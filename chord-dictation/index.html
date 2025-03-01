@@ -1,0 +1,478 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tone.js 和音クイズ</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.min.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        .black-keybord {
+            margin-left: 50px;
+        }
+
+        .black-keybord>label {
+            width: 98px;
+            margin-right: 2px;
+        }
+
+        .white-keybord>label {
+            /* label要素に適用するスタイル */
+            width: 98px;
+            margin-right: 2px;
+
+        }
+    </style>
+</head>
+
+<body class="text-center">
+
+    <h1 class="mb-4">和音クイズ</h1>
+    <p>2025/02/28</p>
+
+    <!-- 設定セクション -->
+    <div id="setup-section" class="mb-4 card card-body p-1">
+        <h3 class="mt-3">セットアップ</h3>
+        <button class="btn btn-primary my-3" type="button" data-bs-toggle="collapse" data-bs-target="#setup-display"
+            aria-expanded="false" aria-controls="setup-display">
+            表示／非表示
+        </button>
+        <div class="collapse" id="setup-display">
+
+            <!-- ルート音の選択 -->
+            <div class="my-3">
+                <h5>ルート音を選択</h5>
+                <div class="overflow-auto">
+                    <div class="d-flex flex-nowrap">
+                        <div class="d-flex flex-column">
+                            <div class="d-flex">
+                                <div class="btn-group" role="group">
+                                    <div class="black-keybord">
+                                        <input type="checkbox" class="btn-check" id="root-csharp" autocomplete="off"
+                                            value="61" checked>
+                                        <label class="btn btn-outline-secondary mx-1 px-1" for="root-csharp">C# /
+                                            Db</label>
+                                        <input type="checkbox" class="btn-check" id="root-dsharp" autocomplete="off"
+                                            value="63" checked>
+                                        <label class="btn btn-outline-secondary mx-1 px-1" for="root-dsharp">D# /
+                                            Eb</label>
+                                    </div>
+                                    <div class="black-keybord">
+                                        <input type="checkbox" class="btn-check" id="root-fsharp" autocomplete="off"
+                                            value="66" checked>
+                                        <label class="btn btn-outline-secondary mx-1 px-1" for="root-fsharp">F# /
+                                            Gb</label>
+                                        <input type="checkbox" class="btn-check" id="root-gsharp" autocomplete="off"
+                                            value="68" checked>
+                                        <label class="btn btn-outline-secondary mx-1 px-1" for="root-gsharp">G# /
+                                            Ab</label>
+                                        <input type="checkbox" class="btn-check" id="root-asharp" autocomplete="off"
+                                            value="70" checked>
+                                        <label class="btn btn-outline-secondary mx-1 px-1" for="root-asharp">A# /
+                                            Bb</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="d-flex justify-content-center">
+                                <div class="btn-group white-keybord" role="group">
+                                    <input type="checkbox" class="btn-check" id="root-c" autocomplete="off" value="60"
+                                        checked>
+                                    <label class="btn btn-outline-secondary px-4" for="root-c">C</label>
+                                    <input type="checkbox" class="btn-check" id="root-d" autocomplete="off" value="62"
+                                        checked>
+                                    <label class="btn btn-outline-secondary px-4" for="root-d">D</label>
+                                    <input type="checkbox" class="btn-check" id="root-e" autocomplete="off" value="64"
+                                        checked>
+                                    <label class="btn btn-outline-secondary px-4" for="root-e">E</label>
+                                    <input type="checkbox" class="btn-check" id="root-f" autocomplete="off" value="65"
+                                        checked>
+                                    <label class="btn btn-outline-secondary px-4" for="root-f">F</label>
+                                    <input type="checkbox" class="btn-check" id="root-g" autocomplete="off" value="67"
+                                        checked>
+                                    <label class="btn btn-outline-secondary px-4" for="root-g">G</label>
+                                    <input type="checkbox" class="btn-check" id="root-a" autocomplete="off" value="69"
+                                        checked>
+                                    <label class="btn btn-outline-secondary px-4" for="root-a">A</label>
+                                    <input type="checkbox" class="btn-check" id="root-b" autocomplete="off" value="71"
+                                        checked>
+                                    <label class="btn btn-outline-secondary px-4" for="root-b">B</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+
+
+
+            <!-- コードタイプの選択 -->
+            <div class="container-fluid">
+                <h5>コードタイプを選択</h5>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <input type="checkbox" class="btn-check" id="augmented-triad" autocomplete="off" checked>
+                        <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                            for="augmented-triad" style="height: 210px;">
+                            <div class="text-center w-100">
+                                増三和音<br>
+                                <ruby>augmented<rt>オーグメンティド</rt></ruby>
+                                <ruby>triad<rt>トライアド</rt></ruby>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="col-6">
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <input type="checkbox" class="btn-check" id="augmented-7th-chord" autocomplete="off"
+                                    checked>
+                                <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                                    for="augmented-7th-chord" style="height: 100px;">
+                                    <div class="text-center w-100">
+                                        増七の和音<br>
+                                        <ruby>augmented<rt>オーギュメント</rt></ruby><br>
+                                        <ruby>seventh<rt>セブンス</rt></ruby>
+                                        <ruby>chord<rt>コード</rt></ruby>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <input type="checkbox" class="btn-check" id="diminished-dominant-7th-chord"
+                                    autocomplete="off" disabled>
+                                <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                                    for="diminished-dominant-7th-chord" style="height: 100px;">
+                                    <div class="text-center w-100">
+                                        comming soon
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <input type="checkbox" class="btn-check" id="major-triad" autocomplete="off" checked>
+                        <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                            for="major-triad" style="height: 210px;">
+                            <div class="text-center w-100">
+                                長三和音<br>
+                                <ruby>major<rt>メジャー</rt></ruby>
+                                <ruby>triad<rt>トライアド</rt></ruby>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="col-6">
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <input type="checkbox" class="btn-check" id="major-7th-chord" autocomplete="off"
+                                    checked>
+                                <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                                    for="major-7th-chord" style="height: 100px;">
+                                    <div class="text-center w-100">
+                                        長七の和音<br>
+                                        <ruby>major<rt>メジャー</rt></ruby> <br>
+                                        <ruby>seventh<rt>セブンス</rt></ruby>
+                                        <ruby>chord<rt>コード</rt></ruby>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <input type="checkbox" class="btn-check" id="dominant-7th-chord" autocomplete="off"
+                                    checked>
+                                <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                                    for="dominant-7th-chord" style="height: 100px;">
+                                    <div class="text-center w-100">
+                                        属七の和音<br>
+                                        <ruby>dominant<rt>ドミナント</rt></ruby> <br>
+                                        <ruby>seventh<rt>セブンス</rt></ruby>
+                                        <ruby>chord<rt>コード</rt></ruby>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <input type="checkbox" class="btn-check" id="minor-triad" autocomplete="off" checked>
+                        <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                            for="minor-triad" style="height: 210px;">
+                            <div class="text-center w-100">
+                                短三和音<br>
+                                <ruby>minor<rt>マイナー</rt></ruby>
+                                <ruby>triad<rt>トライアド</rt></ruby>
+                            </div>
+                        </label>
+                    </div>
+                    <div class="col-6">
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <input type="checkbox" class="btn-check" id="minor-major-7th-chord" autocomplete="off"
+                                    disabled>
+                                <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                                    for="minor-major-7th-chord" style="height: 100px;">
+                                    <div class="text-center w-100">
+                                        comming soon
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <input type="checkbox" class="btn-check" id="minor-7th-chord" autocomplete="off"
+                                    checked>
+                                <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                                    for="minor-7th-chord" style="height: 100px;">
+                                    <div class="text-center w-100">
+                                        短七の和音<br>
+                                        <ruby>minor<rt>マイナー</rt></ruby> <br>
+                                        <ruby>seventh<rt>セブンス</rt></ruby>
+                                        <ruby>chord<rt>コード</rt></ruby>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-6 mb-2">
+                        <input type="checkbox" class="btn-check" id="diminished-triad" autocomplete="off" checked>
+                        <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                            for="diminished-triad" style="height: 210px;">
+                            <div class="text-center w-100">
+                                減三和音<br>
+                                <ruby>diminished<rt>ディミニッシュド</rt></ruby>
+                                <ruby>triad<rt>トライアド</rt></ruby>
+                            </div>
+                        </label>
+                    </div>
+
+                    <div class="col-6">
+                        <div class="row">
+                            <div class="col-12 mb-2">
+                                <input type="checkbox" class="btn-check" id="half-diminished-7th-chord"
+                                    autocomplete="off" checked>
+                                <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                                    for="half-diminished-7th-chord" style="height: 100px;">
+                                    <div class="text-center w-100">
+                                        半減七の和音<br>
+                                        <ruby>half-diminished<rt>ハーフディミニッシュト</rt></ruby> <br>
+                                        <ruby>seventh<rt>セブンス</rt></ruby>
+                                        <ruby>chord<rt>コード</rt></ruby>
+                                    </div>
+                                </label>
+                            </div>
+                            <div class="col-12 mb-2">
+                                <input type="checkbox" class="btn-check" id="diminished-7th-chord" autocomplete="off"
+                                    checked>
+                                <label class="btn btn-outline-secondary w-100 rounded py-5 d-flex align-items-center"
+                                    for="diminished-7th-chord" style="height: 100px;">
+                                    <div class="text-center w-100">
+                                        減七の和音<br>
+                                        <ruby>diminished<rt>ディミニッシュト</rt></ruby> <br>
+                                        <ruby>seventh<rt>セブンス</rt></ruby>
+                                        <ruby>chord<rt>コード</rt></ruby>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <button id="apply-settings-button" class="btn btn-info my-3">設定を適用</button>
+            <div id="status-display" class="container mt-3">
+                <h6>選択されたルート：</h6>
+                <div id="root-list" class="alert alert-info" role="alert" style="display: none;"></div>
+                <h6>選択されたコードタイプ：</h6>
+                <div id="type-list" class="alert alert-success" role="alert" style="display: none;"></div>
+            </div>
+            <button class="btn btn-primary my-3" type="button" data-bs-toggle="collapse" data-bs-target="#setup-display"
+            aria-expanded="false" aria-controls="setup-display">
+            セットアップを非表示
+        </button>
+        </div>
+    </div>
+
+
+
+
+    <!-- 出題と再生ボタン -->
+    <div id="question-section" class="mb-4 card card-body">
+        <h3>出題</h3>
+        <button id="play-button" class="btn btn-primary">和音を再生</button>
+    </div>
+
+    <!-- 解答表示ボタンと結果 -->
+    <div id="answer-section" class="mb-4 card card-body">
+        <h3>解答</h3>
+        <button id="answer-button" class="btn btn-primary" disabled="">解答を表示</button>
+        <p id="answer-text" class="mt-3 fw-bold"></p>
+    </div>
+
+    <!-- 次の問題ボタン（初回は非表示） -->
+    <div id="next-question-section" class="mb-4 d-none">
+        <button id="next-question-button" class="btn btn-success">次の問題</button>
+    </div>
+
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            // ルート音とコードの種類、インターバル情報
+            const chordInfo = {
+                "major-triad": { jp: "長三和音", symbol: "maj", intervals: [0, 4, 7] },
+                "minor-triad": { jp: "短三和音", symbol: "m", intervals: [0, 3, 7] },
+                "augmented-triad": { jp: "増三和音", symbol: "aug", intervals: [0, 4, 8] },
+                "diminished-triad": { jp: "減三和音", symbol: "dim", intervals: [0, 3, 6] },
+                "major-7th-chord": { jp: "長七の和音", symbol: "maj7", intervals: [0, 4, 7, 11] },
+                "minor-7th-chord": { jp: "短七の和音", symbol: "m7", intervals: [0, 3, 7, 10] },
+                "dominant-7th-chord": { jp: "属七の和音", symbol: "7", intervals: [0, 4, 7, 10] },
+                "augmented-7th-chord": { jp: "増七の和音", symbol: "aug7", intervals: [0, 4, 8, 11] },
+                "half-diminished-7th-chord": { jp: "半減七の和音", symbol: "m7b5", intervals: [0, 3, 6, 10] },
+                "diminished-7th-chord": { jp: "減七の和音", symbol: "dim7", intervals: [0, 3, 6, 9] }
+            };
+
+            // HTML要素
+            const playButton = document.getElementById("play-button");
+            const answerButton = document.getElementById("answer-button");
+            const answerText = document.getElementById("answer-text");
+            const nextQuestionSection = document.getElementById("next-question-section");
+            const applySettingsButton = document.getElementById("apply-settings-button");
+            const nextQuestionButton = document.getElementById("next-question-button");
+            const statusDisplay = document.getElementById("status-display");
+            const rootList = document.getElementById("root-list");
+            const typeList = document.getElementById("type-list");
+
+            let selectedRoots = []; // selectedRootsを初期化
+            let selectedTypes = Object.keys(chordInfo); // 初期状態では全コードタイプ選択
+            let currentRoot = null;
+            let currentChordType = null;
+            let currentChord = [];
+            let synth = new Tone.PolySynth(Tone.Synth).toDestination();
+
+            // ランダムな配列の要素を取得する関数
+            function getRandomNumber(array) {
+                return array[Math.floor(Math.random() * array.length)];
+            }
+
+            // コードの音を取得する関数
+            function getChordNotes(root, chordType) {
+                return chordInfo[chordType].intervals.map(interval => root + interval);
+            }
+
+            // コードの情報を取得する関数
+            // コードの情報を取得する関数
+            function getChordInfo(root, chordType) {
+                let rootName = Tone.Frequency(root, "midi").toNote();
+                // 音名からオクターブの数字を取り除く
+                rootName = rootName.replace(/[0-9]/g, '');
+                let typeInfo = chordInfo[chordType];
+                let chordSymbol = rootName + typeInfo.symbol; // 音名とコードシンボルを組み合わせる
+                return `ルート: ${rootName} <br> コードタイプ: ${typeInfo.jp} <br> コードシンボル: <span class="math-inline">${chordSymbol}</span>`;
+            }
+            // 問題を設定する関数
+            function setQuestion() {
+                if (selectedRoots.length === 0 || selectedTypes.length === 0) {
+                    alert("ルート音またはコードタイプを選択してください。");
+                    return;
+                }
+
+                currentRoot = getRandomNumber(selectedRoots);
+                currentChordType = getRandomNumber(selectedTypes);
+                currentChord = getChordNotes(currentRoot, currentChordType);
+                console.log(`currentRoot: ${currentRoot} \n currentChordType： ${currentChordType} \n currentChord： ${currentChord}`);
+
+                playButton.innerText = "もう一度聞く";
+                answerButton.disabled = false;
+                answerText.innerHTML = "";
+                nextQuestionSection.classList.add("d-none");
+            }
+
+            // コードを再生する関数
+            function playChord() {
+                if (currentChord.length === 0) return;
+                let now = Tone.now();
+                synth.triggerAttackRelease(currentChord.map(note => Tone.Frequency(note, "midi").toFrequency()), "1.5s", now);
+            }
+
+            // 答えを表示する関数
+            function showAnswer() {
+                answerText.innerHTML = getChordInfo(currentRoot, currentChordType);
+                nextQuestionSection.classList.remove("d-none");
+            }
+
+            // クイズをリセットする関数
+            function resetQuiz() {
+                answerText.innerHTML = "";
+                nextQuestionSection.classList.add("d-none");
+                setQuestion();
+                playButton.innerText = "出題";
+            }
+
+            // 設定を適用する関数
+            function applySettings() {
+                selectedRoots = [];
+                selectedTypes = [];
+
+                document.querySelectorAll("#setup-section input[id^='root-']:checked").forEach(input => {
+                    selectedRoots.push(parseInt(input.value));
+                });
+
+                Object.keys(chordInfo).forEach(type => {
+                    if (document.getElementById(type).checked) {
+                        selectedTypes.push(type);
+                    }
+                });
+
+                console.log(selectedTypes);
+                updateStatusDisplay(selectedRoots, selectedTypes);
+                //alert("設定が適用されました！");
+            }
+
+            function updateStatusDisplay(selectedRoots, selectedTypes) {
+                const rootList = document.getElementById("root-list");
+                const typeList = document.getElementById("type-list");
+              
+                // MIDIノートナンバーから音名への変換テーブル
+                const noteNames = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+              
+                // ルートの表示 (MIDIノートナンバーから音名に変換してソート)
+                if (selectedRoots && selectedRoots.length > 0) {
+                  const rootNames = selectedRoots
+                    .slice() // 元の配列を破壊しないようにコピー
+                    .sort((a, b) => a - b) // MIDIノートナンバーで昇順ソート
+                    .map(note => noteNames[note % 12]); // 音名に変換
+              
+                  rootList.textContent = rootNames.join(', ');
+                  rootList.style.display = 'block';
+                } else {
+                  rootList.style.display = 'none';
+                }
+              
+                // タイプの表示 (変更なし)
+                if (selectedTypes && selectedTypes.length > 0) {
+                  typeList.innerHTML = '<ul class="list-unstyled text-start">' + selectedTypes.map(type => `<li>${type}</li>`).join('') + '</ul>';
+                  typeList.style.display = 'block';
+                } else {
+                  typeList.style.display = 'none';
+                }
+              }
+
+            // イベントリスナー
+            applySettingsButton.addEventListener("click", applySettings);
+            playButton.addEventListener("click", () => {
+                if (currentChord.length === 0) setQuestion();
+                playChord();
+            });
+
+            answerButton.addEventListener("click", showAnswer);
+            nextQuestionButton.addEventListener("click", resetQuiz);
+
+            applySettings(); // ページ読み込み時に設定を初期化
+        });
+    </script>
+
+
+</body>
+
+</html>
