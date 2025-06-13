@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CDN Library Loader Test (Modularized)</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 10px;
+            cursor: pointer;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 20px;
+            font-size: 1.1em;
+            color: #555;
+        }
+
+        #verovio-output {
+            margin-top: 20px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 50px;
+            text-align: left;
+        }
+
+        #verovio-svg {
+            margin-top: 10px;
+            border: 1px dashed #aaa;
+            padding: 5px;
+            text-align: center;
+            /* SVGを中央揃えにするため */
+        }
+
+        #verovio-svg svg {
+            max-width: 100%;
+            /* SVGが親要素からはみ出さないように */
+            height: auto;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>CDN Library Loader Test (Modularized)</h1>
+
+    <div id="status">Libraries not yet loaded.</div>
+
+    <button id="loadLibrariesButton">Load Tone.js & Verovio</button>
+    <button id="testToneJsButton" disabled>Test Tone.js</button>
+    <button id="testVerovioButton" disabled>Test Verovio (Fetch MEI)</button>
+
+    <h2>Verovio Output:</h2>
+    <div id="verovio-output"></div>
+    <div id="verovio-svg"></div>
+
+    <script type="module">
+        import { loadToneJs } from './tonejs-loader.mjs';
+        import { loadVerovio } from './verovio-loader.mjs';
+
+        const statusDiv = document.getElementById('status');
+        const loadLibrariesButton = document.getElementById('loadLibrariesButton');
+        const testToneJsButton = document.getElementById('testToneJsButton');
+        const testVerovioButton = document.getElementById('testVerovioButton');
+        const verovioOutputDiv = document.getElementById('verovio-output');
+        const verovioSvgDiv = document.getElementById('verovio-svg');
+
+        loadLibrariesButton.addEventListener('click', async () => {
+            statusDiv.textContent = 'Loading libraries...';
+            loadLibrariesButton.disabled = true;
+            testToneJsButton.disabled = true;
+            testVerovioButton.disabled = true;
+
+            try {
+                await Promise.all([
+                    loadToneJs(),
+                    loadVerovio()
+                ]);
+
+                statusDiv.textContent = 'All libraries loaded successfully!';
+                testToneJsButton.disabled = false;
+                testVerovioButton.disabled = false;
+                console.log('All libraries loaded. You can now test them.');
+
+            } catch (error) {
+                statusDiv.textContent = `Error loading libraries: ${error.message}`;
+                console.error('Failed to load one or more libraries:', error);
+                loadLibrariesButton.disabled = false;
+            }
+        });
+
+        testToneJsButton.addEventListener('click', () => {
+            if (window.Tone) {
+                try {
+                    const synth = new Tone.Synth().toDestination();
+                    synth.triggerAttackRelease("C4", "8n");
+                    statusDiv.textContent = 'Tone.js test: Played a C4 note!';
+                    console.log('Tone.js test: Synth initialized and played a note.');
+                } catch (e) {
+                    statusDiv.textContent = `Tone.js test failed: ${e.message}`;
+                    console.error('Tone.js test error:', e);
+                }
+            } else {
+                statusDiv.textContent = 'Tone.js not found. Load libraries first.';
+                console.warn('Tone.js global object not found.');
+            }
+        });
+
+        testVerovioButton.addEventListener('click', async () => {
+            if (window.verovio) {
+                statusDiv.textContent = 'Verovio test: Fetching MEI data...';
+                verovioOutputDiv.textContent = 'Fetching MEI data...';
+                verovioSvgDiv.innerHTML = '';
+
+                try {
+                    const response = await fetch("https://www.verovio.org/examples/downloads/Schubert_Lindenbaum.mei");
+                    if (!response.ok) {
+                        throw new Error(`HTTP error! status: ${response.status}`);
+                    }
+                    const meiXML = await response.text();
+
+                    const vrvToolkit = new window.verovio.toolkit();
+
+                    vrvToolkit.setOptions({
+                        'adjustPageWidth': true,
+                        'adjustHeight': true,
+                        'scale': 40,
+                    });
+
+                    vrvToolkit.loadData(meiXML);
+                    const svgString = vrvToolkit.renderToSVG(1);
+
+                    verovioOutputDiv.textContent = 'Verovio test: MEI fetched and SVG rendered.';
+                    verovioSvgDiv.innerHTML = svgString;
+                    statusDiv.textContent = 'Verovio test: Music notation from fetched MEI displayed!';
+                    console.log('Verovio test: Toolkit initialized, MEI fetched, SVG rendered.');
+
+                } catch (e) {
+                    verovioOutputDiv.textContent = `Verovio test failed: ${e.message}`;
+                    statusDiv.textContent = `Verovio test failed: ${e.message}`;
+                    console.error('Verovio test error:', e);
+                }
+            } else {
+                statusDiv.textContent = 'Verovio not found. Load libraries first.';
+                console.warn('Verovio global object not found.');
+            }
+        });
+
+        statusDiv.textContent = 'Click "Load Libraries" to begin.';
+    </script>
+</body>
+
+</html>

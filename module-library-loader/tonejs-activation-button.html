@@ -1,0 +1,63 @@
+<!-- tonejs-activation-button.html -->
+
+
+<!-- 
+
+// 1. Tone.js のCDN URLを定義する
+// 現在の最新安定版のURLを推奨します。
+// 例: "https://unpkg.com/@tonejs/core" または "https://cdn.jsdelivr.net/npm/tone"
+// 最新のURLはTone.jsの公式ドキュメントやCDNプロバイダのサイトで確認してください。
+const TONE_JS_CDN_URL = "https://cdn.jsdelivr.net/npm/tone@14.7.58/build/Tone.min.js"; // 例: 特定のバージョン
+
+/**
+ * CDNからスクリプトをロードする関数
+ * @param {string} url - ロードするスクリプトのURL
+ * @param {function} callback - スクリプトのロードが完了したときに実行されるコールバック関数
+ */
+function loadScriptFromCDN(url, callback) {
+    const script = document.createElement('script');
+    script.src = url;
+    script.async = true; // 非同期ロード
+    script.onload = () => {
+        console.log(`Script loaded from: ${url}`);
+        if (callback) {
+            callback();
+        }
+    };
+    script.onerror = () => {
+        console.error(`Failed to load script from: ${url}`);
+    };
+
+    // DOMの<head>または<body>にスクリプトタグを追加
+    document.head.appendChild(script);
+}
+
+// 2. loadScriptFromCDN 関数を使ってTone.jsをロードし、完了後に処理を行う
+loadScriptFromCDN(TONE_JS_CDN_URL, () => {
+    // Tone.js のロードが完了した後に実行される処理
+    console.log("Tone.js has been loaded and is ready to use!");
+
+    // ここでTone.jsのコンテキストをアクティベートするなど、初期設定を行う
+    // 例: ユーザーインタラクション（クリックなど）でオーディオコンテキストをアクティベートする
+    const activateButton = document.getElementById('activate-audio-button');
+    if (activateButton) {
+        activateButton.addEventListener('click', () => {
+            if (Tone.context.state !== 'running') {
+                Tone.start().then(() => {
+                    console.log('AudioContext is running');
+                    // ここで音を鳴らすなどの処理を開始できる
+                });
+            }
+        });
+    } else {
+        console.warn("Element with ID 'activate-audio-button' not found. Please add a button to activate audio context.");
+        // ボタンがない場合でも、ユーザーインタラクションのイベントでTone.start()を呼ぶ必要があることを忘れない
+        // 例えば、document.body.addEventListener('click', () => { Tone.start() }) など。
+    }
+});
+
+// HTML側には、オーディオコンテキストをアクティベートするためのボタンを用意すると良いでしょう
+// <button id="activate-audio-button">Start Audio</button>
+
+
+-->
