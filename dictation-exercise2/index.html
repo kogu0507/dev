@@ -1,0 +1,60 @@
+<!--
+
+
+-->
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictation Exercise</title>
+
+    <!-- テスト用 -->
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+    </body>
+
+    <!-- 本番環境用 -->
+    <!-- 
+        以下のファイルをCustom Assets Loaderで読みこむ
+        https://cdn.jsdelivr.net/gh/kogu0507/mini-apps@main/dictation-exercise/script.min.js
+        https://cdn.jsdelivr.net/gh/kogu0507/mini-apps@main/dictation-exercise/style.min.css
+    -->
+
+</head>
+
+<body>
+    <section id="data-section">
+        <script id="meiData" type="application/mei+Xml">
+            <!-- MEIファイルがはいる -->
+        </script>
+    </section>
+
+    <!-- セクション -->
+    <section id=""></section>
+
+    <!-- セクション -->
+    <section id=""></section>
+
+    <script type="module">
+        /* モジュール化してjsDelivrで読み込む */
+
+        // TODO: jsDelivrのバージョン情報が決まったらアドレス補完すべし
+        import { loadToneJs } from 'jsDelivr...module@バージョン/tonejs/loader.min.mjs';
+        import { loadVerovio } from 'jsDelivr...module@バージョン/verovio/loader.min.mjs';
+        import { loadToneJsMidi } from 'jsDelivr...module@バージョン/tonejs/tonejs-midi-loader.min.mjs';
+
+        let verovioToolkit, Midi, synth, scorePlayer;
+
+
+
+        document.addEventListener('DOMContentLoaded', () => {
+            Promise.all([loadVerovio(), loadToneJs(), loadToneJsMidi()])
+                .then(() => console.log('[init] 事前ロード完了'))
+                .catch(e => console.error('[init] 事前ロード失敗:', e));
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,122 @@
+<style>
+    /* 簡単なスタイルを追加して見やすくします */
+    #loading-status {
+        margin-top: 20px;
+        font-weight: bold;
+        color: #333;
+    }
+    #viewer {
+        border: 1px solid #ccc;
+        padding: 10px;
+        margin-top: 20px;
+        overflow-x: auto; /* 楽譜がはみ出た場合にスクロールできるように */
+    }
+    .button-container button {
+        margin-right: 10px;
+        padding: 8px 15px;
+        font-size: 16px;
+        cursor: pointer;
+    }
+</style>
+
+<div class="button-container">
+    <button id="load-all-btn">Tone.js と Verovio をロードして実行</button>
+    <button id="play-sound-btn" disabled>C4 の音を鳴らす (Tone.js)</button>
+</div>
+<div id="loading-status">待機中...</div>
+<div id="viewer"></div>
+
+<script type="module">
+    // --- 自分のモジュールをjsDelivr経由でインポート ---
+    import { loadVerovio } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v1.0.0/verovio/loader.min.mjs';
+    import { loadToneJs } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v1.0.0/tonejs/loader.min.mjs';
+
+    const loadAllBtn = document.getElementById('load-all-btn');
+    const playSoundBtn = document.getElementById('play-sound-btn');
+    const statusDiv = document.getElementById('loading-status');
+    const viewerDiv = document.getElementById('viewer');
+
+    let toneSynth = null; // Tone.js のシンセサイザーインスタンスを保持
+    let verovioToolkit = null; // Verovio のToolkitインスタンスを保持
+
+    // --- 全てロードボタンのイベントリスナー ---
+    loadAllBtn.addEventListener('click', async () => {
+        loadAllBtn.disabled = true;
+        statusDiv.textContent = 'Tone.js と Verovio を両方ロード中...';
+        viewerDiv.innerHTML = '';
+        playSoundBtn.disabled = true; // ロード中は音ボタンを無効化
+
+        try {
+            // --- Promise.all の使い方 ---
+            // Promise.all は、複数の非同期処理（Promise）を並行して実行し、
+            // 全てのPromiseが成功（resolve）するのを待つためのメソッドです。
+            // 全て成功すると、それぞれのPromiseが返した結果を配列として返します。
+            // 一つでも失敗（reject）すると、Promise.all 全体が失敗します。
+            const [toneJsResult, verovioResult] = await Promise.all([
+                loadToneJs(),       // Tone.js のロードと初期化
+                loadVerovio()       // Verovio のロードと初期化
+            ]);
+
+            // Promise.all が成功したら、各結果を変数に格納
+            // Tone.js はグローバルな `Tone` オブジェクトを公開するので、toneJsResult は undefined かもしれません
+            // loadVerovio() は Toolkit インスタンスを返すので、verovioResult に格納されます
+            verovioToolkit = verovioResult; // Verovio の Toolkit インスタンス
+
+            statusDiv.textContent = 'ロード完了。Verovioで楽譜をレンダリングし、Tone.jsの準備中...';
+
+            // --- Verovio を使って楽譜をレンダリング ---
+            const sampleMeiUrl = 'https://cdn.jsdelivr.net/gh/kogu0507/module@v1.0.0/examples/sample.mei';
+            const resp = await fetch(sampleMeiUrl);
+            const mei = await resp.text();
+
+            verovioToolkit.loadData(mei);
+            verovioToolkit.setOptions({
+                pageWidth: 800,
+                pageHeight: 600,
+                scale: 40
+            });
+            const svg = verovioToolkit.renderToSVG(1, {});
+            viewerDiv.innerHTML = svg;
+
+            // --- Tone.js のシンセサイザーを初期化 ---
+            // AudioContext はユーザー操作がないと開始できない場合があるため、
+            // ボタンクリックイベント内で AudioContext を開始するのが一般的です。
+            // Tone.js は自動で開始しようとしますが、
+            // ユーザーが再生ボタンをクリックした時に明示的に Tone.start() を呼ぶとより確実です。
+            // ここではシンプルにシンセを生成だけしておきます。
+            if (typeof Tone !== 'undefined' && Tone.Synth) {
+                toneSynth = new Tone.Synth().toDestination();
+                playSoundBtn.disabled = false; // 音を鳴らすボタンを有効化
+            } else {
+                statusDiv.textContent += ' (Tone.js の初期化に失敗しました)';
+                console.error('Tone.js が正しくロードされていないか、Tone.Synth が見つかりません。');
+            }
+
+            statusDiv.textContent = '全ての処理が完了しました！';
+
+        } catch (error) {
+            console.error('ロードまたは処理中にエラーが発生しました:', error);
+            statusDiv.textContent = 'エラー: ' + error.message;
+        } finally {
+            loadAllBtn.disabled = false; // ボタンを再度有効化
+        }
+    });
+
+    // --- 音を鳴らすボタンのイベントリスナー ---
+    playSoundBtn.addEventListener('click', async () => {
+        if (toneSynth) {
+            try {
+                // Tone.js の AudioContext を開始
+                await Tone.start();
+                toneSynth.triggerAttackRelease("C4", "8n");
+                console.log('C4 の音を再生しました。');
+            } catch (e) {
+                console.error('音の再生に失敗しました:', e);
+                statusDiv.textContent = '音再生エラー: ' + e.message;
+            }
+        } else {
+            statusDiv.textContent = 'Tone.js がまだ準備できていません。';
+        }
+    });
+
+</script>
