@@ -1,5 +1,5 @@
 /**
- * prism-loader.mjs
+ * prism-loader.js
  * ---------------------------------------------------------------------
  * 1.  <script type="module" src="..."></script> を入れるだけで動く
  * 2.  デフォルトで Okaidia テーマ + HTML/CSS/JavaScript をサポート
