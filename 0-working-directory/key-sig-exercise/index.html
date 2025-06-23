@@ -6,22 +6,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>調号エクササイズ - 開発版</title>
 
-    <style>
-        /* 楽譜表示エリアのSVGスタイル（共通） */
-        .verovio-viewer svg {
-            max-width: 100%;
-            height: auto;
-        }
 
-        /* simple-tab-componentのCSSは別途ロード */
-        /* https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css */
-    </style>
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css">
 
 </head>
 
 <body>
+    <style>
+        /* 楽譜表示エリアのSVGスタイル（共通） */
+        .verovio-viewer {
+            width: 100%;
+            overflow-x: auto;
+        }
+
+        .verovio-viewer svg {
+            display: block; /* インライン要素の余白などをなくす */
+            max-width: none;
+            height: auto;
+        }
+
+        /* simple-tab-componentのCSSは別途ロード */
+        /* https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css */
+    </style>
+
+
     <h2>調号エクササイズ</h2>
     <div id="simple-tab-component" class="simple-tab-component-container" data-default-tab="intro"
         data-deep-link="true">
