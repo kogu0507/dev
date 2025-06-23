@@ -4,6 +4,7 @@
 import { loadVerovio } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/verovio/loader.min.mjs';
 import 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/script.min.js'; // タブコンポーネントのスクリプトをロード
 
+
 // Verovioのツールキットインスタンスをグローバル（またはアクセス可能なスコープ）で保持
 let verovioToolkit = null;
 
@@ -118,7 +119,7 @@ window.renderVerovioScore = async (targetElementId, meiString, statusElementId =
             footer: "none",
             //pageWidth: 800,
             //pageHeight: 600,
-            scale: 100
+            scale: 80
         });
         console.log('[renderVerovioScore] Verovioオプションを設定しました。');
 
