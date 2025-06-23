@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <title>MEI楽譜 & MIDI再生アプリ</title>
+
+    <!--keybord-selector-->
+    <link rel="stylesheet" href="keyboard-selector/style.css">
+    <!--simple-tab-component-->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.2.1/components/simple-tab-component/style.min.css">
+
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 2em;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            text-align: center;
+            max-width: 800px;
+            width: 90%;
+            margin-bottom: 2em;
+        }
+
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 25px;
+        }
+
+        button {
+            padding: .75em 1.5em;
+            font-size: 1.1rem;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+            outline: none;
+            margin: 0.5em;
+        }
+
+        #loadVerovioBtn {
+            background-color: #007bff;
+            color: white;
+        }
+
+        #loadVerovioBtn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        #playMidiFromMeiBtn {
+            background-color: #fd7e14;
+            color: white;
+        }
+
+        #playMidiFromMeiBtn:hover {
+            background-color: #e66b0d;
+            transform: translateY(-2px);
+        }
+
+        #stopMidiFromMeiBtn {
+            background-color: #dc3545;
+            color: white;
+        }
+
+        #stopMidiFromMeiBtn:hover {
+            background-color: #c82333;
+            transform: translateY(-2px);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #status {
+            margin-top: 1.5em;
+            font-size: 1em;
+            color: #555;
+            background-color: #e9f5e9;
+            border: 1px solid #d4edda;
+            border-radius: 6px;
+            padding: 15px;
+            min-height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-break: break-word;
+        }
+
+        #viewer {
+            margin-top: 1.5em;
+            border: 1px solid #ccc;
+            padding: 1em;
+            width: 100%;
+            box-sizing: border-box;
+            overflow-x: auto;
+        }
+
+        #midiInfo {
+            margin-top: 1.5em;
+            border: 1px solid #cce5ff;
+            padding: 1em;
+            width: 100%;
+            box-sizing: border-box;
+            background-color: #e7f3ff;
+        }
+
+        .success {
+            color: #155724;
+            background-color: #d4edda;
+            border-color: #c3e6cb;
+        }
+
+        .error {
+            color: #721c24;
+            background-color: #f8d7da;
+            border-color: #f5c6cb;
+        }
+
+        .loading {
+            color: #004085;
+            background-color: #cce5ff;
+            border-color: #b8daff;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="simple-tab-component-container" style="width: 100%;">
+        <div class="tabs">
+            <button class="tab-button" data-tab="question">出題</button>
+            <button class="tab-button" data-tab="answer">解答</button>
+            <button class="tab-button" data-tab="settings">設定</button>
+        </div>
+
+        <div id="question" class="tab-pane">
+            <button>通常の和音で再生</button>
+            <button>分散和音で再生</button>
+            <button>次の問題を生成</button>
+        </div>
+
+        <div id="answer" class="tab-pane">
+            <div id="viewer"></div>
+            <div id="answer-display">解答を読込中...</div>
+            <div>コードネーム:<span id="chordnameValue"></span></div>
+            <div>ルート:<span id="rootValue"></span></div>
+            <div>タイプ:<span id="typeValue"></span></div>
+            <button>次の問題</button>
+        </div>
+
+        <div id="settings" class="tab-pane">
+            <h3>楽器選択</h3>
+            <style>
+                .scs-radio-container {
+                    display: flex;
+                    gap: 10px;
+                    margin-bottom: 20px;
+                }
+
+                .scs-radio-option {
+                    padding: 8px 15px;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    background-color: #f0f0f0;
+                    white-space: nowrap;
+                }
+
+                .scs-radio-option[data-checked="true"] {
+                    background-color: #007bff;
+                    color: white;
+                    border-color: #007bff;
+                }
+            </style>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.querySelectorAll('.scs-radio-container').forEach(container => {
+                        container.addEventListener('click', (event) => {
+                            const option = event.target.closest('.scs-radio-option');
+                            if (option) {
+                                container.querySelectorAll('.scs-radio-option').forEach(opt => {
+                                    opt.dataset.checked = "false";
+                                });
+                                option.dataset.checked = "true";
+                                console.log(`Radio selected: ${container.dataset.name}, ${option.dataset.value}`);
+                            }
+                        });
+                    });
+                });
+            </script>
+            <div class="scs-radio-container" data-name="instrument">
+                <div class="scs-radio-option" data-id="synth" data-value="synth" data-checked="true">シンセ</div>
+                <div class="scs-radio-option" data-id="sampler" data-value="sampler">サンプラー</div>
+            </div>
+
+            <h3>ルート選択</h3>
+            <div class="scs-keyboard-root-container">
+                <div class="black-keys">
+                    <div class="scs-keyboard-note black-key" data-id="61">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">C♯/D♭</span>
+                    </div>
+                    <div class="scs-keyboard-note black-key" data-id="63">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">D♯/E♭</span>
+                    </div>
+                    <div class="scs-keyboard-note black-key" data-id="66">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">F♯/G♭</span>
+                    </div>
+                    <div class="scs-keyboard-note black-key" data-id="68">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">G♯/A♭</span>
+                    </div>
+                    <div class="scs-keyboard-note black-key" data-id="70">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">A♯/B♭</span>
+                    </div>
+                </div>
+                <div class="white-keys">
+                    <div class="scs-keyboard-note white-key" data-id="60">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">C</span>
+                    </div>
+                    <div class="scs-keyboard-note white-key" data-id="62">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">D</span>
+                    </div>
+                    <div class="scs-keyboard-note white-key" data-id="64">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">E</span>
+                    </div>
+                    <div class="scs-keyboard-note white-key" data-id="65">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">F</span>
+                    </div>
+                    <div class="scs-keyboard-note white-key" data-id="67">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">G</span>
+                    </div>
+                    <div class="scs-keyboard-note white-key" data-id="69">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">A</span>
+                    </div>
+                    <div class="scs-keyboard-note white-key" data-id="71">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">B</span>
+                    </div>
+                    <div class="scs-keyboard-note white-key" data-id="72">
+                        <span class="scs-check-mark hidden">✅</span>
+                        <span class="scs-note-name">C</span>
+                    </div>
+                </div>
+            </div>
+
+            <h3>タイプ選択</h3>
+            <style>
+                .scs-checkbox-container {
+                    display: flex;
+                    flex-wrap: wrap;
+                    gap: 10px;
+                }
+
+                .scs-checkbox-option {
+                    padding: 8px 15px;
+                    border: 1px solid #ccc;
+                    border-radius: 5px;
+                    cursor: pointer;
+                    background-color: #f0f0f0;
+                    white-space: nowrap;
+                }
+
+                .scs-checkbox-option[data-checked="true"] {
+                    background-color: #28a745;
+                    color: white;
+                    border-color: #28a745;
+                }
+            </style>
+            <script>
+                document.addEventListener('DOMContentLoaded', () => {
+                    document.querySelectorAll('.scs-checkbox-container[data-name="type"]').forEach(container => {
+                        container.addEventListener('click', (event) => {
+                            const option = event.target.closest('.scs-checkbox-option');
+                            if (option) {
+                                option.dataset.checked = (option.dataset.checked === "true") ? "false" : "true";
+                                const checkedValues = Array.from(container.querySelectorAll('.scs-checkbox-option[data-checked="true"]'))
+                                    .map(opt => opt.dataset.value);
+                                console.log(`Checkbox selected for ${container.dataset.name}: ${checkedValues}`);
+                            }
+                        });
+                    });
+                });
+            </script>
+            <div class="scs-checkbox-container" data-name="type">
+                <div class="scs-checkbox-option" data-id="major-triad" data-value="major-triad" data-checked="true">
+                    major triad（長三和音）</div>
+                <div class="scs-checkbox-option" data-id="minor-triad" data-value="minor-triad">minor triad（短三和音）</div>
+                <div class="scs-checkbox-option" data-id="diminished-triad" data-value="diminished-triad">diminished
+                    triad（減三和音）</div>
+                <div class="scs-checkbox-option" data-id="augmented-triad" data-value="augmented-triad">augmented
+                    triad（増三和音）</div>
+                <div class="scs-checkbox-option" data-id="major-7th" data-value="major-7th">major 7th（長七の和音）</div>
+                <div class="scs-checkbox-option" data-id="dominant-7th" data-value="dominant-7th">dominant 7th（属七の和音）
+                </div>
+                <div class="scs-checkbox-option" data-id="minor-7th" data-value="minor-7th">minor 7th（短七の和音）</div>
+                <div class="scs-checkbox-option" data-id="half-diminished-7th" data-value="half-diminished-7th">
+                    half-diminished 7th（減七短五の和音）</div>
+                <div class="scs-checkbox-option" data-id="diminished-7th" data-value="diminished-7th">diminished
+                    7th（減七の和音）</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MEIテンプレート（楽譜とMIDIを作成。解答表示と音源を鳴らす。あ、分三和音で鳴らすのはどうする、、、？） -->
+    <section id="data-section">
+        <script type="application/mei-xml" id="mei-data">
+            <?xml version="1.0" encoding="UTF-8"?>
+            <mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">
+                <meiHead>
+                    <fileDesc>
+                        <titleStmt>
+                            <title id="mei-title"></title> </titleStmt>
+                    </fileDesc>
+                </meiHead>
+                <music>
+                    <body>
+                        <mdiv>
+                            <score>
+                                <scoreDef keysig="0" meter.count="4" meter.unit="4">
+                                    <staffGrp>
+                                        <staffDef n="1" clef.shape="G" clef.line="2" lines="5"/>
+                                    </staffGrp>
+                                </scoreDef>
+                                <section>
+                                    <measure n="1">
+                                        <staff n="1">
+                                            <layer n="1">
+                                                __NOTES__ </layer>
+                                        </staff>
+                                    </measure>
+                                </section>
+                            </score>
+                        </mdiv>
+                    </body>
+                </music>
+            </mei>
+        </script>
+
+        <script>
+            const allChords = [
+                {
+                    "key": "C-major-triad",
+                    "chordName": "C",
+                    "root": "C",
+                    "type": {
+                        "en": "major triad",
+                        "ja": "長三和音"
+                    },
+                    "mei": "<chord><note xml:id=\"n_c4_chord\" dur=\"4\" pname=\"c\" oct=\"4\"/><note xml:id=\"n_e4_chord\" dur=\"4\" pname=\"e\" oct=\"4\"/><note xml:id=\"n_g4_chord\" dur=\"4\" pname=\"g\" oct=\"4\"/></chord>",
+                    "toneJsNotes": ["C4", "E4", "G4"] // Tone.js再生用のノートを追加
+                },
+                {
+                    "key": "G-major-triad",
+                    "chordName": "G",
+                    "root": "G",
+                    "type": {
+                        "en": "major triad",
+                        "ja": "長三和音"
+                    },
+                    "mei": "<chord><note xml:id=\"n_g4_chord\" dur=\"4\" pname=\"g\" oct=\"4\"/><note xml:id=\"n_b4_chord\" dur=\"4\" pname=\"b\" oct=\"4\"/><note xml:id=\"n_d5_chord\" dur=\"4\" pname=\"d\" oct=\"5\"/></chord>",
+                    "toneJsNotes": ["G4", "B4", "D5"] // Tone.js再生用のノートを追加
+                }
+                // ... 他の和音データ
+            ];
+        </script>
+    </section>
+
+    <script src="keyboard-selector/script.js"></script>
+    <script
+        src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.2.1/components/simple-tab-component/script.min.js"></script>
+    <script type="module">
+        import { loadVerovio } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.2.1/verovio/loader.min.mjs';
+        import { loadToneJs } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.2.1/tonejs/loader.min.mjs';
+        import { loadToneJsMidi } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.2.1/tonejs/tonejs-midi-loader.min.mjs';
+
+        // --- DOM要素の参照 ---
+        const loadVerovioBtn = document.getElementById('loadVerovioBtn');
+        const playMidiFromMeiBtn = document.getElementById('playMidiFromMeiBtn');
+        const stopMidiFromMeiBtn = document.getElementById('stopMidiFromMeiBtn');
+        const statusDiv = document.getElementById('status');
+        const viewerDiv = document.getElementById('viewer');
+        const midiInfoDiv = document.getElementById('midiInfo');
+
+        // --- グローバル変数 (ライブラリインスタンスや再生状態を保持) ---
+        let verovioToolkit = null;
+        let MidiClass = null; // @tonejs/midi の Midi クラスを保持
+        let activeSynth = null; // Tone.Synthインスタンスを保持
+        let activePart = null;  // Tone.Partインスタンスを保持
+
+        // --- ヘルパー関数 ---
+
+        /**
+         * Base64でエンコードされた文字列をArrayBufferに変換します。
+         * @param {string} base64 - Base64エンコードされた文字列
+         * @returns {ArrayBuffer} 変換されたArrayBuffer
+         */
+        function base64ToArrayBuffer(base64) {
+            const binary_string = window.atob(base64);
+            const len = binary_string.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binary_string.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        /**
+         * 解析されたMIDIオブジェクトの情報をHTML要素に表示します。
+         * @param {Object} midiObject - @tonejs/midi によって解析されたMidiオブジェクト
+         */
+        function displayMidiMetadata(midiObject) {
+            let midiInfoHtml = `<h3>MIDIファイル情報:</h3>`;
+            midiInfoHtml += `<p><strong>フォーマット:</strong> ${midiObject.header.format}</p>`;
+            midiInfoHtml += `<p><strong>テンポ:</strong> ${midiObject.header.tempos[0] ? midiObject.header.tempos[0].bpm : 'N/A'} BPM</p>`;
+            midiInfoHtml += `<p><strong>タイムシグネチャ:</strong> ${midiObject.header.timeSignatures[0] ? `${midiObject.header.timeSignatures[0].numerator}/${midiObject.header.timeSignatures[0].denominator}` : 'N/A'}</p>`;
+            midiInfoHtml += `<p><strong>トラック数:</strong> ${midiObject.tracks.length}</p>`;
+
+            if (midiObject.tracks.length > 0) {
+                midiInfoHtml += '<h4>トラック詳細:</h4>';
+                // 最初の2トラック程度に限定して表示することも検討可
+                midiObject.tracks.slice(0, 2).forEach((track, index) => { // 例として最初の2トラックだけ表示
+                    midiInfoHtml += `<h5>トラック ${index + 1}:</h5>`;
+                    midiInfoHtml += `<ul>`;
+                    midiInfoHtml += `<li><strong>名前:</strong> ${track.name || 'なし'}</li>`;
+                    midiInfoHtml += `<li><strong>楽器:</strong> ${track.instrument.name || 'なし'} (${track.instrument.number})</li>`;
+                    midiInfoHtml += `<li><strong>ノート数:</strong> ${track.notes.length}</li>`;
+                    midiInfoHtml += `</ul>`;
+                });
+                if (midiObject.tracks.length > 2) {
+                    midiInfoHtml += `<p>...他にも ${midiObject.tracks.length - 2} トラックあります。</p>`;
+                }
+            }
+            midiInfoDiv.innerHTML = midiInfoHtml;
+        }
+
+        // --- コア機能関数 ---
+
+        /**
+         * Verovioをロードし、指定されたMEIファイルをレンダリングして表示します。
+         * @param {string} meiFilePath - ロードするMEIファイルのパス
+         */
+        async function loadAndRenderScore(meiFilePath) {
+            statusDiv.textContent = 'Verovio をロード中…';
+            statusDiv.className = 'loading';
+            viewerDiv.innerHTML = ''; // 以前の楽譜をクリア
+            midiInfoDiv.innerHTML = ''; // MIDI情報もクリア
+
+            try {
+                verovioToolkit = await loadVerovio();
+                statusDiv.textContent = 'Verovio 初期化完了 → MEI を取得してレンダリング中…';
+
+                const resp = await fetch(meiFilePath);
+                if (!resp.ok) {
+                    throw new Error(`MEIファイルの取得に失敗しました: ${resp.status} ${resp.statusText}`);
+                }
+                const mei = await resp.text();
+
+                verovioToolkit.loadData(mei);
+                verovioToolkit.setOptions({
+                    pageWidth: 750,
+                    pageHeight: 600,
+                    scale: 45
+                });
+
+                const svg = verovioToolkit.renderToSVG(1, {});
+                viewerDiv.innerHTML = svg;
+                statusDiv.textContent = 'Verovio で楽譜のレンダリングが完了しました！';
+                statusDiv.className = 'success';
+                playMidiFromMeiBtn.disabled = false; // レンダリング完了後、MIDI再生ボタンを有効化
+
+            } catch (error) {
+                console.error('楽譜のロードまたはレンダリング中にエラーが発生しました:', error);
+                statusDiv.textContent = `エラー: ${error.message}`;
+                statusDiv.className = 'error';
+                playMidiFromMeiBtn.disabled = true; // エラー時は無効化
+            }
+        }
+
+        /**
+         * VerovioからMIDIデータを生成し、Tone.jsを使って再生を開始します。
+         */
+        async function generateAndPlayMidiFromMei() {
+            statusDiv.textContent = 'MEIからMIDIデータを生成中…';
+            statusDiv.className = 'loading';
+            midiInfoDiv.innerHTML = ''; // MIDI情報もクリア
+
+            try {
+                if (!verovioToolkit) {
+                    throw new Error('Verovio Toolkit がまだロードされていません。まず楽譜をロードしてください。');
+                }
+                if (!MidiClass) {
+                    MidiClass = await loadToneJsMidi();
+                }
+                if (typeof Tone === 'undefined') {
+                    await loadToneJs(); // Tone.jsがロードされていなければロード
+                }
+
+                // AudioContext が停止状態の場合は開始する (ユーザーの操作で開始する必要がある)
+                if (Tone.context.state !== 'running') {
+                    await Tone.start();
+                    console.log("Tone.js AudioContext started.");
+                }
+
+                // VerovioでMIDIデータをbase64文字列として生成
+                const base64midi = verovioToolkit.renderToMIDI();
+
+                // base64文字列をArrayBufferに変換
+                const midiArrayBuffer = base64ToArrayBuffer(base64midi);
+
+                statusDiv.textContent = '生成されたMIDIデータを解析中…';
+                const midi = new MidiClass(midiArrayBuffer); // 生成されたMIDIデータを直接渡す
+
+                displayMidiMetadata(midi);
+
+                // 既存のシンセとパートがあれば停止・解放
+                if (activePart) {
+                    activePart.dispose();
+                }
+                if (activeSynth) {
+                    activeSynth.dispose();
+                }
+
+                // Tone.jsのシンセサイザーを初期化 (今回はシンプルなSynthを使用)
+                activeSynth = new Tone.Synth().toDestination();
+
+                // MIDIイベントをTone.Partとしてスケジュール (最初のトラックのノートを使用)
+                activePart = new Tone.Part((time, note) => {
+                    activeSynth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+                }, midi.tracks[0].notes).start(0);
+
+                // テンポを設定 (MIDIヘッダーから取得、またはデフォルト120BPM)
+                const midiTempo = midi.header.tempos[0] ? midi.header.tempos[0].bpm : 120;
+                Tone.Transport.bpm.value = midiTempo;
+
+                // 再生が終了したらボタン状態をリセット
+                Tone.Transport.on('stop', () => {
+                    statusDiv.textContent = 'MIDI再生が終了しました。';
+                    statusDiv.className = 'success';
+                    playMidiFromMeiBtn.disabled = false;
+                    stopMidiFromMeiBtn.disabled = true;
+                });
+
+                // Tone.Transportを開始して再生
+                Tone.Transport.start();
+
+                statusDiv.textContent = 'MEIから生成されたMIDIを再生中…';
+                statusDiv.className = 'success';
+                playMidiFromMeiBtn.disabled = true; // 再生中は再生ボタンを無効化
+                stopMidiFromMeiBtn.disabled = false; // 再生開始で停止ボタンを有効化
+
+            } catch (error) {
+                console.error('MEIからMIDIへの変換または再生中にエラーが発生しました:', error);
+                statusDiv.textContent = `エラー: ${error.message}`;
+                statusDiv.className = 'error';
+                playMidiFromMeiBtn.disabled = false; // エラー時でも再生ボタンは再度有効にする
+                stopMidiFromMeiBtn.disabled = true;
+            }
+        }
+
+        /**
+         * 現在再生中のMIDIを停止します。
+         */
+        function stopCurrentMidiPlayback() {
+            if (Tone.Transport.state === 'started') {
+                Tone.Transport.stop();
+                statusDiv.textContent = 'MIDI再生を停止しました。';
+                statusDiv.className = 'success';
+                playMidiFromMeiBtn.disabled = false;
+                stopMidiFromMeiBtn.disabled = true;
+            }
+        }
+
+        
+
+        // --- イベントリスナー設定 ---
+
+        /**
+         * 全てのボタンにイベントリスナーを設定します。
+         */
+        function setupEventListeners() {
+            loadVerovioBtn.addEventListener('click', async () => {
+                loadVerovioBtn.disabled = true; // 連打防止
+                await loadAndRenderScore('https://cdn.jsdelivr.net/gh/kogu0507/module@v2.2.1/examples/sample.mei');
+                loadVerovioBtn.disabled = false; // 処理完了後に再度有効化
+            });
+
+            playMidiFromMeiBtn.addEventListener('click', async () => {
+                // generateAndPlayMidiFromMei() 内でボタンの状態を制御するため、ここでは連打防止のみ
+                playMidiFromMeiBtn.disabled = true;
+                await generateAndPlayMidiFromMei();
+                // 成功時は generateAndPlayMidiFromMei() の中で disabled = true になる
+                // エラー時は generateAndPlayMidiFromMei() の中で disabled = false になる
+            });
+
+            stopMidiFromMeiBtn.addEventListener('click', () => {
+                stopCurrentMidiPlayback();
+            });
+        }
+
+        // --- アプリケーションのエントリーポイント ---
+
+        // DOMContentLoaded イベントで初期化処理を開始
+        document.addEventListener('DOMContentLoaded', () => {
+            // ロード（他アプリでもよく使うので関数単位でコピペ）
+            // TODO:try{}chatch{}でstatusDiv.textContentか？
+            statusDiv.textContent = 'Chord Type Dictationアプリを起動しています';
+            loadVerovio();
+            statusDiv.textContent += '<br>[load] 1/3 Verovioをロードしました';
+            loadTonejs();
+            statusDiv.textContent += '<br>[load] 2/3 Tone.jsをロードしました';
+            loadTonejsMidi();
+            statusDiv.textContent += '<br>[load] 3/3 @tonejs/midiをロードしました';
+            
+            
+            // 設定を取得
+            // TODO: UIで管理で良いんじゃないの？ミニアプリだし？
+            let settings = getSettings()
+            
+            
+            // 楽器の設定（settingsに合わせる）
+            // defaultはシンセだけど、UIがシンセになっている予定だからそれあわせ？ゆくゆくはローカルストレージで前回の値を保持させておく？
+            setInstrument(settings.instrument); 
+
+            // 最初の課題を生成（ボタンを押せば音が鳴る、解答タブを開けば解答確認ができる）
+            generateQuestion(settings, questionHistory);
+            /*
+                // draftだよ長いからもう少し小分けの方がみやすいかな
+                function generateQuestion(settings, questionHistory){
+                    // TODO: 課題のデータを生成
+                    
+                    // ルートを決める
+                    isDuplicated = true; // リセット
+                    while (isDuplicated) {
+                        newRootIndex = getRandom(rootData.length);
+                        isDuplicated = questionHistory.includes(newRootIndex); // 履歴に含まれているかチェック
+                        // TODO:　無限ループ対策？履歴はいくつまで参照する？ルートが１種類しか選択されていないこともあるから、３回くらい試して同じになるならそれでいっちゃうとか？
+                    }
+                    currentQuestionData.root = newRootIndex
+
+                    // タイプを決める
+                    isDuplicated = true; // リセット
+                    while (isDuplicated) {
+                        newTypeIndex = getRandom(typeData.length);
+                        isDuplicated = questionHistory.includes(newRootIndex); // 履歴に含まれているかチェック
+                        // TODO:　無限ループ対策？履歴はいくつまで参照する？タイプが１種類しか選択されていないこともあるから、３回くらい試して同じになるならそれでいっちゃうとか？
+                    }
+                    currentQuestionData.type = newTypeIndex
+
+                    // ----------
+                    // TODO: 出題タブの更新
+                    // TODO: 出題タブの更新：VerovioでMIDIの生成
+                    // TODO: 出題タブの更新：MIDIをパースしてJSオブジェクトを生成
+                    // TODO: 出題タブの更新：ボタンを押したらTone.jsで音が鳴るようにする
+                    // ----------
+                    // TODO: 解答タブの更新
+                    // TODO: 解答タブの更新：Verovioで解答画像の生成
+                    // TODO: 解答タブの更新：コードネームの生成
+                    currentQuestionData.chordName = getChordName(
+                        currentQuestionData.root,
+                        currentQuestionData.type
+                    );
+                    // TODO: 解答タブの更新：
+                    updateAnswerTab(
+                        currentQuestionData.svg,
+                        currentQuestionData.chordName,
+                        currentQuestionData.root, 
+                        currentQuestionData.type,
+                    );
+                }
+
+            */
+            
+
+            statusDiv.textContent = 'Chord Type Dictationアプリを起動しています';
+            statusDiv.className = ''; // 初期状態はLoadingでない
+            setupEventListeners();
+        });
+    </script>
+
+</body>
+
+</html>

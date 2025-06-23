@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>多機能でアクセシブルなタブコンポーネントを実装しよう</title>
+    <meta name="description" content="ライブラリ不要でアクセシビリティ対応のタブコンポーネントの実装方法を解説。Webアプリ開発者やプログラミングに興味がある音楽教育アプリユーザー向け。">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.2.1/components/simple-tab-component/style.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.2.1/components/simple-tab-component/script.min.js"
+        defer></script>
+    <style>
+        /* 基本的なリセットやフォント設定など、サイト全体のスタイルをここに記述 */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            background-color: #f8f8f8;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h1,
+        h2,
+        h3 {
+            color: #2c3e50;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        h2 {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-top: 40px;
+            margin-bottom: 20px;
+        }
+
+        h3 {
+            margin-top: 30px;
+            margin-bottom: 15px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-bottom: 15px;
+            padding-left: 25px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        pre {
+            background-color: #eef2f7;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        code {
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 0.9em;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            text-align: left;
+        }
+
+        th {
+            background-color: #f2f2f2;
+        }
+
+        hr {
+            border: 0;
+            border-top: 1px solid #eee;
+            margin: 40px 0;
+        }
+
+        .sample-link {
+            display: block;
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px 25px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            font-weight: bold;
+            transition: background-color 0.3s ease;
+        }
+
+        .sample-link:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>音楽教育アプリ開発のためのUIメモ：シンプルタブコンポーネント活用術</h1>
+
+        <h2>サンプル</h2>
+        <p>実際に動作するタブコンポーネントを体験してみましょう。以下のサンプルでタブをクリックして、コンテンツの切り替えを試してみてください。</p>
+
+        <h3>動作のサンプル</h3>
+
+        <h4>デモ1：ベーシック </h4>
+        <p>最も基本的なタブコンポーネントの動作です。初期表示は「タブ1」で、URLハッシュによる切り替えも有効になっています。</p>
+        <div class="simple-tab-component-container" data-default-tab="tab1" data-deep-link="true">
+            <div class="tabs">
+                <button class="tab-button" data-tab="tab1">タブ1</button>
+                <button class="tab-button" data-tab="tab2">タブ2</button>
+                <button class="tab-button" data-tab="tab3">タブ3</button>
+            </div>
+            <div class="tab-content">
+                <div id="tab1" class="tab-pane">タブ1のコンテンツ</div>
+                <div id="tab2" class="tab-pane">タブ2のコンテンツ</div>
+                <div id="tab3" class="tab-pane">タブ3のコンテンツ</div>
+            </div>
+        </div>
+        
+        <details>
+            <summary>コードを見る<br></summary>
+            <pre><code>
+&lt;div class="simple-tab-component-container" data-default-tab="tab1" data-deep-link="true"&gt;
+    &lt;div class="tabs"&gt;
+        &lt;button class="tab-button" data-tab="tab1"&gt;タブ1&lt;/button&gt;
+        &lt;button class="tab-button" data-tab="tab2"&gt;タブ2&lt;/button&gt;
+        &lt;button class="tab-button" data-tab="tab3"&gt;タブ3&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class="tab-content"&gt;
+        &lt;div id="tab1" class="tab-pane"&gt;タブ1のコンテンツ&lt;/div&gt;
+        &lt;div id="tab2" class="tab-pane"&gt;タブ2のコンテンツ&lt;/div&gt;
+        &lt;div id="tab3" class="tab-pane"&gt;タブ3のコンテンツ&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+        </details>
+
+        <hr>
+
+        <h4>デモ2：タブ5つ、常にタブ2をアクティブ</h4>
+        <p>複数のタブを扱い、特定のタブ（ここでは「タブ2」）を常に初期アクティブにする設定です。URLハッシュによるタブ切り替えは無効にしています。</p>
+        <div class="simple-tab-component-container" data-default-tab="tab2" data-deep-link="false">
+            <div class="tabs">
+                <button class="tab-button" data-tab="tab1">タブ1</button>
+                <button class="tab-button" data-tab="tab2">タブ2</button>
+                <button class="tab-button" data-tab="tab3">タブ3</button>
+                <button class="tab-button" data-tab="tab4">タブ4</button>
+                <button class="tab-button" data-tab="tab5">タブ5</button>
+            </div>
+            <div class="tab-content">
+                <div id="tab1" class="tab-pane">タブ1のコンテンツ</div>
+                <div id="tab2" class="tab-pane">タブ2のコンテンツ</div>
+                <div id="tab3" class="tab-pane">タブ3のコンテンツ</div>
+                <div id="tab4" class="tab-pane">タブ4のコンテンツ</div>
+                <div id="tab5" class="tab-pane">タブ5のコンテンツ</div>
+            </div>
+        </div>
+        
+        <details>
+            <summary>コードを見る<br></summary>
+            <pre><code>
+&lt;div class="simple-tab-component-container" data-default-tab="tab2" data-deep-link="false"&gt;
+    &lt;div class="tabs"&gt;
+        &lt;button class="tab-button" data-tab="tab1"&gt;タブ1&lt;/button&gt;
+        &lt;button class="tab-button" data-tab="tab2"&gt;タブ2&lt;/button&gt;
+        &lt;button class="tab-button" data-tab="tab3"&gt;タブ3&lt;/button&gt;
+        &lt;button class="tab-button" data-tab="tab4"&gt;タブ4&lt;/button&gt;
+        &lt;button class="tab-button" data-tab="tab5"&gt;タブ5&lt;/button&gt;
+    &lt;/div&gt;
+    &lt;div class="tab-content"&gt;
+        &lt;div id="tab1" class="tab-pane"&gt;タブ1のコンテンツ&lt;/div&gt;
+        &lt;div id="tab2" class="tab-pane"&gt;タブ2のコンテンツ&lt;/div&gt;
+        &lt;div id="tab3" class="tab-pane"&gt;タブ3のコンテンツ&lt;/div&gt;
+        &lt;div id="tab4" class="tab-pane"&gt;タブ4のコンテンツ&lt;/div&gt;
+        &lt;div id="tab5" class="tab-pane"&gt;タブ5のコンテンツ&lt;/div&gt;
+    &lt;/div&gt;
+&lt;/div&gt;
+</code></pre>
+        </details>
+
+        <hr>
+
+        <h2>クイックスタートガイド</h2>
+        <p>このタブコンポーネントは、最小限のコードで素早く導入できます。</p>
+
+        <h3>HTML1ファイルで動くコードサンプル</h3>
+        <p>単一のHTMLファイル内でCSSとJavaScriptを記述し、すぐに動作を確認できます。</p>
+        <details>
+            <summary>コードを見る<br></summary>
+            <pre><code>&lt;!-- HTML、CSS、JavaScriptを単一ファイルにまとめたコードの例 (省略) --&gt;</code></pre>
+        </details>
+        <h3>外部ファイルから読み込むコードサンプル</h3>
+        <p>より管理しやすいように、HTML、CSS、JavaScriptをそれぞれのファイルに分割する構成です。</p>
+        <h4>index.html</h4>
+        <details>
+            <summary>コードを見る<br></summary>
+            <pre><code>&lt;!-- index.html のコード例 (省略) --&gt;</code></pre>
+        </details>
+
+        <h4>style.css</h4>
+        <details>
+            <summary>コードを見る<br></summary>
+            <pre><code>&lt;!-- style.css のコード例 (省略) --&gt;</code></pre>
+        </details>
+
+        <h4>script.js</h4>
+        <details>
+            <summary>コードを見る<br></summary>
+            <pre><code>&lt;!-- script.js のコード例 (省略) --&gt;</code></pre>
+        </details>
+
+
+        <hr>
+
+        <h2>特徴</h2>
+        <p>このタブコンポーネントには、あなたのプロジェクトで活用できる様々な特徴があります。</p>
+        <ul>
+            <li><strong>ライブラリ不要</strong>:
+                複雑な依存関係がなく、プレーンなJavaScriptで記述されているため、既存のプロジェクトへの組み込みが<strong>非常に簡単</strong>です。余分なライブラリを読み込む必要がありません。
+            </li>
+            <li><strong>アクセシビリティ対応</strong>: <code>role</code> や <code>aria-*</code>
+                属性、そしてキーボード操作（矢印キー、Home/Endキー）に対応しており、スクリーンリーダー利用者やキーボードのみで操作するユーザーなど、多様なユーザーが<strong>利用しやすい</strong>設計になっています。
+            </li>
+            <li><strong>複数箇所に配置可能</strong>:
+                １つのページに<strong>何個でも</strong>タブコンポーネントを配置できます。これにより、異なるセクションで柔軟に利用したり、複数のコンポーネントを同時に表示したりすることが可能です。</li>
+            <li><strong>URLディープリンク</strong>:
+                特定のタブをURLハッシュで直接指定できるため、ユーザーが目的のコンテンツに<strong>すぐにアクセス</strong>できます。これは、教材の共有や特定のセクションへの参照に非常に便利です。</li>
+            <li><strong>CSSカスタムプロパティでデザイン変更</strong>:
+                CSS変数（カスタムプロパティ）を使って、フォント、色、間隔などを<strong>手軽に変更</strong>できます。プロジェクトのデザインガイドラインに合わせて、見た目を柔軟にカスタマイズできます。
+            </li>
+        </ul>
+
+        <hr>
+
+        <h2>全コード</h2>
+        <p>このタブコンポーネントを構成するJavaScript、CSS、HTMLの全コードを以下に示します。</p>
+
+        <details>
+            <summary>コードを見る</summary>
+            <p>このタブコンポーネントの全コードは、以下のGitHubリポジトリで確認できます。</p>
+            <ul>
+                <li><a href="https://github.com/kogu0507/module/blob/main/components/simple-tab-component/index.html" target="_blank" rel="noopener noreferrer">HTMLファイル (index.html)</a></li>
+                <li><a href="https://github.com/kogu0507/module/blob/main/components/simple-tab-component/style.css" target="_blank" rel="noopener noreferrer">CSSファイル (style.css)</a></li>
+                <li><a href="https://github.com/kogu0507/module/blob/main/components/simple-tab-component/script.js" target="_blank" rel="noopener noreferrer">JavaScriptファイル (script.js)</a></li>
+            </ul>
+            <p>または、<a href="https://github.com/kogu0507/module/tree/main/components/simple-tab-component" target="_blank" rel="noopener noreferrer">コンポーネントのディレクトリ全体</a>をご覧ください。</p>
+        </details>
+
+        <hr>
+
+        <h2>高度な使い方</h2>
+        <p>さらにこのタブコンポーネントを使いこなすための詳細な情報です。</p>
+
+        <h3>アクセシビリティの考慮点</h3>
+        <p>このコンポーネントは、以下の点でアクセシビリティに対応しています。</p>
+        <ul>
+            <li><strong>ARIA属性</strong>: <code>role="tablist"</code>, <code>role="tab"</code>,
+                <code>role="tabpanel"</code>, <code>aria-selected</code>, <code>aria-controls</code>,
+                <code>aria-labelledby</code> を自動で設定し、スクリーンリーダーなどの支援技術にタブの役割と状態を適切に伝えます。
+            </li>
+            <li><strong>キーボード操作</strong>:
+                <ul>
+                    <li><code>←</code> / <code>→</code> キーでタブを左右に移動できます。</li>
+                    <li><code>Home</code> / <code>End</code> キーで先頭／末尾のタブに素早く移動できます。</li>
+                    <li><code>Tab</code> キーで通常のフォーカス移動を行い、<code>Enter</code> / <code>Space</code>
+                        キーでタブを選択できます。これにより、マウスを使わずにすべての機能にアクセス可能です。</li>
+                </ul>
+            </li>
+        </ul>
+
+        <h3><code>data</code>属性による設定</h3>
+        <p>コンテナ要素 (<code>.simple-tab-component-container</code>) に以下の <code>data</code> 属性を追加することで、初期設定を変更できます。</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>属性名</th>
+                    <th>説明</th>
+                    <th>例</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>data-default-tab</code></td>
+                    <td>ページロード時にデフォルトで表示するタブのID（<code>data-tab</code>属性の値）を指定します。</td>
+                    <td><code>data-default-tab="intro"</code></td>
+                </tr>
+                <tr>
+                    <td><code>data-deep-link</code></td>
+                    <td>URLハッシュ（<code>#</code>）によるタブ切り替えを有効にするか設定します。<code>"false"</code>
+                        で無効化。デフォルトは<code>true</code>です。</td>
+                    <td><code>data-deep-link="false"</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <h3>JavaScript API （タブ切り替え時のコールバック）</h3>
+        <p><code>script.js</code> 内でコンポーネントを初期化する際に、<code>onTabChange</code>
+            コールバック関数を渡すことで、タブが切り替わるたびに任意の処理を実行できます。これにより、タブの切り替えに応じて追加のアニメーションやデータロードなどの処理を組み込めます。</p>
+        <pre><code>
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.simple-tab-component-container')
+        .forEach(container => {
+            const defaultTab = container.dataset.defaultTab || null;
+            const deepLink = container.dataset.deepLink !== 'false';
+
+            new SimpleTabComponent(container, {
+                defaultTab,
+                deepLink,
+                // onTabChange コールバック関数の設定例
+                onTabChange: (newTabId) => {
+                    console.log(`タブが ${newTabId} に切り替わりました！`);
+                    // ここに、タブ切り替え時に実行したいカスタム処理を記述します。
+                    // 例: 特定のタブに切り替わったら、データをロードする、アニメーションを開始するなど
+                    if (newTabId === 'tab2') {
+                        console.log('タブ2のコンテンツがアクティブになりました。');
+                    }
+                }
+            });
+        });
+});
+        </code></pre>
+
+        <h3>CSSカスタムプロパティによるデザイン調整</h3>
+        <p><code>style.css</code> 内の <code>:root</code>
+            セレクタに定義されているCSSカスタムプロパティを上書きすることで、デザインを簡単に変更できます。特定のタブコンポーネントだけデザインを変えたい場合は、そのコンポーネントにクラスを追加し、そのクラスセレクタ内でカスタムプロパティを上書きします。
+        </p>
+        <pre><code>
+/* 全体のタブコンポーネントに適用する場合 */
+:root {
+    --stc-tab-bg: #e6f7ff; /* タブの背景色を水色に変更 */
+    --stc-tab-active-bg: #b3e0ff; /* アクティブタブの背景色を濃い水色に変更 */
+    --stc-tab-color: #004085; /* タブの文字色を濃い青色に変更 */
+    --stc-tab-active-color: #00264d; /* アクティブタブの文字色をさらに濃い青色に変更 */
+    --stc-focus-outline: 2px solid #0056b3; /* フォーカス時のアウトライン色を変更 */
+}
+
+/* 特定のタブコンポーネントにだけ適用する場合 (例: class="my-custom-tabs" を持つコンポーネント) */
+.my-custom-tabs {
+    --stc-tab-bg: #ffe6e6; /* タブの背景色を薄い赤に変更 */
+    --stc-tab-active-bg: #ffb3b3; /* アクティブタブの背景色を濃い赤に変更 */
+    --stc-tab-color: #850000;
+    --stc-tab-active-color: #4d0000;
+    --stc-border-color: #cc0000;
+    --stc-box-shadow: 0 4px 8px rgba(255, 0, 0, 0.2);
+}
+        </code></pre>
+        <p>主なカスタムプロパティは以下の通りです。</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>カスタムプロパティ</th>
+                    <th>説明</th>
+                    <th>デフォルト値</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>--stc-font-family</code></td>
+                    <td>フォントファミリー</td>
+                    <td><code>sans-serif</code></td>
+                </tr>
+                <tr>
+                    <td><code>--stc-max-width</code></td>
+                    <td>コンテナの最大幅</td>
+                    <td><code>800px</code></td>
+                </tr>
+                <tr>
+                    <td><code>--stc-tab-bg</code></td>
+                    <td>タブの背景色</td>
+                    <td><code>#f0f0f0</code></td>
+                </tr>
+                <tr>
+                    <td><code>--stc-tab-active-bg</code></td>
+                    <td>アクティブタブの背景色</td>
+                    <td><code>#ffffff</code></td>
+                </tr>
+                <tr>
+                    <td><code>--stc-tab-color</code></td>
+                    <td>タブの文字色</td>
+                    <td><code>#555</code></td>
+                </tr>
+                <tr>
+                    <td><code>--stc-tab-active-color</code></td>
+                    <td>アクティブタブの文字色</td>
+                    <td><code>#333</code></td>
+                </tr>
+                <tr>
+                    <td><code>--stc-transition</code></td>
+                    <td>アニメーションの速度</td>
+                    <td><code>0.2s</code></td>
+                </tr>
+                <tr>
+                    <td><code>--stc-focus-outline</code></td>
+                    <td>フォーカス時のアウトラインスタイル</td>
+                    <td><code>2px solid #007bff</code></td>
+                </tr>
+                <tr>
+                    <td><code>--stc-tab-hover-bg</code></td>
+                    <td>タブホバー時の背景色</td>
+                    <td><code>#e0e0e0</code></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <hr>
+
+        <h2>ライセンス</h2>
+        <p>このタブコンポーネントは<strong>MITライクなライセンス</strong>で提供されます。個人・商用を問わず、自由に利用、改変、配布いただけます。</p>
+
+    </div>
+
+</body>
+
+</html>
