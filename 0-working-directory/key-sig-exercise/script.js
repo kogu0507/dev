@@ -8,6 +8,10 @@ import 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab
 // Verovioのツールキットインスタンスをグローバル（またはアクセス可能なスコープ）で保持
 let verovioToolkit = null;
 
+// keySpansをグローバルスコープで宣言
+// DOMContentLoaded内で再取得し、更新されるようにする
+let keySpans = [];
+
 // =================================================================
 // 共通データと状態管理 (window.commonMusicData, window.currentQuizState)
 // =================================================================
@@ -310,6 +314,64 @@ function updateAnswerDisplay() {
 }
 
 
+
+// =================================================================
+// 言語選択
+// =================================================================
+function updateKeyNames(selectedLang) {
+    // すべてのキー名表示用の<span>要素を再取得
+    // data-key-type と data-mei-value 属性を持つspan要素を対象にする
+    const keyNameSpans = document.querySelectorAll('span[data-key-type][data-mei-value]');
+
+    keyNameSpans.forEach(span => {
+        const keyType = span.getAttribute('data-key-type'); // 'major' または 'minor'
+        const meiValue = span.getAttribute('data-mei-value'); // 例: '0s', '1f'
+
+        // commonMusicData.keySignatures から対応するキー情報を見つける
+        const keyInfo = window.commonMusicData.keySignatures.find(ks => ks.meiValue === meiValue);
+
+        if (keyInfo) {
+            let displayText = '';
+            if (keyType === 'major') {
+                // selectedLang に基づいて長調の名前を選択
+                switch (selectedLang) {
+                    case 'ja':
+                        displayText = keyInfo.nameMajorJp;
+                        break;
+                    case 'en':
+                        displayText = keyInfo.nameMajorEn;
+                        break;
+                    case 'de':
+                        displayText = keyInfo.nameMajorDe;
+                        break;
+                    default:
+                        displayText = keyInfo.nameMajorJp; // デフォルトは日本語
+                }
+            } else if (keyType === 'minor') {
+                // selectedLang に基づいて短調の名前を選択
+                switch (selectedLang) {
+                    case 'ja':
+                        displayText = keyInfo.nameMinorJp;
+                        break;
+                    case 'en':
+                        displayText = keyInfo.nameMinorEn;
+                        break;
+                    case 'de':
+                        displayText = keyInfo.nameMinorDe;
+                        break;
+                    default:
+                        displayText = keyInfo.nameMinorJp; // デフォルトは日本語
+                }
+            }
+            span.textContent = displayText;
+        } else {
+            // 見つからない場合は元のテキストを保持するか、空にするかなど
+            // 例: span.textContent = '';
+            console.warn(`[updateKeyNames] MEI値 '${meiValue}' のキー情報が見つかりませんでした。`);
+        }
+    });
+}
+
 // =================================================================
 // DOMContentLoaded イベントリスナー
 // =================================================================
@@ -318,25 +380,21 @@ function updateAnswerDisplay() {
 document.addEventListener('DOMContentLoaded', () => {
     console.log('[Logic] DOMContentLoaded イベント発生。スクリプトの実行を開始します。');
 
-    //  --- DOM 要素の取得  ---
-    // ラジオボタンのコンテナ要素を取得
+    // --- DOM 要素の取得 ---
     const majorKeyGrid = document.getElementById('major-key-grid');
     const minorKeyGrid = document.getElementById('minor-key-grid');
-
     const submitAnswerBtn = document.getElementById('submitAnswerBtn');
     const questionStatus = document.getElementById('question-status');
     const submitNotification = document.getElementById('submit-notification');
-
     const generateNewQuestionBtn = document.getElementById('generate-new-question-btn');
     const newQuestionNotification = document.getElementById('new-question-notification');
-
-    // タブボタン要素を直接取得
-    const tabBtnIntro = document.getElementById('tab-btn-intro'); // 出題タブのボタン
-    const tabBtnPractice = document.getElementById('tab-btn-practice'); // 解答タブのボタン
-
-    // tabsContainer は引き続き必要（イベントリスナー用）
+    const tabBtnIntro = document.getElementById('tab-btn-intro');
+    const tabBtnPractice = document.getElementById('tab-btn-practice');
     const tabsContainer = document.querySelector('.simple-tab-component-container');
 
+
+    // 言語選択用の要素を取得
+    const languageSelector = document.getElementById('language-selector');
 
     console.log('[Logic] すべての主要DOM要素を取得しました。');
 
@@ -377,8 +435,6 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.log(`[Event: majorKey change] ユーザーが長調を選択: ${event.target.value}. currentQuizState.userMajorAnswerMeiValue を更新しました。`);
                 // 両方が選択されたら送信ボタンを有効化
                 if (submitAnswerBtn) {
-                    // userMajorAnswerSelect と userMinorAnswerSelect はもう存在しないので、
-                    // 代わりにラジオボタンの選択状態をチェックする必要がある
                     const isMajorSelected = document.querySelector('input[name="majorKey"]:checked');
                     const isMinorSelected = document.querySelector('input[name="minorKey"]:checked');
                     submitAnswerBtn.disabled = !(isMajorSelected && isMinorSelected);
@@ -465,13 +521,13 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // --- タブ切り替え時のイベントハンドリング ---
+    // // --- タブ切り替え時のイベントハンドリング ---
     if (tabsContainer) {
         tabsContainer.addEventListener('tab:switched', (event) => {
             const currentTabId = event.detail.currentTabId;
             console.log(`[Event: tab:switched] タブが切り替わりました。現在のタブID: ${currentTabId}`);
-            if (currentTabId === 'practice') { // 解答タブのID
-                updateAnswerDisplay(); // 解答タブに切り替わったら内容を更新
+            if (currentTabId === 'practice') {
+                updateAnswerDisplay();
             }
         });
         console.log('[Logic] "tab:switched" イベントリスナーを設定しました。');
@@ -487,5 +543,27 @@ document.addEventListener('DOMContentLoaded', () => {
         updateAnswerDisplay();
     } else {
         console.log(`[Logic] デフォルトタブは '${defaultTabId}' です。`);
+    }
+
+    // --- 言語選択 --- (変更なしで動作するはずですが、`updateKeyNames`の変更に合わせて説明を調整)
+    if (languageSelector) {
+        languageSelector.addEventListener('change', (event) => {
+            if (event.target.name === 'lang') {
+                const selectedLang = event.target.value;
+                updateKeyNames(selectedLang);
+                console.log(`[Event: lang change] 言語が '${selectedLang}' に変更されました。キー名表示を更新します。`);
+            }
+        });
+
+        const initialLangRadio = document.querySelector('input[name="lang"]:checked');
+        if (initialLangRadio) {
+            const initialLang = initialLangRadio.value;
+            console.log(`[Logic] 初期言語を '${initialLang}' に設定し、キー名表示を初期化します。`);
+            updateKeyNames(initialLang);
+        } else {
+            console.warn('[Logic] 初期言語を選択するラジオボタンが見つかりませんでした。言語の初期化がスキップされます。');
+        }
+    } else {
+        console.warn('[Logic] language-selector 要素が見つかりませんでした。言語切り替え機能が無効です。');
     }
 });
