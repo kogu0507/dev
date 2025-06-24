@@ -11,6 +11,8 @@
 </head>
 
 <body>
+
+    <!--ここから カスタムHTMLにコピペ　カスタムCSSだとうまくいかない -->
     <style>
         /* 楽譜表示エリアのSVGスタイル（共通） */
         .verovio-viewer {
@@ -25,13 +27,27 @@
             height: auto !important;
         }
 
+        .language-setting-note {
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+
         /* simple-tab-componentのCSSは別途ロード */
         /* https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css */
     </style>
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css">
 
+    <!--ここまで カスタムHTMLにコピペ　カスタムCSSだとうまくいかない -->
 
+
+
+
+
+
+
+
+    <!-- ここからカスタムHTMLにコピペ -->
     <h2>調号エクササイズ</h2>
     <div id="simple-tab-component" class="simple-tab-component-container" data-default-tab="intro"
         data-deep-link="true">
@@ -44,7 +60,7 @@
         </div>
         <div class="tab-content">
             <div id="intro" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-intro">
-                <h3 style="display: none;">調号エクササイズ - 出題</h3>
+                <h3 style="display: none;">出題</h3>
                 <!-- <p>譜例の調号を見て調名を答えましょう。</p> -->
                 <div id="question-status"></div>
                 <div id="question-viewer" class="verovio-viewer"></div>
@@ -196,6 +212,9 @@
                         </label>
                     </div>
                 </div>
+                <p class="language-setting-note">
+                    ※音名の表示言語は<a href="#summary">設定</a>から変更できます。
+                </p>
 
                 <hr>
 
@@ -292,6 +311,10 @@
                         </label>
                     </div>
                 </div>
+                <p class="language-setting-note">
+                    ※音名の表示言語は<a href="#summary">設定</a>から変更できます。
+                </p>
+
                 <hr>
 
                 <button id="submitAnswerBtn">解答を送信</button>
@@ -301,7 +324,7 @@
             </div>
 
             <div id="practice" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-practice">
-                <h3 style="display: none;">調号エクササイズ - 解答</h3>
+                <h3 style="display: none;">解答</h3>
                 <div id="answer-feedback"></div>
 
                 <p>あなたの答え：<br>
@@ -334,7 +357,10 @@
             </div>
         </div>
     </div>
+    <!-- ここまでカスタムHTMLにコピペ -->
 
+
+    <!-- ここはコピペしない　カスタムアセットローダーを使う -->
     <script type="module" src="./script.js"></script>
     <!-- <script type="module" src="https://kogu0507.github.io/dev/0-working-directory/key-sig-exercise/script.js"></script> -->
 </body>
