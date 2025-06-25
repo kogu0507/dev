@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <!-- 文字コード宣言 -->
+    <meta charset="UTF-8">
+    <!-- ビューポート設定（レスポンシブ対応） -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <!-- ページタイトル -->
+    <title>調号エクササイズ</title>
+
+    <!-- 外部スタイルシート -->
+    <link rel="stylesheet" href="./assets/style.css">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css">
+
+    <!-- 外部スクリプト（defer 付きで head にまとめる） -->
+    <script src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/script.min.js"
+        defer></script>
+    <script type="module" src="./script.js" defer></script>
+</head>
+
+<body>
+    <!-- ===== ヘッダー ===== -->
+    <header>
+        <!-- メイン見出しは h1 で -->
+        <h1 class="page-title">調号エクササイズ</h1>
+    </header>
+
+    <!-- ===== メインコンテンツ ===== -->
+    <main id="key-signature-exercise">
+        <!-- タブコンポーネント全体を section で囲む -->
+        <section class="simple-tab-component-container" id="simple-tab-component" data-default-tab="sig2name"
+            data-deep-link="true" data-on-tab-change="handleModeTabChange">
+
+            <!-- タブボタン群 -->
+            <div class="tabs" role="tablist">
+                <!-- role や aria 属性は必要最低限に整理 -->
+                <button class="tab-button" data-tab="sig2name" id="tab-btn-sig2name" role="tab">
+                    調号→調名
+                </button>
+                <button class="tab-button" data-tab="name2sig" id="tab-btn-name2sig" role="tab">
+                    調名→調号
+                </button>
+                <button class="tab-button" data-tab="settings" id="tab-btn-settings" role="tab">
+                    設定
+                </button>
+            </div>
+
+            <!-- タブコンテンツ群 -->
+            <div class="tab-content">
+                <!-- ===== 調号→調名モード ===== -->
+                <section id="sig2name" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-sig2name">
+                    <!-- 問題パネル -->
+                    <div id="question-s2n" class="panel">
+                        <!-- 問題ステータス表示 -->
+                        <div id="question-status" class="notification-message" aria-live="polite"></div>
+
+                        <!-- Verovio による譜面表示エリア -->
+                        <div id="question-viewer" class="verovio-viewer"></div>
+
+                        <!-- 回答フォーム -->
+                        <form class="form--inline" aria-label="長調・短調を選択">
+                            <fieldset>
+                                <legend>あなたの答え</legend>
+                                <div class="tables-wrapper">
+                                    <!-- 長調選択 -->
+                                    <div class="tables-wrapper__item">
+                                        <label>長調：</label>
+                                        <table class="key-select-table" id="major-key-grid"></table>
+                                    </div>
+                                    <!-- 短調選択 -->
+                                    <div class="tables-wrapper__item">
+                                        <label>短調：</label>
+                                        <table class="key-select-table" id="minor-key-grid"></table>
+                                    </div>
+                                </div>
+                                <!-- 回答送信ボタン -->
+                                <button type="button" id="submitAnswerBtn" disabled>
+                                    解答を送信
+                                </button>
+                            </fieldset>
+                        </form>
+
+                        <!-- 送信後の通知 -->
+                        <div id="submit-notification" class="notification-message" aria-live="polite"></div>
+                    </div>
+
+                    <!-- 答え合わせパネル -->
+                    <div id="answer-s2n" class="panel hidden">
+                        <!-- フィードバック -->
+                        <div id="answer-feedback"></div>
+
+                        <!-- ユーザーの回答表示 -->
+                        <p>
+                            あなたの答え：<br>
+                            <span id="displayUserMajorAnswer"></span> /
+                            <span id="displayUserMinorAnswer"></span>
+                        </p>
+
+                        <!-- 正解表示 -->
+                        <p>
+                            正解：<br>
+                            日本語）<span id="displayCorrectAnswerJp"></span><br>
+                            英語）<span id="displayCorrectAnswerEn"></span><br>
+                            ドイツ語）<span id="displayCorrectAnswerDe"></span>
+                        </p>
+
+                        <!-- 正解の譜面表示 -->
+                        <div id="answer-viewer" class="verovio-viewer"></div>
+
+                        <!-- ステータス & 次へボタン -->
+                        <div id="answer-status"></div>
+                        <button type="button" id="generate-new-question-btn">
+                            新しい問題を生成
+                        </button>
+                        <div id="new-question-notification" class="notification-message"></div>
+                    </div>
+                </section>
+
+                <!-- ===== 調名→調号モード ===== -->
+                <section id="name2sig" class="tab-pane hidden" role="tabpanel" aria-labelledby="tab-btn-name2sig">
+                    <div id="question-n2s" class="panel">
+                        <!-- 操作説明 -->
+                        <div id="name2sig-status" class="notification-message">
+                            譜例を矢印で操作して調号を作ってください
+                        </div>
+
+                        <!-- フラット／シャープ操作と譜面 -->
+                        <div class="controls">
+                            <button id="decreaseAccBtn" title="フラットを増やす">← ♭</button>
+                            <div id="name2sig-viewer" class="verovio-viewer"></div>
+                            <button id="increaseAccBtn" title="シャープを増やす">♯ →</button>
+                        </div>
+
+                        <!-- 回答送信 -->
+                        <button type="button" id="submitName2SigBtn" disabled>
+                            解答を送信
+                        </button>
+                        <div id="name2sig-notification" class="notification-message" aria-live="polite"></div>
+                    </div>
+
+                    <!-- 答え合わせパネル -->
+                    <div id="answer-n2s" class="panel hidden">
+                        <div id="name2sig-feedback"></div>
+                        <p>あなたの答え： <span id="displayN2SUserAnswer"></span></p>
+                        <p>正解： <span id="displayN2SCorrectAnswer"></span></p>
+                        <div id="name2sig-answer-viewer" class="verovio-viewer"></div>
+                        <button type="button" id="generate-n2s-question-btn">
+                            新しい問題を生成
+                        </button>
+                        <div id="new-n2s-notification" class="notification-message"></div>
+                    </div>
+                </section>
+
+                <!-- ===== 設定タブ ===== -->
+                <section id="settings" class="tab-pane hidden" role="tabpanel" aria-labelledby="tab-btn-settings">
+                    <!-- 言語選択フォーム -->
+                    <form id="language-selector" class="form--inline" aria-label="音名の言語選択">
+                        <fieldset>
+                            <legend>音名の言語</legend>
+                            <label><input type="radio" name="lang" value="ja" checked> 日本語</label>
+                            <label><input type="radio" name="lang" value="en"> English</label>
+                            <label><input type="radio" name="lang" value="de"> Deutsch</label>
+                        </fieldset>
+                    </form>
+                </section>
+            </div>
+        </section>
+    </main>
+
+    <!-- ===== フッター （必要であれば追記） ===== -->
+    <footer>
+        <!-- 例：著作権表記など -->
+    </footer>
+</body>
+
+</html>

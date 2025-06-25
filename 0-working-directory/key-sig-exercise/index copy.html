@@ -11,6 +11,9 @@
 </head>
 
 <body>
+
+    <!--ここから カスタムHTMLにコピペ　カスタムCSSだとうまくいかない -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Music&display=swap" rel="stylesheet">
     <style>
         /* 楽譜表示エリアのSVGスタイル（共通） */
         .verovio-viewer {
@@ -19,18 +22,57 @@
         }
 
         .verovio-viewer svg {
-            display: block; /* インライン要素の余白などをなくす */
+            display: block;
+            /* インライン要素の余白などをなくす */
             max-width: none !important;
             height: auto !important;
         }
 
+        .language-setting-note {
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+
+.music-key {
+  font-family: "Noto Music", sans-serif; /* 全体のキー名に適用 */
+  /* font-size: 1.2em; */ /* 必要に応じて調整 */
+}
+
+.music-key .flat-symbol {
+  font-family: "Noto Music", sans-serif; /* ♭記号専用のフォントを再指定 */
+  font-size: 1.3em;
+  /* 必要であれば、♭記号のサイズや位置を微調整 */
+  vertical-align: baseline;
+  position: relative;
+  top: -0.2em;
+}
+
+.music-key .sharp-symbol {
+  font-family: "Noto Music", sans-serif; /* #記号専用のフォントを再指定 */
+  font-size: 1em;
+  /* 必要であれば、#記号のサイズや位置を微調整 */
+  vertical-align: baseline;
+  position: relative;
+  top: -0.4em;
+}
+
         /* simple-tab-componentのCSSは別途ロード */
         /* https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css */
     </style>
+    
     <link rel="stylesheet"
         href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css">
+    
+    
+    <!--ここまで カスタムHTMLにコピペ　カスタムCSSだとうまくいかない -->
 
 
+
+
+
+
+
+    <!-- ここからカスタムHTMLにコピペ -->
     <h2>調号エクササイズ</h2>
     <div id="simple-tab-component" class="simple-tab-component-container" data-default-tab="intro"
         data-deep-link="true">
@@ -43,7 +85,7 @@
         </div>
         <div class="tab-content">
             <div id="intro" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-intro">
-                <h3>調号エクササイズ - 出題</h3>
+                <h3 style="display: none;">出題</h3>
                 <!-- <p>譜例の調号を見て調名を答えましょう。</p> -->
                 <div id="question-status"></div>
                 <div id="question-viewer" class="verovio-viewer"></div>
@@ -105,67 +147,198 @@
                 <p>あなたの答え（長調）：</p>
                 <div class="key-select-grid" id="major-key-grid">
                     <div class="column">
-                        <label><input type="radio" name="majorKey" value="7f"> 変ハ長調</label>
-                        <label><input type="radio" name="majorKey" value="5f"> 変ニ長調</label>
-                        <label><input type="radio" name="majorKey" value="3f"> 変ホ長調</label>
-                        <label><input type="radio" name="majorKey" value="" disabled> 変ヘ長調</label>
-                        <label><input type="radio" name="majorKey" value="6f"> 変ト長調</label>
-                        <label><input type="radio" name="majorKey" value="1f"> 変イ長調</label>
-                        <label><input type="radio" name="majorKey" value="2f"> 変ロ長調</label>
+                        <label>
+                            <input type="radio" name="majorKey" value="7f">
+                            <span data-key-type="major" data-mei-value="7f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="5f">
+                            <span data-key-type="major" data-mei-value="5f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="3f">
+                            <span data-key-type="major" data-mei-value="3f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="" disabled>
+                            <span data-key-type="major" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="6f">
+                            <span data-key-type="major" data-mei-value="6f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="4f">
+                            <span data-key-type="major" data-mei-value="4f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="2f">
+                            <span data-key-type="major" data-mei-value="2f" class="music-key"></span>
+                        </label>
                     </div>
                     <div class="column">
-                        <label><input type="radio" name="majorKey" value="0s"> ハ長調</label>
-                        <label><input type="radio" name="majorKey" value="2s"> ニ長調</label>
-                        <label><input type="radio" name="majorKey" value="4s"> ホ長調</label>
-                        <label><input type="radio" name="majorKey" value="1f"> ヘ長調</label>
-                        <label><input type="radio" name="majorKey" value="1s"> ト長調</label>
-                        <label><input type="radio" name="majorKey" value="3s"> イ長調</label>
-                        <label><input type="radio" name="majorKey" value="5s"> ロ長調</label>
+                        <label>
+                            <input type="radio" name="majorKey" value="0s">
+                            <span data-key-type="major" data-mei-value="0s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="2s">
+                            <span data-key-type="major" data-mei-value="2s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="4s">
+                            <span data-key-type="major" data-mei-value="4s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="1f">
+                            <span data-key-type="major" data-mei-value="1f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="1s">
+                            <span data-key-type="major" data-mei-value="1s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="3s">
+                            <span data-key-type="major" data-mei-value="3s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="5s">
+                            <span data-key-type="major" data-mei-value="5s" class="music-key"></span>
+                        </label>
                     </div>
                     <div class="column">
-                        <label><input type="radio" name="majorKey" value="7s"> 嬰ハ長調</label>
-                        <label><input type="radio" name="majorKey" value="" disabled> 嬰ニ長調</label>
-                        <label><input type="radio" name="majorKey" value="" disabled> 嬰ホ長調</label>
-                        <label><input type="radio" name="majorKey" value="6s"> 嬰ヘ長調</label>
-                        <label><input type="radio" name="majorKey" value="" disabled> 嬰ト長調</label>
-                        <label><input type="radio" name="majorKey" value="" disabled> 嬰イ長調</label>
-                        <label><input type="radio" name="majorKey" value="" disabled> 嬰ロ長調</label>
+                        <label>
+                            <input type="radio" name="majorKey" value="7s">
+                            <span data-key-type="major" data-mei-value="7s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="" disabled>
+                            <span data-key-type="major" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="" disabled>
+                            <span data-key-type="major" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="6s">
+                            <span data-key-type="major" data-mei-value="6s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="" disabled>
+                            <span data-key-type="major" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="" disabled>
+                            <span data-key-type="major" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="majorKey" value="" disabled>
+                            <span data-key-type="major" data-mei-value="" class="music-key"></span>
+                        </label>
                     </div>
-
                 </div>
+                <p class="language-setting-note">
+                    ※音名の表示言語は<a href="#summary">設定</a>から変更できます。
+                </p>
 
                 <hr>
 
                 <p> <label for="userMinorAnswerSelect">あなたの答え（短調）：</label></p>
                 <div class="key-select-grid" id="minor-key-grid">
                     <div class="column">
-                        <label><input type="radio" name="minorKey" value="" disabled> 変ハ短調</label>
-                        <label><input type="radio" name="minorKey" value="" disabled> 変ニ短調</label>
-                        <label><input type="radio" name="minorKey" value="6f"> 変ホ短調</label>
-                        <label><input type="radio" name="minorKey" value="" disabled> 変ヘ短調</label>
-                        <label><input type="radio" name="minorKey" value="" disabled> 変ト短調</label>
-                        <label><input type="radio" name="minorKey" value="7f"> 変イ短調</label>
-                        <label><input type="radio" name="minorKey" value="5f"> 変ロ短調</label>
+                        <label>
+                            <input type="radio" name="minorKey" value="" disabled>
+                            <span data-key-type="minor" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="" disabled>
+                            <span data-key-type="minor" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="6f">
+                            <span data-key-type="minor" data-mei-value="6f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="" disabled>
+                            <span data-key-type="minor" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="" disabled>
+                            <span data-key-type="minor" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="7f">
+                            <span data-key-type="minor" data-mei-value="7f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="5f">
+                            <span data-key-type="minor" data-mei-value="5f" class="music-key"></span>
+                        </label>
                     </div>
                     <div class="column">
-                        <label><input type="radio" name="minorKey" value="3f"> ハ短調</label>
-                        <label><input type="radio" name="minorKey" value="1f"> ニ短調</label>
-                        <label><input type="radio" name="minorKey" value="1s"> ホ短調</label>
-                        <label><input type="radio" name="minorKey" value="4f"> ヘ短調</label>
-                        <label><input type="radio" name="minorKey" value="2f"> ト短調</label>
-                        <label><input type="radio" name="minorKey" value="0s"> イ短調</label>
-                        <label><input type="radio" name="minorKey" value="2s"> ロ短調</label>
+                        <label>
+                            <input type="radio" name="minorKey" value="3f">
+                            <span data-key-type="minor" data-mei-value="3f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="1f">
+                            <span data-key-type="minor" data-mei-value="1f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="1s">
+                            <span data-key-type="minor" data-mei-value="1s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="4f">
+                            <span data-key-type="minor" data-mei-value="4f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="2f">
+                            <span data-key-type="minor" data-mei-value="2f" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="0s">
+                            <span data-key-type="minor" data-mei-value="0s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="2s">
+                            <span data-key-type="minor" data-mei-value="2s" class="music-key"></span>
+                        </label>
                     </div>
                     <div class="column">
-                        <label><input type="radio" name="minorKey" value="4s"> 嬰ハ短調</label>
-                        <label><input type="radio" name="minorKey" value="6s"> 嬰ニ短調</label>
-                        <label><input type="radio" name="minorKey" value="" disabled> 嬰ホ短調</label>
-                        <label><input type="radio" name="minorKey" value="3s"> 嬰ヘ短調</label>
-                        <label><input type="radio" name="minorKey" value="5s"> 嬰ト短調</label>
-                        <label><input type="radio" name="minorKey" value="7s"> 嬰イ短調</label>
-                        <label><input type="radio" name="minorKey" value="" disabled> 嬰ロ短調</label>
+                        <label>
+                            <input type="radio" name="minorKey" value="4s">
+                            <span data-key-type="minor" data-mei-value="4s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="6s">
+                            <span data-key-type="minor" data-mei-value="6s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="" disabled>
+                            <span data-key-type="minor" data-mei-value="" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="3s">
+                            <span data-key-type="minor" data-mei-value="3s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="5s">
+                            <span data-key-type="minor" data-mei-value="5s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="7s">
+                            <span data-key-type="minor" data-mei-value="7s" class="music-key"></span>
+                        </label>
+                        <label>
+                            <input type="radio" name="minorKey" value="" disabled>
+                            <span data-key-type="minor" data-mei-value="" class="music-key"></span>
+                        </label>
                     </div>
                 </div>
+                <p class="language-setting-note">
+                    ※音名の表示言語は<a href="#summary">設定</a>から変更できます。
+                </p>
 
                 <hr>
 
@@ -176,7 +349,7 @@
             </div>
 
             <div id="practice" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-practice">
-                <h3>調号エクササイズ - 解答</h3>
+                <h3 style="display: none;">解答</h3>
                 <div id="answer-feedback"></div>
 
                 <p>あなたの答え：<br>
@@ -199,12 +372,20 @@
             </div>
 
             <div id="summary" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-summary">
-                <h3>設定</h3>
-                <p>coming soon</p>
+                <h3 style="display: none;">設定</h3>
+                <p>音名の言語</p>
+                <div id="language-selector">
+                    <label><input type="radio" name="lang" value="ja" checked> 日本語</label>
+                    <label><input type="radio" name="lang" value="en"> English</label>
+                    <label><input type="radio" name="lang" value="de"> Deutsch</label>
+                </div>
             </div>
         </div>
     </div>
+    <!-- ここまでカスタムHTMLにコピペ -->
 
+
+    <!-- ここはコピペしない　カスタムアセットローダーを使う -->
     <script type="module" src="./script.js"></script>
     <!-- <script type="module" src="https://kogu0507.github.io/dev/0-working-directory/key-sig-exercise/script.js"></script> -->
 </body>

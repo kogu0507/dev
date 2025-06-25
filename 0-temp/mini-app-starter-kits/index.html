@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ミニアプリの起動例</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+
+    <div class="mini-app-wrapper">
+        <div class="activate-button">アプリ1を起動</div>
+        <div class="app-main" data-app-id="sample1-app" data-app-css="sample1-app.css" data-app-url="./sample1-app.js">
+        </div>
+    </div>
+
+    <div class="mini-app-wrapper">
+        <div class="activate-button">アプリ2を起動</div>
+        <div class="app-main" data-app-id="sample2-app" data-app-css="sample2-app.css" data-app-url="./sample2-app.js">
+        </div>
+    </div>
+
+
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>
