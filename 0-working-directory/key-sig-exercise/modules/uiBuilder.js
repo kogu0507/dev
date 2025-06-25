@@ -17,8 +17,13 @@ export function loadUiBuilderCss() {
     const link = document.createElement('link');
     link.rel = 'stylesheet';
     link.type = 'text/css';
-    // uiBuilder.js と同じディレクトリにある uiBuilder.css を参照
-    link.href = './modules/uiBuilder.css'; // script.js から見た相対パス
+
+    // import.meta.url を使って、この uiBuilder.js ファイル自身のURLを取得し、
+    // そのディレクトリパスから uiBuilder.css を参照する
+    const currentModuleUrl = import.meta.url;
+    const currentModuleDir = currentModuleUrl.substring(0, currentModuleUrl.lastIndexOf('/'));
+    link.href = currentModuleDir + '/uiBuilder.css'; // uiBuilder.js と同じディレクトリにある uiBuilder.css を参照
+
     document.head.appendChild(link);
     console.log('[uiBuilder] uiBuilder.css を動的にロードしました。');
 }
@@ -51,8 +56,6 @@ export function renderKeySelectTables() {
                 );
                 const mei = ks?.meiValue || '';
                 const disabled = ks ? '' : 'disabled';
-                // disabled 属性は radio に直接付けるべき
-                // span.music-key には data-key-type と data-mei-value を付与
                 html += `<td>
                     <label>
                         <input type="radio" name="${mode}Key" value="${mei}" ${disabled}>
