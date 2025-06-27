@@ -1,0 +1,211 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音程ミニアプリ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<style>
+    #status {
+        text-align: center;
+        margin-top: 1em;
+        font-size: 0.95rem;
+        color: #555;
+        min-height: 1.5em;
+        /* コンテンツがないときに高さが変化しないように */
+    }
+
+    #viewer {
+        margin-top: 2em;
+        border: 1px solid #ddd;
+        background-color: #ffffff;
+        padding: 1.5em;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        overflow-x: auto;
+        /* SVGがはみ出る場合にスクロール可能に */
+    }
+
+    #viewer svg {
+        display: block;
+        /* SVGの余計な余白をなくす */
+        margin: 0 auto;
+        /* SVGを中央に配置 */
+        max-width: 100%;
+        /* 親要素からはみ出さないように */
+        height: auto;
+        /* アスペクト比を維持 */
+    }
+</style>
+
+<body>
+    <div class="container">
+        <h1>Simple Interval Exercise</h1>
+
+        <link rel="stylesheet"
+            href="https://cdn.jsdelivr.net/gh/kogu0507/module@2.2.1/components/simple-tab-component/style.min.css">
+        <script src="https://cdn.jsdelivr.net/gh/kogu0507/module@2.2.1/components/simple-tab-component/script.min.js"
+            defer></script>
+        <div class="simple-tab-component-container" data-default-tab="question" data-deep-link="true">
+            <div class="tabs">
+                <button class="tab-button" data-tab="question">出題</button>
+                <button class="tab-button" data-tab="answer">解答</button>
+                <button class="tab-button" data-tab="settings">設定</button>
+            </div>
+            <div class="tab-content">
+                <div id="question" class="tab-pane">
+                    <div class="quiz-section">
+                        <h2>
+                            <span class="lang-ja">出題</span>
+                            <span class="lang-en">Question</span>
+                        </h2>
+
+                        <p>
+                            <span class="lang-ja">次の音程と転回音程を答えましょう</span>
+                            <span class="lang-en">Answer the following intervals and their inversions</span>
+                        </p>
+
+                        <div id="verovioViewer"
+                            style="margin-top: 1.5em; border: 1px solid #eee; padding: 1em; background-color: #fff;">
+                        </div>
+                        <div id="verovioStatusContainer" style="margin-bottom: 0.5em;">
+                            <span class="lang-ja" id="verovioStatus">楽譜表示準備中...</span>
+                            <span class="lang-en" id="verovioStatusEn">Preparing music score display...</span>
+                        </div>
+
+                        <div class="generated-notes" style="display: none;">
+                            <span id="generatedBottomNote">---</span>
+                            <span id="generatedTopNote">---</span>
+                        </div>
+
+                        <button id="showAnswerButton">
+                            <span class="lang-ja">解答を表示</span>
+                            <span class="lang-en">Show Answer</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="answer" class="tab-pane">
+                    <div class="output-section">
+                        <h2>
+                            <span class="lang-ja">解答</span>
+                            <span class="lang-en">Answer</span>
+                        </h2>
+
+                        <div id="answerOutput">
+                            <p class="placeholder">
+                                <span class="lang-ja">ここに解答が表示されます。</span>
+                                <span class="lang-en">The answer will be displayed here.</span>
+                            </p>
+                        </div>
+
+                        <button id="generateButton">
+                            <span class="lang-ja">新しい問題を生成</span>
+                            <span class="lang-en">Generate New Question</span>
+                        </button>
+
+                        <hr>
+
+                        <h2>
+                            <span class="lang-ja">音程の詳細</span>
+                            <span class="lang-en">Interval Details</span>
+                        </h2>
+                        <div id="resultOutput" class="result-card">
+                            <p class="placeholder">
+                                <span class="lang-ja">「解答を表示」ボタンを押すと、ここに結果が表示されます。</span>
+                                <span class="lang-en">Press the "Show Answer" button to display results here.</span>
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="settings" class="tab-pane">
+                    <div class="settings-section">
+                        <h2>
+                            <span class="lang-ja">設定</span>
+                            <span class="lang-en">Settings</span>
+                        </h2>
+
+                        <div class="setting-group">
+                            <h3>
+                                <span class="lang-ja">使用する音符</span>
+                                <span class="lang-en">Notes to Use</span>
+                            </h3>
+                            <label><input type="radio" name="noteType" value="natural">
+                                <span class="lang-ja"> 幹音のみ </span>
+                                <span class="lang-en"> Natural Notes </span>(C, D, E...)
+                            </label>
+                            <label><input type="radio" name="noteType" value="accidental" checked>
+                                <span class="lang-ja"> 派生音を含む </span>
+                                <span class="lang-en"> Altered Notes </span>
+                                (C#, Db...)
+                            </label>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>
+                                <span class="lang-ja">オクターブの範囲</span>
+                                <span class="lang-en">Octave Range</span>
+                            </h3>
+                            <select id="octaveRange">
+                                <option value="G3-G5" selected>G3 - G5</option>
+                                <option value="C3-C5">C3 - C5</option>
+                                <option value="C2-C6">C2 - C6</option>
+                                <option value="C1-C7">C1 - C7</option>
+                            </select>
+                        </div>
+
+                        <div class="setting-group">
+                            <h3>
+                                <span class="lang-ja">言語設定</span>
+                                <span class="lang-en">Language Settings</span>
+                            </h3>
+                            <label>
+                                <input type="radio" name="displayLanguage" value="ja" checked> 日本語
+                            </label>
+                            <label>
+                                <input type="radio" name="displayLanguage" value="en"> English
+                            </label>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+
+
+
+
+        <div class="info-section">
+            <h3>
+                <span class="lang-ja">音符の入力形式について</span>
+                <span class="lang-en">About Note Input Format</span>
+            </h3>
+            <ul>
+                <li>
+                    <span class="lang-ja">音名とオクターブ番号を組み合わせて入力してください（例: C4, D#5, Gb3）。</span>
+                    <span class="lang-en">Enter the note name combined with the octave number (e.g., C4, D#5,
+                        Gb3).</span>
+                </li>
+                <li>
+                    <span class="lang-ja">シャープは「#」、フラットは「b」を使用してください。</span>
+                    <span class="lang-en">Use "#" for sharp and "b" for flat.</span>
+                </li>
+                <li>
+                    <span class="lang-ja">オクターブ番号は0から8まで対応しています。</span>
+                    <span class="lang-en">Octave numbers from 0 to 8 are supported.</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+
+    <script src="script.js" type="module"></script>
+
+
+</body>
+
+</html>
