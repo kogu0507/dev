@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">
+    <meiHead>
+        <fileDesc>
+            <titleStmt>
+                <title>シンプル Cメジャースケール</title>
+            </titleStmt>
+        </fileDesc>
+    </meiHead>
+    <music>
+        <body>
+            <mdiv>
+                <score>
+                    <scoreDef keysig="0" meter.count="4" meter.unit="4">
+                        <staffGrp>
+                            <staffDef n="1" clef.shape="G" clef.line="2" lines="5"/>
+                        </staffGrp>
+                    </scoreDef>
+                    <section>
+                        <measure n="1">
+                            <staff n="1">
+                                <layer n="1">
+                                    <note xml:id="n_c4" dur="4" pname="c" oct="4"/>
+                                    <note xml:id="n_d4" dur="4" pname="d" oct="4"/>
+                                    <note xml:id="n_e4" dur="4" pname="e" oct="4"/>
+                                    <note xml:id="n_f4" dur="4" pname="f" oct="4"/>
+                                </layer>
+                            </staff>
+                        </measure>
+                        <measure n="2">
+                            <staff n="1">
+                                <layer n="1">
+                                    <note xml:id="n_g4" dur="4" pname="g" oct="4"/>
+                                    <note xml:id="n_a4" dur="4" pname="a" oct="4"/>
+                                    <note xml:id="n_b4" dur="4" pname="b" oct="4"/>
+                                    <note xml:id="n_c5" dur="4" pname="c" oct="5"/>
+                                </layer>
+                            </staff>
+                        </measure>
+                    </section>
+                </score>
+            </mdiv>
+        </body>
+    </music>
+</mei>

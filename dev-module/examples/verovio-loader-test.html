@@ -1,0 +1,93 @@
+<!-- dev-module/examples/verovio-loader.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verovio MEIファイル読み込みテスト</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f4;
+    }
+    h1 {
+      color: #333;
+    }
+    #notation {
+      border: 1px solid #ccc;
+      padding: 1em;
+      margin-top: 1em;
+      background-color: #fff;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+      overflow-x: auto; /* SVGが大きすぎる場合にスクロールできるようにする */
+    }
+    #loading-message {
+      color: #007bff;
+      font-weight: bold;
+    }
+    #error-message {
+      color: #dc3545;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <h1>Verovio MEIファイル読み込みテストページ</h1>
+  <div id="loading-message">楽譜データを読み込み中...</div>
+  <div id="error-message" style="display: none;"></div>
+  <div id="notation">
+    </div>
+
+  <script type="module" defer>
+    // Verovioローダーをインポートします。
+    // パスはあなたのプロジェクト構造に合わせて調整してください。
+    import { loadVerovio } from '../../dev-module/verovio/loader.js'; // このパスはそのままにしてください
+
+    async function init() {
+      const loadingMessage = document.getElementById('loading-message');
+      const errorMessage = document.getElementById('error-message');
+      const notationDiv = document.getElementById('notation');
+
+      try {
+        console.log('Verovio Toolkit をロード中...');
+        loadingMessage.textContent = 'Verovio Toolkit を初期化中...';
+        const toolkit = await loadVerovio();
+        console.log('Verovio Toolkit インスタンス:', toolkit);
+        loadingMessage.textContent = 'Verovio Toolkit のロードが完了しました。MEIファイルをフェッチ中...';
+
+        // ***** ここを変更します *****
+        // HTMLファイルと同じディレクトリにsample.meiがある場合
+        const meiUrl = './sample.mei'; // 相対パスに変更
+
+        console.log(`MEIファイルを ${meiUrl} からフェッチします...`);
+        const response = await fetch(meiUrl);
+
+        if (!response.ok) {
+          throw new Error(`MEIファイルのフェッチに失敗しました: HTTPステータス ${response.status} - ${response.statusText}`);
+        }
+
+        const meiData = await response.text();
+        console.log('フェッチしたMEIデータ（先頭100文字）:', meiData.substring(0, 100) + '...');
+
+        console.log('SVGをレンダリング中...');
+        loadingMessage.textContent = '楽譜をレンダリング中...';
+        const svg = toolkit.renderData(meiData, {});
+        
+        notationDiv.innerHTML = svg;
+        console.log('SVG を描画しました');
+        loadingMessage.style.display = 'none';
+
+      } catch (err) {
+        console.error('初期化エラーまたはデータ処理エラー:', err);
+        loadingMessage.style.display = 'none';
+        errorMessage.textContent = `エラーが発生しました: ${err.message}`;
+        errorMessage.style.display = 'block';
+        notationDiv.innerHTML = '<p style="color:red;">楽譜の表示に失敗しました。</p>';
+      }
+    }
+
+    init();
+  </script>
+</body>
+</html>

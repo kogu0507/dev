@@ -1,0 +1,317 @@
+/* 視覚的に要素を隠すが、スクリーンリーダーからはアクセス可能にするためのスタイル */
+.visually-hidden {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* ここから追加・修正されたスタイル */
+body {
+    font-family: sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    background-color: #f3f4f6;
+    padding: 1rem;
+}
+
+#rhythm-dictation-mini-app-section {
+    width: 100%;
+    max-width: 960px;
+    background-color: #ffffff;
+    border-radius: 0.5rem;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+    padding: 1.5rem;
+}
+
+.tabs {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+}
+
+.tab-button {
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #4b5563;
+    transition: background-color 0.2s ease-in-out;
+    border: none; /* ボタンのデフォルトの枠線を削除 */
+    background-color: transparent; /* デフォルトの背景色を透明に */
+    cursor: pointer;
+}
+
+.tab-button:hover {
+    background-color: #e5e7eb;
+}
+
+.tab-button.active {
+    background-color: #d1d5db; /* アクティブなタブの背景色 */
+    color: #1f2937; /* アクティブなタブの文字色 */
+}
+
+
+.activation-button,
+.show-answer,
+.new-question-button {
+    width: 100%;
+    padding: 0.75rem 0;
+    border-radius: 0.5rem;
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #ffffff;
+    transition: background-color 0.2s ease-in-out;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem;
+    border: none;
+    cursor: pointer;
+}
+
+.activation-button {
+    background-color: #2563eb;
+}
+.activation-button:hover {
+    background-color: #1d4ed8;
+}
+
+.play-correct-answer-button,
+.play-selected-answer-button {
+    width: 100%;
+    padding: 0.5rem 0;
+    border-radius: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #ffffff;
+    transition: background-color 0.2s ease-in-out;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    margin-bottom: 1rem;
+    border: none;
+    cursor: pointer;
+}
+
+.play-correct-answer-button {
+    background-color: #22c55e;
+}
+.play-correct-answer-button:hover {
+    background-color: #16a34a;
+}
+
+.play-selected-answer-button {
+    background-color: #3b82f6;
+}
+.play-selected-answer-button:hover {
+    background-color: #2563eb;
+}
+
+.question-main,
+.correct-answer,
+.selected-answer,
+.question-setting,
+.sequencer-setting {
+    background-color: #f9fafb;
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+    margin-bottom: 1.5rem; /* question-main以外に追加 */
+}
+
+/* selected-answer-displayのフレックスコンテナ */
+.selected-answer-display {
+    display: flex; /* Flexboxを有効にする */
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0; /* 子要素でパディングを調整するため0に */
+    margin-bottom: 1rem;
+    background-color: #ffffff;
+    min-height: 100px;
+    overflow: hidden; /* 角丸に合わせて内容をクリップ */
+}
+
+.first-half-display,
+.second-half-display {
+    flex: 1; /* 利用可能なスペースを均等に分割 */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem; /* 各ハーフディスプレイのパディング */
+    color: #9ca3af;
+    min-height: 100px; /* 親と同じ高さを確保 */
+}
+
+.first-half-display {
+    border-right: 1px solid #e5e7eb; /* 境界線 */
+}
+
+.first-half-display img,
+.second-half-display img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+
+.user-select-area {
+    margin-bottom: 1.5rem;
+}
+
+/* ラジオボタンのコンテナ */
+.user-select-area > div:nth-of-type(2) {
+    margin-bottom: 1rem;
+    color: #4b5563;
+}
+
+/* ラジオボタンのフレックスコンテナ */
+.flex-container {
+    display: flex;
+    gap: 1rem;
+    margin-top: 0.5rem;
+}
+
+.radio-label {
+    display: inline-flex;
+    align-items: center;
+    cursor: pointer;
+}
+
+.form-radio {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    display: inline-block;
+    width: 1rem;
+    height: 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 50%;
+    vertical-align: middle;
+    outline: none;
+    cursor: pointer;
+    position: relative;
+}
+
+.form-radio:checked {
+    background-color: #2563eb;
+    border-color: #2563eb;
+}
+
+.form-radio:checked::before {
+    content: '';
+    display: block;
+    width: 0.5rem;
+    height: 0.5rem;
+    background-color: #fff;
+    border-radius: 50%;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+.radio-text {
+    margin-left: 0.5rem;
+}
+
+.user-select-buttons {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 1rem;
+}
+
+.user-select-buttons button {
+    background-color: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    padding: 0.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease-in-out;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+    height: 100px;
+}
+
+.user-select-buttons button:hover {
+    background-color: #e5e7eb;
+    border-color: #9ca3af;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.user-select-buttons button.selected {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.5);
+    background-color: #eff6ff;
+}
+
+.user-select-buttons img {
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+}
+
+hr {
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-color: #d1d5db;
+}
+
+.show-answer {
+    background-color: #9333ea;
+}
+.show-answer:hover {
+    background-color: #7e22ce;
+}
+
+.new-question-button {
+    background-color: #4f46e5;
+}
+.new-question-button:hover {
+    background-color: #4338ca;
+}
+
+h4 {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: #1f2937;
+    margin-bottom: 1rem;
+}
+
+.question-setting p,
+.sequencer-setting p {
+    color: #4b5563;
+}
+
+.tempo-slider label,
+.volume-slider label {
+    display: block;
+    color: #4b5563;
+    font-size: 1.125rem;
+    font-weight: 500;
+    margin-bottom: 0.5rem;
+}
+
+.tempo-slider input[type="range"],
+.volume-slider input[type="range"] {
+    width: 100%;
+    height: 0.5rem;
+    background-color: #d1d5db;
+    border-radius: 0.5rem;
+    -webkit-appearance: none;
+    cursor: pointer;
+}
+
+.tempo-slider span,
+.volume-slider span {
+    display: block;
+    text-align: right;
+    color: #4b5563;
+    margin-top: 0.5rem;
+}

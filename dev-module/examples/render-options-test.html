@@ -1,0 +1,70 @@
+<!-- dev-module/examples/render-options-test.html -->
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Render Options テスト</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 1em;
+        }
+
+        #notation {
+            border: 1px solid #ccc;
+            padding: 1em;
+            min-height: 200px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Render Options プリセット適用テスト</h1>
+
+    <div style="margin-top:1em;">
+        <button id="btnDefault">デフォルト</button>
+        <button id="btnHighRes">高解像度</button>
+        <button id="btnMobile">モバイル</button>
+        <button id="btnPrint">印刷向け</button>
+    </div>
+    <div id="notation"></div>
+    <script type="module">
+        import { VerovioManager } from '../../dev-module/verovio/verovio-manager.js';
+        import {
+            defaultOptions,
+            highResOptions,
+            mobileOptions,
+            printOptions
+        } from '../../dev-module/verovio/render-options.js';
+
+        const manager = new VerovioManager();
+        const meiUrl = './sample.mei';
+        const targetId = 'notation';
+
+        // 初期化
+        await manager.initialize();
+        // デフォルト表示
+        await manager.displayMeiOnElement(meiUrl, targetId);
+
+        document.getElementById('btnDefault').onclick = async () => {
+            manager.setRenderOptions(defaultOptions);
+            await manager.displayMeiOnElement(meiUrl, targetId);
+        };
+        document.getElementById('btnHighRes').onclick = async () => {
+            manager.setRenderOptions(highResOptions);
+            await manager.displayMeiOnElement(meiUrl, targetId);
+        };
+        document.getElementById('btnMobile').onclick = async () => {
+            manager.setRenderOptions(mobileOptions);
+            await manager.displayMeiOnElement(meiUrl, targetId);
+        };
+        document.getElementById('btnPrint').onclick = async () => {
+            manager.setRenderOptions(printOptions);
+            await manager.displayMeiOnElement(meiUrl, targetId);
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,43 @@
+<!-- dev-module/examples/core-processor-test.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CoreProcessor テスト</title>
+  <style>body{font-family:sans-serif;padding:1em;}#score{border:1px solid #ccc;padding:1em;margin-top:1em;}</style>
+</head>
+<body>
+  <h1>CoreProcessor SVG テスト</h1>
+  <div id="score">ここに SVG が表示されます</div>
+  <script type="module">
+    import { loadVerovio } from '../../dev-module/verovio/loader.js';
+    import { CoreProcessor } from '../../dev-module/verovio/core-processor.js';
+
+    async function run() {
+      try {
+        console.log('Toolkit 初期化...');
+        const tk = await loadVerovio();
+        const proc = new CoreProcessor(tk);
+        console.log('CoreProcessor 作成');
+
+        // オプション例（任意）
+        proc.setRenderOptions({ pageWidth: 800, scale: 80 });
+
+        // テスト用 MEI
+        const meiUrl = './sample.mei';
+        console.log(`MEI を ${meiUrl} から取得`);
+        const svg = await proc.renderSvgFromUrl(meiUrl);
+
+        document.getElementById('score').innerHTML = svg;
+        console.log('SVG 描画完了');
+      } catch (err) {
+        console.error(err);
+        document.getElementById('score').textContent = 'エラー: ' + err.message;
+      }
+    }
+    run();
+  </script>
+</body>
+</html>
+

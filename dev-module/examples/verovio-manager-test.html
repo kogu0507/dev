@@ -1,0 +1,46 @@
+
+
+<!-- dev-module/examples/verovio-manager-test.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VerovioManager テスト</title>
+  <style>
+    body { font-family: sans-serif; padding:1em; }
+    #container { border:1px solid #ccc; padding:1em; min-height:200px; }
+    button { margin-right:0.5em; }
+  </style>
+</head>
+<body>
+  <h1>VerovioManager 統合テスト</h1>
+  <div id="container">ここに楽譜が表示されます</div>
+  <div style="margin-top:1em;">
+    <button id="btnLoad">表示</button>
+    <button id="btnTranspose">移調(+2)</button>
+  </div>
+
+  <script type="module">
+    import { VerovioManager } from '../../dev-module/verovio/verovio-manager.js';
+
+    const manager = new VerovioManager();
+    const containerId = 'container';
+    const meiUrl = './sample.mei';
+
+    // 初期化
+    manager.initialize().catch(err => console.error(err));
+
+    document.getElementById('btnLoad').onclick = () => {
+      manager.displayMeiOnElement(meiUrl, containerId);
+    };
+    document.getElementById('btnTranspose').onclick = () => {
+      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "2");
+      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "m2");
+      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "M2");
+      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "P5");
+      manager.displayTransposedMeiOnElement(meiUrl, containerId, "F"); // Tonic指定 F Major Key
+    };
+  </script>
+</body>
+</html>

@@ -1,0 +1,45 @@
+<!-- dev-module/examples/score-ui-handler-test.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ScoreUIHandler テスト</title>
+  <style>
+    body { font-family: sans-serif; padding: 1em; }
+    #viewer { border: 1px solid #ccc; min-height: 200px; position: relative; }
+  </style>
+</head>
+<body>
+  <h1>ScoreUIHandler SVG & ローディング/エラー テスト</h1>
+  <div id="viewer"></div>
+  <button id="loadBtn">楽譜を読み込む</button>
+  <button id="errorBtn">エラー表示テスト</button>
+
+  <script type="module">
+    import { loadVerovio } from '../../dev-module/verovio/loader.js';
+    import { CoreProcessor } from '../../dev-module/verovio/core-processor.js';
+    import { ScoreUIHandler } from '../../dev-module/verovio/score-ui-handler.js';
+
+    const handler = new ScoreUIHandler();
+    document.getElementById('loadBtn').addEventListener('click', async () => {
+      handler.showLoading('viewer');
+      try {
+        const tk = await loadVerovio();
+        const proc = new CoreProcessor(tk);
+        const svg = await proc.renderSvgFromUrl('./sample.mei');
+        handler.displaySvg(svg, 'viewer');
+      } catch (err) {
+        handler.showError(`読み込みエラー: ${err.message}`, 'viewer');
+      }
+    });
+
+    document.getElementById('errorBtn').addEventListener('click', () => {
+      handler.showLoading('viewer');
+      setTimeout(() => {
+        handler.showError('テスト用エラー発生', 'viewer');
+      }, 1000);
+    });
+  </script>
+</body>
+</html>

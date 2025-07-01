@@ -1,0 +1,613 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MEI to SVG Converter (マニアック版)</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 1em;
+            background-color: #f8f8f8;
+            color: #333;
+        }
+
+        h1,
+        h2 {
+            color: #2c3e50;
+        }
+
+        section {
+            background-color: #ffffff;
+            padding: 1.5em;
+            margin-bottom: 1.5em;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+
+        textarea {
+            width: 100%;
+            min-height: 150px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            box-sizing: border-box;
+            margin-top: 0.5em;
+        }
+
+        button {
+            padding: 10px 18px;
+            margin-right: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+            font-size: 15px;
+            transition: background-color 0.2s ease;
+        }
+
+        button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #output {
+            min-height: 200px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            padding: 10px;
+            background-color: #e9ecef;
+            overflow: auto;
+            /* SVGが大きい場合にスクロールできるように */
+            display: flex;
+            /* SVGを中央に配置するためにflexboxを使用 */
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+        }
+
+        #output svg {
+            max-width: 100%;
+            /* SVGがコンテナからはみ出さないように */
+            height: auto;
+        }
+
+        .loading-message {
+            color: #666;
+            font-style: italic;
+        }
+
+        /* カスタムメッセージボックスのスタイル */
+        #messageBox {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: #fff;
+            border: 1px solid #ccc;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 20px;
+            border-radius: 8px;
+            z-index: 1000;
+            display: none;
+            /* デフォルトで非表示 */
+            max-width: 80%;
+            text-align: center;
+        }
+
+        #messageBox.show {
+            display: block;
+        }
+
+        #messageBox button {
+            margin-top: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>MEI to SVG Converter (マニアック版)</h1>
+
+
+    <section id="mei-data-area">
+        <h2>MEIデータ</h2>
+        <p>以下のスクリプトタグ内にMEIデータを直接記述してください。</p>
+        <p class="loading-message" id="loadingVerovio">Verovioライブラリを読み込み中...</p>
+
+        <!-- MEIデータをここに直接記述します -->
+        <script type="application/mei+xml" id="meiDataScript">
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">
+    <meiHead>
+        <fileDesc>
+            <titleStmt>
+                <title>シンプル Gメジャー</title>
+            </titleStmt>
+        </fileDesc>
+    </meiHead>
+    <music>
+        <body>
+            <mdiv>
+                <score>
+                    <scoreDef keysig="0" key.mode="major" meter.count="4" meter.unit="4">
+                        <staffGrp>
+                            <staffDef n="1" lines="5"/>
+                        </staffGrp>
+                        <key mode="major" pname="g"/>
+                        <meter count="4" unit="3"/>
+                    </scoreDef>
+                    <section>
+                        <measure n="1">
+                            <staff n="1">
+                                <layer n="1">
+                                    <note xml:id="m1_s1_l1_n1" dur="4" pname="d" oct="4"/>
+                                    <beam>
+                                    <note xml:id="m1_s1_l1_n2" dur="8" pname="d" oct="4"/>
+                                    <note xml:id="m1_s1_l1_n3" dur="8" pname="d" oct="4"/>
+                                    </beam>
+                                </layer>
+                            </staff>
+                        </measure>
+                    </section>
+                </score>
+            </mdiv>
+        </body>
+    </music>
+</mei>
+        </script>
+        <button id="convert-button" disabled>SVGを生成</button>
+    </section>
+
+    <section id="svg-output-display">
+        <h2>SVG出力（表示）</h2>
+        <div id="output">
+            <p>「SVGを生成」ボタンをクリックすると、ここに楽譜のSVGが表示されます。</p>
+            <p class="loading-message" id="loadingVerovioOutput">Verovioライブラリを読み込み中...</p>
+        </div>
+
+        <button onclick="temp()">クリックしてね</button>
+
+    </section>
+
+    <section id="formatted-svg-text-area">
+        <h2>整形済みSVGテキスト</h2>
+        <p>Verovioが生成した、可読性重視の整形済みSVGテキストです。</p>
+        <textarea id="formattedSvgTextOutput" readonly></textarea>
+        <div style="margin-top: 10px;">
+            <button id="copyFormattedSvgTextButton">整形済みSVGテキストをコピー</button>
+        </div>
+    </section>
+
+    <section id="compressed-svg-text-area">
+        <h2>圧縮済みSVGテキスト</h2>
+        <p>SVGOで圧縮された（ファイルサイズ重視）SVGテキストです。</p>
+        <textarea id="compressedSvgTextOutput" readonly></textarea>
+        <div style="margin-top: 10px;">
+            <button id="copyCompressedSvgTextButton">圧縮済みSVGテキストをコピー</button>
+        </div>
+    </section>
+
+    <!-- カスタムメッセージボックス -->
+    <div id="messageBox">
+        <p id="messageText"></p>
+        <button id="messageBoxCloseButton">閉じる</button>
+    </div>
+
+
+
+
+
+    <!-- Verovio Toolkitのロード -->
+    <script src="https://www.verovio.org/javascript/latest/verovio-toolkit-wasm.js" defer></script>
+    <!-- SVGOのロード -->
+    <script>
+        function temp() {
+            console.log("temp　です");
+
+
+            hideElementsByClassNames(["meterSig", "barLine"]);
+
+            // 五線を消す
+            // 1. class="staff" を持つグループ要素を取得します
+            const staffGroup = document.querySelector('g.staff');
+
+
+            if (staffGroup) {
+                // 2. そのグループ要素の中にあるすべての <path> 要素を取得します
+                const allPathsInStaff = staffGroup.querySelectorAll('path');
+
+                // 3. 各path要素をループし、五線の条件に合うものだけを非表示にします
+                allPathsInStaff.forEach(pathElement => {
+                    const dAttribute = pathElement.getAttribute('d');
+
+                    // d属性が "M0 [Y] L2241 [Y]" のパターンに一致するかチェック
+                    // これは水平線（Y座標が変化しない）であり、かつ五線の特徴的な長さを持つパスを識別します
+                    // 正規表現: ^M0\s+(\d+)\s+L2241\s+\1$
+                    // ^   : 文字列の先頭
+                    // M0\s+: "M0" の後に1つ以上の空白
+                    // (\d+): 1つ以上の数字をキャプチャグループ1として取得 (Y座標の開始)
+                    // \s+L2241\s+: 1つ以上の空白、"L2241"、1つ以上の空白
+                    // \1  : キャプチャグループ1と同じ値 (Y座標の終了が開始と同じであることを確認)
+                    // $   : 文字列の末尾
+                    if (dAttribute && dAttribute.match(/^M0\s+(\d+)\s+L2241\s+\1$/)) {
+                        pathElement.style.display = 'none';
+                        console.log("五線が非表示になりました:", pathElement);
+                    }
+                });
+            } else {
+                console.log("class=\"staff\"を持つ要素が見つかりませんでした。五線を非表示にできません。");
+            }
+
+
+            //hideOtherChildrenOfMeasure();
+
+            // --- オプション：ページマージンの調整も引き続き行う場合 ---
+            //const pageMarginGroup = svgContainer.querySelector('g.page-margin');
+            if (pageMarginGroup) {
+                pageMarginGroup.setAttribute('transform', 'translate(0, 0)');
+            }
+
+        }
+        /**
+         * measureクラスのついた要素の中の、layerクラスがついたものだけ残し、
+         * その他の子要素はすべて非表示にします。
+         */
+        function hideOtherChildrenOfMeasure() {
+            // 1. measureクラスを持つすべての要素を取得
+            const measureElements = document.getElementsByClassName('measure');
+
+            // 2. それぞれの measure 要素に対して処理を行う
+            Array.from(measureElements).forEach(measureElement => {
+                // 3. measure 要素のすべての子要素（直下の子要素だけでなく、孫要素以下も含む）を取得
+                //    querySelectorAll('*') で全ての子孫要素を取得できます。
+                //    もし直下の子要素のみを対象にする場合は、measureElement.children を使います。
+                const allChildren = measureElement.querySelectorAll('*'); // すべての子孫要素
+
+                // 4. 取得したすべての子要素をループ処理
+                Array.from(allChildren).forEach(childElement => {
+                    // 5. 'layer' クラスが含まれているかチェック
+                    if (!childElement.classList.contains('layer')) {
+                        // 'layer' クラスが含まれていない場合、非表示にする
+                        childElement.style.display = 'none';
+                    }
+                });
+            });
+        }
+
+        // 実行例：
+        // <div class="measure">
+        //     <p class="text">非表示になる</p>
+        //     <div class="layer active">残る</div>
+        //     <span>残るものの中に<b class="layer">これも残る</b></span>
+        //     <img src="..." class="image">非表示になる
+        //     <div class="container">
+        //         <p>これも非表示になる</p>
+        //         <span class="layer">残る</span>
+        //     </div>
+        // </div>
+        // のようなHTMLがある場合、上記関数を呼び出すと期待通りに動作します。
+
+        // 関数を呼び出す
+        // hideOtherChildrenOfMeasure();
+
+
+
+        /**
+         * 指定されたクラス名の配列に一致する要素を非表示にします。
+         * 非表示には display: none; を使用します。
+         * @param {string[]} classNames - 非表示にしたいクラス名の配列
+         */
+        function hideElementsByClassNames(classNames) {
+            if (!Array.isArray(classNames)) {
+                console.error("引数はクラス名の配列である必要があります。");
+                return;
+            }
+
+            classNames.forEach(className => {
+                // 指定されたクラス名を持つすべての要素を取得
+                const elements = document.getElementsByClassName(className);
+
+                // 取得した要素をループして非表示にする
+                // HTMLCollection はライブコレクションなので、逆順にループするか、配列に変換してから処理するのが安全です。
+                // ここでは for (let i = 0; i < elements.length; i++) の代わりに Array.from を使っています。
+                Array.from(elements).forEach(element => {
+                    element.style.display = 'none';
+                });
+            });
+        }
+
+        // 使用例：
+        // HTML側で以下のような要素があると仮定します
+        /*
+        <div class="box red">これは赤い箱です</div>
+        <p class="text blue">これは青いテキストです</p>
+        <span class="box green">これは緑の箱です</span>
+        <div class="item blue">これも青いです</div>
+        */
+
+        // 'red' と 'blue' クラスを持つ要素を非表示にする
+        const classesToHide = ['red', 'blue'];
+        hideElementsByClassNames(classesToHide);
+
+        // 後で元に戻したい場合は、表示する関数も必要になります。
+        // function showElementsByClassNames(classNames) {
+        //     if (!Array.isArray(classNames)) {
+        //         console.error("引数はクラス名の配列である必要があります。");
+        //         return;
+        //     }
+        //     classNames.forEach(className => {
+        //         const elements = document.getElementsByClassName(className);
+        //         Array.from(elements).forEach(element => {
+        //             element.style.display = ''; // または 'block', 'inline', etc. 元の display 値に戻す
+        //         });
+        //     });
+        // }
+        // showElementsByClassNames(classesToHide);
+
+    </script>
+    <script type="module">
+        import { optimize as SVGO_optimize } from 'https://unpkg.com/svgo@3.2.0/dist/svgo.browser.js';
+
+        let vrvToolkit;
+        const meiDataScript = document.getElementById('meiDataScript');
+        const convertButton = document.getElementById('convert-button');
+        const outputDiv = document.getElementById('output');
+        const loadingVerovioMessages = document.querySelectorAll('.loading-message');
+
+        const formattedSvgTextOutput = document.getElementById('formattedSvgTextOutput');
+        const copyFormattedSvgTextButton = document.getElementById('copyFormattedSvgTextButton');
+
+        const compressedSvgTextOutput = document.getElementById('compressedSvgTextOutput');
+        const copyCompressedSvgTextButton = document.getElementById('copyCompressedSvgTextButton');
+
+        // カスタムメッセージボックスの要素
+        const messageBox = document.getElementById('messageBox');
+        const messageText = document.getElementById('messageText');
+        const messageBoxCloseButton = document.getElementById('messageBoxCloseButton');
+
+        // カスタムメッセージを表示する関数
+        const showMessage = (msg) => {
+            messageText.textContent = msg;
+            messageBox.classList.add('show');
+        };
+
+        // カスタムメッセージを非表示にする関数
+        const hideMessage = () => {
+            messageBox.classList.remove('show');
+        };
+
+        // メッセージボックスの閉じるボタン
+        messageBoxCloseButton.addEventListener('click', hideMessage);
+
+        // VerovioのレンダリングオプションをJavaScriptで直接定義
+        const verovioOptions = {
+            svgViewBox: true,
+            scale: 100,             // スコアの拡大・縮小 (100 = 100%)
+            adjustPageHeight: true, // ページの高さを内容に合わせて調整
+            adjustPageWidth: true,  // ページの幅を内容に合わせて調整
+            breaks: "encoded",      // MEIにエンコードされた改行を使用
+            footer: "none",         // フッターを非表示
+            header: "none",         // ヘッダーを非表示
+            pageMarginLeft: 0,      // 左マージン
+            pageMarginRight: 0,     // 右マージン
+            pageMarginTop: 0,       // 上マージン
+            pageMarginBottom: 0     // 下マージン
+        };
+
+
+
+
+
+        // XMLを整形する関数 (可読性向上用)
+        const formatXml = (xmlString) => {
+            if (!xmlString || xmlString.trim() === "") {
+                return "";
+            }
+            try {
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlString, "text/xml");
+
+                if (xmlDoc.getElementsByTagName("parsererror").length > 0) {
+                    console.error("XML parsing error:", xmlDoc.getElementsByTagName("parsererror")[0].textContent);
+                    return xmlString; // エラーがあれば元の文字列を返す
+                }
+
+                const serializer = new XMLSerializer();
+                let formattedXml = serializer.serializeToString(xmlDoc);
+
+                // タグの間に改行を追加
+                formattedXml = formattedXml.replace(/></g, '>\n<');
+
+                let lines = formattedXml.split('\n');
+                let indent = 0;
+                const indentChar = '  '; // 2スペースでインデント
+                let indentedLines = [];
+
+                lines.forEach(line => {
+                    let trimmedLine = line.trim();
+
+                    if (trimmedLine === '') {
+                        return;
+                    }
+
+                    // XML宣言やDOCTYPEはインデントしない
+                    if (trimmedLine.startsWith('<?xml') || trimmedLine.startsWith('<!DOCTYPE')) {
+                        indentedLines.push(trimmedLine);
+                        return;
+                    }
+
+                    // 閉じタグの場合、インデントを減らす
+                    if (trimmedLine.startsWith('</')) {
+                        indent = Math.max(0, indent - 1);
+                    }
+
+                    // 現在の行をインデントして追加
+                    indentedLines.push(indentChar.repeat(indent) + trimmedLine);
+
+                    // 開始タグ（自己閉じタグでないもの）の場合、インデントを増やす
+                    if (trimmedLine.startsWith('<') && !trimmedLine.startsWith('</') && !trimmedLine.endsWith('/>')) {
+                        indent++;
+                    }
+                });
+
+                return indentedLines.join('\n');
+
+            } catch (e) {
+                console.error("XML整形エラー:", e);
+                return xmlString; // エラーがあれば元の文字列を返す
+            }
+        };
+
+        // MEIからSVGへの変換処理
+        const convertMeiToSvg = async () => {
+            if (!vrvToolkit) {
+                showMessage('Verovioライブラリがまだ読み込まれていないか、初期化されていません。しばらくお待ちください。');
+                return;
+            }
+
+            // MEIデータをスクリプトタグから取得
+            const meiData = meiDataScript.textContent.trim();
+            if (!meiData) {
+                outputDiv.innerHTML = '<p>MEIデータがスクリプトタグ内に見つかりません。</p>';
+                formattedSvgTextOutput.value = '';
+                compressedSvgTextOutput.value = '';
+                return;
+            }
+
+            try {
+                vrvToolkit.setOptions(verovioOptions); // 定義済みのオプションを設定
+                vrvToolkit.loadData(meiData);
+                const svg = vrvToolkit.renderToSVG(1); // 1ページ目をレンダリング
+                outputDiv.innerHTML = svg;
+
+                // 整形済みSVGをテキストエリアに表示
+                formattedSvgTextOutput.value = formatXml(svg);
+
+                // SVGOで圧縮
+                let compressedSvg = '';
+                if (typeof SVGO_optimize === 'function') {
+                    try {
+                        const result = await SVGO_optimize(svg);
+                        if (result.error) {
+                            console.error('SVGO optimization error:', result.error);
+                            compressedSvg = `SVGO圧縮エラー: ${result.error}`;
+                        } else {
+                            compressedSvg = result.data;
+                        }
+                    } catch (svgoError) {
+                        console.error('Error during SVGO optimization:', svgoError);
+                        compressedSvg = `SVGO圧縮中に例外が発生しました: ${svgoError.message}`;
+                    }
+                } else {
+                    compressedSvg = "SVGOライブラリのoptimize関数が利用できません。";
+                }
+                compressedSvgTextOutput.value = compressedSvg;
+
+                console.log('SVG generated successfully.');
+            } catch (error) {
+                outputDiv.innerHTML = `<p style="color: red;">SVG生成中にエラーが発生しました: ${error.message}</p>`;
+                formattedSvgTextOutput.value = `SVG生成中にエラーが発生しました: ${error.message}`;
+                compressedSvgTextOutput.value = `SVG生成中にエラーが発生しました: ${error.message}`;
+                console.error('Error converting MEI to SVG:', error);
+            }
+
+        };
+
+        // Verovio Toolkitの初期化
+        // onRuntimeInitialized は、WASMモジュールが完全にロードされ、初期化されたときに発火する
+        if (typeof verovio !== 'undefined' && verovio.module) {
+            verovio.module.onRuntimeInitialized = async () => {
+                try {
+                    vrvToolkit = new verovio.toolkit();
+                    convertButton.disabled = false;
+                    loadingVerovioMessages.forEach(msgElement => {
+                        msgElement.textContent = 'Verovioライブラリの読み込みが完了しました。';
+                    });
+                    console.log('Verovio Toolkit initialized.');
+                } catch (error) {
+                    loadingVerovioMessages.forEach(msgElement => {
+                        msgElement.textContent = 'Verovioライブラリの初期化に失敗しました。詳細をコンソールで確認してください。';
+                    });
+                    console.error('Verovio Toolkit initialization failed:', error);
+                }
+            };
+
+            // Verovio WASMランタイムが既に初期化を完了している場合
+            if (verovio.module.calledRun) {
+                console.log('Verovio runtime already initialized. Attempting direct toolkit creation.');
+                try {
+                    vrvToolkit = new verovio.toolkit(); // 同期的に動作する場合
+                    convertButton.disabled = false;
+                    loadingVerovioMessages.forEach(msgElement => {
+                        msgElement.textContent = 'Verovioライブラリの読み込みが完了しました。';
+                    });
+                    console.log('Verovio Toolkit initialized immediately (runtime already active).');
+                } catch (error) {
+                    loadingVerovioMessages.forEach(msgElement => {
+                        msgElement.textContent = 'Verovioライブラリの初期化に失敗しました。詳細をコンソールで確認してください。';
+                    });
+                    console.error('Verovio Toolkit initialization failed immediately:', error);
+                }
+            }
+
+        } else {
+            console.error("Verovio object or verovio.module is not available when the main script runs. Please check verovio-toolkit-wasm.js loading and browser console for errors.");
+            loadingVerovioMessages.forEach(msgElement => {
+                msgElement.textContent = 'Verovioライブラリのロードに問題があるようです。ブラウザのコンソールを確認してください。';
+            });
+        }
+
+        // --- イベントリスナーの設定 ---
+        convertButton.addEventListener('click', convertMeiToSvg);
+
+        // 整形済みSVGテキストのコピーボタン
+        copyFormattedSvgTextButton.addEventListener('click', () => {
+            if (formattedSvgTextOutput.value.trim() === "") {
+                showMessage("コピーする整形済みSVGテキストがありません。");
+                return;
+            }
+            try {
+                formattedSvgTextOutput.select();
+                document.execCommand('copy');
+                showMessage('整形済みSVGテキストをクリップボードにコピーしました！');
+            } catch (err) {
+                console.error('SVGテキストのコピーに失敗しました:', err);
+                showMessage('SVGテキストのコピーに失敗しました。ブラウザのセキュリティ設定をご確認ください。');
+            }
+        });
+
+        // 圧縮済みSVGテキストのコピーボタン
+        copyCompressedSvgTextButton.addEventListener('click', () => {
+            if (compressedSvgTextOutput.value.trim() === "") {
+                showMessage("コピーする圧縮済みSVGテキストがありません。");
+                return;
+            }
+            try {
+                compressedSvgTextOutput.select();
+                document.execCommand('copy');
+                showMessage('圧縮済みSVGテキストをクリップボードにコピーしました！');
+            } catch (err) {
+                console.error('SVGテキストのコピーに失敗しました:', err);
+                showMessage('SVGテキストのコピーに失敗しました。ブラウザのセキュリティ設定をご確認ください。');
+            }
+        });
+    </script>
+</body>
+
+</html>
