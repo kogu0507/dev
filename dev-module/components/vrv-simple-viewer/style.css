@@ -1,0 +1,21 @@
+/* vrv-simple-viewer 用の基本スタイル */
+.vrv-simple-viewer {
+  position: relative;
+  margin: 1em 0;
+}
+
+/* ローディング中のメッセージ */
+.vrv-loading {
+  font-style: italic;
+  color: #666;
+  text-align: center;
+}
+
+/* エラー時の表示 */
+.vrv-error {
+  color: #c00;
+  background: #fee;
+  border: 1px solid #c00;
+  padding: 1em;
+  text-align: center;
+}

@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>VerovioManager 確認ページ</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    label { display: block; margin: 0.5em 0 0.2em; }
+    input, button { padding: 0.5em; margin-right: 0.5em; }
+    #controls { margin-bottom: 1em; }
+    #notation { border: 1px solid #ccc; padding: 1em; min-height: 200px; }
+    .error { color: #c00; }
+    .loading { color: #06c; }
+  </style>
+</head>
+<body>
+  <h1>VerovioManager テストページ</h1>
+
+  <div id="controls">
+    <!-- MEI ファイル URL 入力 -->
+    <label for="meiUrl">MEI ファイル URL：</label>
+    <!-- <input type="text" id="meiUrl" size="60"
+      value="https://www.verovio.org/examples/downloads/Schubert_Lindenbaum.mei" /> -->
+      <input type="text" id="meiUrl" size="60"
+      value="https://kogu0507.github.io/dev/dev-module/examples/sample.mei" />
+      
+    <button id="btnLoad">表示</button>
+    <br />
+    <!-- 小節範囲指定 -->
+    <label>小節範囲：</label>
+    <input type="text" id="startMeasure" placeholder="開始 (例:1 or start)" size="6" />
+    <input type="text" id="endMeasure" placeholder="終了 (例:5 or end)" size="6" />
+    <button id="btnRange">範囲表示</button>
+    <br />
+    <!-- 移調指定 -->
+    <label for="semitones">移調 (半音)：</label>
+    <input type="number" id="semitones" value="0" size="4" />
+    <button id="btnTranspose">移調表示</button>
+    <br />
+    <!-- MIDI ダウンロード -->
+    <button id="btnMidi">MIDI ダウンロード</button>
+  </div>
+
+  <!-- 楽譜表示エリア -->
+  <div id="notation"></div>
+  <!-- MIDI リンク表示用 -->
+  <div id="midiContainer"></div>
+
+  <script type="module">
+    import { VerovioManager } from '../verovio/verovio-manager.js';
+    import { defaultOptions } from '../verovio/render-options.js';
+
+    // インスタンス生成
+    const manager = new VerovioManager();
+    // 初期化
+    await manager.initialize();
+    // デフォルトオプション設定
+    manager.setRenderOptions(defaultOptions);
+
+    // DOM 要素取得
+    const meiUrlInput = document.getElementById('meiUrl');
+    const btnLoad = document.getElementById('btnLoad');
+    const btnRange = document.getElementById('btnRange');
+    const btnTranspose = document.getElementById('btnTranspose');
+    const btnMidi = document.getElementById('btnMidi');
+    const startInput = document.getElementById('startMeasure');
+    const endInput = document.getElementById('endMeasure');
+    const semitonesInput = document.getElementById('semitones');
+    const notationDiv = document.getElementById('notation');
+    const midiContainer = document.getElementById('midiContainer');
+
+    // ヘルパー：エリアをクリア
+    function clearArea() {
+      notationDiv.innerHTML = '';
+      midiContainer.innerHTML = '';
+    }
+
+    // 「表示」ボタン
+    btnLoad.addEventListener('click', async () => {
+      clearArea();
+      notationDiv.classList.add('loading');
+      notationDiv.textContent = '読み込み中...';
+      try {
+        await manager.displaySvgFromUrl(meiUrlInput.value, 'notation');
+      } catch (e) {
+        notationDiv.classList.add('error');
+        notationDiv.textContent = '表示に失敗しました。';
+        console.error(e);
+      } finally {
+        notationDiv.classList.remove('loading');
+      }
+    });
+
+    // 「範囲表示」ボタン
+    btnRange.addEventListener('click', async () => {
+      clearArea();
+      notationDiv.classList.add('loading');
+      notationDiv.textContent = '範囲読み込み中...';
+      try {
+        const start = startInput.value || 'start';
+        const end = endInput.value || 'end';
+        await manager.displaySvgFromUrl(
+          meiUrlInput.value,
+          'notation',
+          { measureRange: `${start}-${end}` }
+        );
+      } catch (e) {
+        notationDiv.classList.add('error');
+        notationDiv.textContent = '範囲表示に失敗しました。';
+        console.error(e);
+      } finally {
+        notationDiv.classList.remove('loading');
+      }
+    });
+
+    // 「移調表示」ボタン
+    btnTranspose.addEventListener('click', async () => {
+      clearArea();
+      notationDiv.classList.add('loading');
+      notationDiv.textContent = '移調中...';
+      try {
+        const semitones = parseInt(semitonesInput.value, 10) || 0;
+        await manager.displayTransposedSvgFromUrl(
+          meiUrlInput.value,
+          'notation',
+          semitones
+        );
+      } catch (e) {
+        notationDiv.classList.add('error');
+        notationDiv.textContent = '移調表示に失敗しました。';
+        console.error(e);
+      } finally {
+        notationDiv.classList.remove('loading');
+      }
+    });
+
+    // 「MIDI ダウンロード」ボタン
+    btnMidi.addEventListener('click', async () => {
+      midiContainer.innerHTML = '';
+      try {
+        const buffer = await manager.getMidiFromUrl(meiUrlInput.value);
+        const blob = new Blob([buffer], { type: 'audio/midi' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'score.mid';
+        a.textContent = 'MIDI をダウンロード';
+        midiContainer.appendChild(a);
+      } catch (e) {
+        midiContainer.classList.add('error');
+        midiContainer.textContent = 'MIDI 取得に失敗しました。';
+        console.error(e);
+      }
+    });
+  </script>
+</body>
+</html>

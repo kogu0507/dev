@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>MEI埋め込み Verovio 表示テスト</title>
+  <style>
+    body { font-family: sans-serif; margin: 2em; }
+    label { display: block; margin: 0.5em 0 0.2em; }
+    input, button { padding: 0.5em; margin-right: 0.5em; }
+    #controls { margin-bottom: 1em; }
+    #notation { border: 1px solid #ccc; padding: 1em; min-height: 200px; }
+    .error { color: #c00; }
+    .loading { color: #06c; }
+  </style>
+</head>
+<body>
+  <h1>MEI埋め込み Verovio テストページ</h1>
+
+  <div id="controls">
+    <button id="btnDisplayMei">埋め込みMEIを表示</button>
+    <br />
+    <label>小節範囲：</label>
+    <input type="text" id="startMeasure" placeholder="開始 (例:1 or start)" size="6" />
+    <input type="text" id="endMeasure" placeholder="終了 (例:5 or end)" size="6" />
+    <button id="btnRange">範囲表示</button>
+  </div>
+
+  <script type="application/mei+xml" id="embeddedMei">
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">
+    <meiHead>
+        <fileDesc>
+            <titleStmt>
+                <title>リズムカードマスター　テスト (全49小節)</title>
+            </titleStmt>
+        </fileDesc>
+    </meiHead>
+    <music>
+        <body>
+            <mdiv>
+                <score>
+                    <scoreDef keysig="0" key.mode="major" meter.count="4" meter.unit="4">
+                        <staffGrp>
+                            <staffDef n="1" clef.shape="G" clef.line="2" lines="5"/>
+                        </staffGrp>
+                    </scoreDef>
+                    <section>
+                        <measure n="1">
+                            <staff n="1">
+                                <layer n="1">
+                                    <note xml:id="m1_p1_n1" dur="2" pname="g" oct="4"/>
+                                    <note xml:id="m1_p2_n1" dur="2" pname="g" oct="4"/>
+                                </layer>
+                            </staff>
+                        </measure>
+                        <measure n="2">
+                            <staff n="1">
+                                <layer n="1">
+                                    <note xml:id="m2_p1_n1" dur="2" pname="g" oct="4"/>
+                                    <note xml:id="m2_p2_n1" dur="4" pname="g" oct="4"/>
+                                    <note xml:id="m2_p2_n2" dur="4" pname="g" oct="4"/>
+                                </layer>
+                            </staff>
+                        </measure>
+                        <measure n="3">
+                            <staff n="1">
+                                <layer n="1">
+                                    <note xml:id="m3_p1_n1" dur="2" pname="g" oct="4"/>
+                                    <note xml:id="m3_p2_n1" dur="4" pname="g" oct="4"/>
+                                    <beam>
+                                        <note xml:id="m3_p2_n2" dur="8" pname="g" oct="4"/>
+                                        <note xml:id="m3_p2_n3" dur="8" pname="g" oct="4"/>
+                                    </beam>
+                                </layer>
+                            </staff>
+                        </measure>
+                    </section>
+                </score>
+            </mdiv>
+        </body>
+    </music>
+</mei>
+  </script>
+
+  <div id="notation"></div>
+
+  <script type="module">
+    /*
+    import { loadVerovio } from '../verovio/loader.min.js';
+    import { CoreProcessor } from '../verovio/core-processor.min.js';
+    import { ScoreUIHandler } from '../verovio/score-ui-handler.min.js';
+    import { defaultOptions } from '../verovio/render-options.js'; // オプションが必要な場合
+    */
+    import { loadVerovio } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0//verovio/loader.min.js';
+    import { CoreProcessor } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0//verovio/core-processor.min.js';
+    import { ScoreUIHandler } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0//verovio/score-ui-handler.min.js';
+    import { defaultOptions } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0//verovio/render-options.js'; // オプションが必要な場合
+
+    
+
+
+    let coreProcessor;
+    const uiHandler = new ScoreUIHandler();
+    let embeddedMeiString = null;
+
+    // 初期化処理
+    async function initializeVerovio() {
+      if (!coreProcessor) {
+        const toolkit = await loadVerovio();
+        coreProcessor = new CoreProcessor(toolkit);
+        coreProcessor.setRenderOptions(defaultOptions); // 必要に応じてデフォルトオプションを設定
+
+        // HTMLからMEIデータを一度だけ取得
+        const meiScriptTag = document.getElementById('embeddedMei');
+        if (meiScriptTag) {
+          embeddedMeiString = meiScriptTag.textContent;
+          console.log('埋め込みMEIデータを取得しました。');
+        } else {
+          console.error("ID 'embeddedMei' のMEIデータが見つかりませんでした。");
+        }
+      }
+    }
+
+    // DOM 要素取得
+    const btnDisplayMei = document.getElementById('btnDisplayMei');
+    const btnRange = document.getElementById('btnRange');
+    const startInput = document.getElementById('startMeasure');
+    const endInput = document.getElementById('endMeasure');
+    const notationDiv = document.getElementById('notation');
+
+    // ヘルパー：エリアをクリア
+    function clearArea() {
+      notationDiv.innerHTML = '';
+      notationDiv.classList.remove('error', 'loading');
+    }
+
+    // 埋め込みMEIを表示ボタン
+    btnDisplayMei.addEventListener('click', async () => {
+      clearArea();
+      notationDiv.classList.add('loading');
+      notationDiv.textContent = '埋め込みMEIを読み込み中...';
+      try {
+        await initializeVerovio(); // Verovioを初期化し、MEIデータを取得
+        if (embeddedMeiString) {
+          const svg = await coreProcessor.renderSvgFromMei(embeddedMeiString);
+          uiHandler.displaySvg(svg, 'notation');
+        } else {
+          uiHandler.showError('埋め込みMEIデータがありません。', 'notation');
+        }
+      } catch (e) {
+        console.error('埋め込みMEI表示エラー:', e);
+        uiHandler.showError('埋め込みMEIの表示に失敗しました。', 'notation');
+      } finally {
+        notationDiv.classList.remove('loading');
+      }
+    });
+
+    // 範囲表示ボタン
+    btnRange.addEventListener('click', async () => {
+      clearArea();
+      notationDiv.classList.add('loading');
+      notationDiv.textContent = '範囲表示中...';
+      try {
+        await initializeVerovio(); // Verovioが初期化されていることを確認
+        if (embeddedMeiString) {
+          const start = startInput.value || 'start';
+          const end = endInput.value || 'end';
+          // CoreProcessor の renderSvgFromMei を使用して、小節範囲を適用して表示
+          const svg = await coreProcessor.renderSvgFromMei(
+            embeddedMeiString,
+            { measureRange: `${start}-${end}` }
+          );
+          uiHandler.displaySvg(svg, 'notation');
+        } else {
+          uiHandler.showError('埋め込みMEIデータがありません。', 'notation');
+        }
+      } catch (e) {
+        console.error('範囲表示エラー:', e);
+        uiHandler.showError('範囲表示に失敗しました。', 'notation');
+      } finally {
+        notationDiv.classList.remove('loading');
+      }
+    });
+
+    // ページロード時にVerovioを初期化する（オプション）
+    // window.addEventListener('DOMContentLoaded', initializeVerovio);
+
+  </script>
+</body>
+</html>

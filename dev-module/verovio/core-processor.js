@@ -1,32 +1,50 @@
-// dev-module/verovio/core-processor.js
+// module/verovio/core-processor.js
 
-import { loadVerovio } from './loader.js';
+// Verovio ローダーからインポートします
+import { loadVerovio } from './loader.min.js';
 
 /**
  * CoreProcessor は VerovioToolkit を使い、
  * MEI → SVG/MIDI の変換ロジックを提供します。
  */
 export class CoreProcessor {
-  /** @private */
-  #toolkit = null;
-  /** @private */
+  /** @private @type {verovio.Toolkit} */
+  #toolkit;
+  /** @private @type {object} */
   #renderOptions = {};
+  /** @private @type {string|null} */
+  #meiData = null;
 
   /**
-   * 初期化時にロード済みの Toolkit インスタンスを渡します。
-   * @param {verovio.Toolkit} toolkit - 初期化済み Verovio Toolkit
+   * @param {verovio.Toolkit} toolkit - 初期化済み Verovio Toolkit インスタンス
+   * @throws {Error} toolkit が渡されない場合
    */
   constructor(toolkit) {
     if (!toolkit) {
       throw new Error('Verovio Toolkit インスタンスが必要です。');
     }
     this.#toolkit = toolkit;
-    // オプションを初期適用
+    // 初期オプションを適用
     this.#toolkit.setOptions(this.#renderOptions);
   }
 
   /**
-   * レンダリングオプションをマージして設定します。
+   * @private
+   * URL から MEI を取得して文字列で返します。
+   * @param {string} url
+   * @returns {Promise<string>}
+   * @throws {Error} ネットワークエラー時
+   */
+  static async #fetchMei(url) {
+    const res = await fetch(url);
+    if (!res.ok) {
+      throw new Error(`MEI の取得に失敗: ${res.status} ${res.statusText}`);
+    }
+    return res.text();
+  }
+
+  /**
+   * レンダリングオプションをマージして適用します。
    * @param {object} options - Verovio の setOptions に渡す設定オブジェクト
    */
   setRenderOptions(options) {
@@ -35,58 +53,78 @@ export class CoreProcessor {
   }
 
   /**
-   * URL から MEI を取得し、SVG を生成します。
-   * @param {string} url - MEI ファイルの URL
-   * @returns {Promise<string>} SVG 文字列
+   * 現在ロードされている MEI データを返します。
+   * @returns {string|null}
    */
-  async renderSvgFromUrl(url) {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`MEI の取得に失敗: ${res.status} ${res.statusText}`);
-    }
-    const mei = await res.text();
-    this.#toolkit.loadData(mei);
-    return this.#toolkit.renderToSVG(1);
+  getCurrentMeiData() {
+    return this.#meiData;
+  }
+
+  /**
+   * @private
+   * 指定した小節範囲を適用し、レイアウトを再計算します。
+   * @param {string} range - 小節範囲 (例: "1-5" または "start-end")
+   */
+  async #applyMeasureRange(range) {
+    this.#toolkit.select({ measureRange: range });
+    // レイアウト再計算完了まで待機
+    await this.#toolkit.redoLayout();
   }
 
   /**
    * MEI 文字列から SVG を生成します。
-   * @param {string} meiData - MEI XML 文字列
-   * @returns {string} SVG 文字列
+   * @param {string} mei - MEI XML 文字列
+   * @param {object} [options]
+   * @param {number} [options.page=1] - 取得ページ番号
+   * @param {string} [options.measureRange='start-end'] - 小節範囲
+   * @returns {Promise<string>} SVG 文字列
+   * @throws {Error} MEI 未ロード時
    */
-  renderSvgFromMei(meiData) {
-    this.#toolkit.loadData(meiData);
-    return this.#toolkit.renderToSVG(1);
-  }
-
-  /**
-   * URL から MEI を取得し、MIDI バイナリを返します。
-   * @param {string} url - MEI ファイルの URL
-   * @returns {Promise<ArrayBuffer>} MIDI データ
-   */
-  async renderMidiFromUrl(url) {
-    const res = await fetch(url);
-    if (!res.ok) {
-      throw new Error(`MEI の取得に失敗: ${res.status} ${res.statusText}`);
-    }
-    const mei = await res.text();
-    return this._renderMidi(mei);
-  }
-
-  /**
-   * MEI 文字列から MIDI バイナリを生成します。
-   * @param {string} meiData - MEI XML 文字列
-   * @returns {ArrayBuffer} MIDI データ
-   */
-  renderMidiFromMei(meiData) {
-    return this._renderMidi(meiData);
-  }
-
-  /** @private */
-  _renderMidi(mei) {
+  async renderSvgFromMei(mei, { page = 1, measureRange = 'start-end' } = {}) {
+    // MEI データを保存しロード
+    this.#meiData = mei;
     this.#toolkit.loadData(mei);
-    const base64 = this.#toolkit.renderToMIDI();
-    // Base64 → ArrayBuffer
+    // 小節範囲を適用
+    await this.#applyMeasureRange(measureRange);
+    // SVG を返す
+    return this.#toolkit.renderToSVG(page);
+  }
+
+  /**
+   * URL から MEI をフェッチして SVG を生成します。
+   * @param {string} url
+   * @param {object} [options]
+   * @returns {Promise<string>} SVG 文字列
+   */
+  async renderSvgFromUrl(url, options) {
+    const mei = await CoreProcessor.#fetchMei(url);
+    return this.renderSvgFromMei(mei, options);
+  }
+
+  /**
+   * 現在ロード中の MEI から再レンダリングします。
+   * 主に小節範囲変更後の更新用。
+   * @param {object} [options]
+   * @param {number} [options.page=1]
+   * @param {string} [options.measureRange='start-end']
+   * @returns {Promise<string>} SVG 文字列
+   * @throws {Error} MEI 未ロード時
+   */
+  async renderCurrentSvg({ page = 1, measureRange = 'start-end' } = {}) {
+    if (!this.#meiData) {
+      throw new Error('MEI データがロードされていません。');
+    }
+    await this.#applyMeasureRange(measureRange);
+    return this.#toolkit.renderToSVG(page);
+  }
+
+  /**
+   * @private
+   * Base64 文字列を ArrayBuffer に変換します。
+   * @param {string} base64
+   * @returns {ArrayBuffer}
+   */
+  static #decodeMidiBase64(base64) {
     const bin = atob(base64);
     const len = bin.length;
     const bytes = new Uint8Array(len);
@@ -97,7 +135,42 @@ export class CoreProcessor {
   }
 
   /**
-   * 現在ロード中のページ数を返します。
+   * MEI 文字列から MIDI バイナリを生成します。
+   * @param {string} mei - MEI XML 文字列
+   * @returns {ArrayBuffer} MIDI データ
+   */
+  renderMidiFromMei(mei) {
+    this.#meiData = mei;
+    this.#toolkit.loadData(mei);
+    const base64 = this.#toolkit.renderToMIDI();
+    return CoreProcessor.#decodeMidiBase64(base64);
+  }
+
+  /**
+   * URL から MEI を取得し MIDI バイナリを生成します。
+   * @param {string} url
+   * @returns {Promise<ArrayBuffer>} MIDI データ
+   */
+  async renderMidiFromUrl(url) {
+    const mei = await CoreProcessor.#fetchMei(url);
+    return this.renderMidiFromMei(mei);
+  }
+
+  /**
+   * 現在ロード中の MEI から MIDI を再生成します。
+   * @returns {ArrayBuffer}
+   * @throws {Error} MEI 未ロード時
+   */
+  renderCurrentMidi() {
+    if (!this.#meiData) {
+      throw new Error('MEI データがロードされていません。');
+    }
+    const base64 = this.#toolkit.renderToMIDI();
+    return CoreProcessor.#decodeMidiBase64(base64);
+  }
+
+  /**
+   * 現在ロード中の総ページ数を返します。
    * @returns {number}
    */
   getPageCount() {

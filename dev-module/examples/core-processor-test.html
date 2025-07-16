@@ -1,4 +1,4 @@
-<!-- dev-module/examples/core-processor-test.html -->
+<!-- module/examples/core-processor-test.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -11,8 +11,11 @@
   <h1>CoreProcessor SVG テスト</h1>
   <div id="score">ここに SVG が表示されます</div>
   <script type="module">
-    import { loadVerovio } from '../../dev-module/verovio/loader.js';
-    import { CoreProcessor } from '../../dev-module/verovio/core-processor.js';
+    //import { loadVerovio } from '../../module/verovio/loader.js';
+    //import { CoreProcessor } from '../../module/verovio/core-processor.js';
+    import { loadVerovio } from '../../module/verovio/loader.js';
+    import { CoreProcessor } from '../../module/verovio/core-processor.js';
+    import { svgViewBox } from '../../module/verovio/render-options.js';
 
     async function run() {
       try {
@@ -22,7 +25,7 @@
         console.log('CoreProcessor 作成');
 
         // オプション例（任意）
-        proc.setRenderOptions({ pageWidth: 800, scale: 80 });
+        proc.setRenderOptions(svgViewBox);
 
         // テスト用 MEI
         const meiUrl = './sample.mei';

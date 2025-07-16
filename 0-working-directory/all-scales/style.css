@@ -1,0 +1,152 @@
+.verovio-loading {
+    text-align: center;
+    padding: 1em;
+    font-style: italic;
+    color: #666;
+}
+
+.verovio-error {
+    color: #c00;
+    padding: 1em;
+    border: 1px solid #c00;
+    background: #fee;
+}
+
+
+
+/* 言語選択 */
+.as-language-selector-group {
+    text-align: right;
+    /* ドロップダウンを右寄せ */
+    margin-bottom: 20px;
+    /* 下に余白 */
+    padding: 10px;
+    background-color: #f0f0f0;
+    border-bottom: 1px solid #ccc;
+}
+
+#language-selector {
+    padding: 5px 10px;
+    border-radius: 5px;
+    border: 1px solid #aaa;
+    font-size: 1rem;
+}
+
+
+
+
+/*調を選択ラジオ*/
+.as-key-buttons {
+    white-space: nowrap;
+    overflow-x: auto;
+}
+
+.as-key-buttons input[type="radio"] {
+    /* 通常のラジオボタンを完全に隠す */
+    display: none;
+}
+
+.as-key-buttons .as-key-button {
+    /* これはlabel要素 */
+    display: inline-block;
+    /* または flex, grid */
+    padding: 8px 15px;
+    margin: 5px;
+    border: 1px solid #ccc;
+    border-radius: 5px;
+    background-color: #f9f9f9;
+    cursor: pointer;
+    text-align: center;
+    user-select: none;
+    /* テキスト選択を無効化 */
+    transition: all 0.2s ease;
+}
+
+/* 選択された状態のスタイル */
+.as-key-buttons input[type="radio"]:checked+.as-key-button {
+    background-color: #007bff;
+    /* 例: 青色 */
+    color: white;
+    border-color: #007bff;
+}
+
+/* ホバー時のスタイル */
+.as-key-buttons .as-key-button:hover {
+    background-color: #e9e9e9;
+}
+
+/* 選択済みのボタンにホバーしても色が変わりすぎないように */
+.as-key-buttons input[type="radio"]:checked+.as-key-button:hover {
+    background-color: #0056b3;
+    /* 選択済み状態より少し濃い色 */
+}
+
+
+/* スケール部分 */
+.scale-card {
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    padding: 20px;
+    margin: 20px auto;
+    width: auto;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+    font-family: Arial, sans-serif;
+}
+
+.scale-card h3 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 25px;
+    font-size: 1.8em;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #eee;
+}
+
+.scale-item {
+    margin-bottom: 20px;
+    /* 各スケールブロックの下にスペースを追加 */
+    padding: 15px;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    background-color: #fcfcfc;
+}
+
+.scale-card h4 {
+    color: #555;
+    margin-top: 20px;
+    margin-bottom: 10px;
+    font-size: 1.3em;
+}
+
+.vrv-simple-viewer {
+    border: 1px solid #ddd;
+    padding: 15px;
+    margin-bottom: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    /* This will vary based on how the actual viewer renders,
+       but this provides a good visual placeholder */
+    min-height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+    color: #666;
+}
+
+/* Optional: Add some responsiveness */
+@media (max-width: 768px) {
+    .scale-card {
+        margin: 15px;
+        padding: 15px;
+    }
+
+    .scale-card h3 {
+        font-size: 1.5em;
+    }
+
+    .scale-card h4 {
+        font-size: 1.1em;
+    }
+}

@@ -1,0 +1,159 @@
+
+<!DOCTYPE html>
+<html lang="ja">
+
+<!-- 
+ TODO:
+ 前半の入力が終わったら、自動で後半のラジオボタンを選択。後半の入力が終わったら、自動で前半を選択。
+ 問題文？メッセージ？みたいなもので、今何をするかを教えてくれるとよい。
+ ・前半のリズムを選択してください。
+ ・後半のリズムを選択してください。
+ ・解答を送信してください。
+
+ CSSの検討（ワードプレスに移動するうえで不要を削除）
+-->
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhythm Dictation Mini</title>
+
+    <!-- 既存のsimple-tab-componentのスタイルシート -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@2.3.0/components/simple-tab-component/style.min.css">
+    <!-- 新しく分離したスタイルシート -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Tone.js CDNの追加 (script.js内のローダーが動的に読み込むため、ここでは必須ではないが、既存に合わせて残す) -->
+    <script src="https://unpkg.com/tone"></script>
+    <!-- @tonejs/midi CDNの追加 (script.js内のローダーが動的に読み込むため、ここでは必須ではないが、既存に合わせて残す) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.2/build/midi.min.js"></script>
+
+    <style>
+        /* 視覚的に要素を隠すが、スクリーンリーダーからはアクセス可能にするためのスタイル */
+        .visually-hidden {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            margin: -1px;
+            padding: 0;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            border: 0;
+        }
+    </style>
+    <!-- リズムボタンのテンプレートを追加 -->
+    <template id="rhythm-button-template">
+        <button class="rhythm-select-button">
+            <img src="" alt="" class="rhythm-image">
+        </button>
+    </template>
+</head>
+
+<body>
+
+
+
+    <!-- メインアプリケーションセクション -->
+    <section id="rhythm-dictation-mini-app-section">
+        <div class="simple-tab-component-container" data-default-tab="question" data-deep-link="true">
+            <div class="tabs">
+                <button class="tab-button" data-tab="question">問題</button>
+                <button class="tab-button" data-tab="answer">解答</button>
+                <button class="tab-button" data-tab="settings">設定</button>
+            </div>
+
+            <div class="tab-content">
+                <!-- 問題タブ -->
+                <div id="question" class="tab-pane">
+                    <h3 class="visually-hidden">出題</h3>
+                    <button class="activation-button">聴音を開始</button>
+                    <div class="question-main visually-hidden"> <!-- 初期状態で非表示にする -->
+                        <button class="play-correct-answer-button">出題音源を聴く（もう一度聴く）</button>
+                        <div class="user-select-area">
+                            <div class="score-display selected-answer-display">
+                                <!-- ユーザーが選択したリズムが表示される場所 -->
+                                <div class="first-half-display">
+                                    <p>前半</p>
+                                </div>
+                                <div class="second-half-display">
+                                    <p>後半</p>
+                                </div>
+                            </div>
+                            <div>
+                                <p>リズムをどの位置に配置しますか？</p>
+                                <div class="flex-container">
+                                    <label class="radio-label">
+                                        <input type="radio" class="form-radio" name="rhythm-position" value="first" checked>
+                                        <span class="radio-text">前半</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" class="form-radio" name="rhythm-position" value="second">
+                                        <span class="radio-text">後半</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="user-select-buttons">
+                                <!-- JavaScriptによってリズムの画像ボタンがここに動的に挿入されます -->
+                            </div>
+                        </div>
+                        <hr>
+                        <button class="show-answer">解答を送信</button>
+                    </div>
+                </div>
+
+                <!-- 解答タブ -->
+                <div id="answer" class="tab-pane">
+                    <h3 class="visually-hidden">解答</h3>
+                    <div class="correct-answer">
+                        <h4>正しい解答</h4>
+                        <div class="score-display correct-answer-display" id="correct-answer-display">
+                            <!-- 正しいリズムが表示される場所 -->
+                            <p>ここに正しいリズムが表示されます</p>
+                        </div>
+                        <button class="play-correct-answer-button">解答音源を聴く</button>
+                    </div>
+                    <div class="selected-answer">
+                        <h4>あなたの選択</h4>
+                        <div class="score-display selected-answer-display" id="selected-answer-display">
+                            <!-- ユーザーが選択したリズムが表示される場所 -->
+                            <p>ここにあなたの選択が表示されます</p>
+                        </div>
+                        <button class="play-selected-answer-button">ユーザー選択音源を聴く</button>
+                    </div>
+                    <hr>
+                    <button class="new-question-button">新しい問題を生成</button>
+                </div>
+
+                <!-- 設定タブ -->
+                <div id="settings" class="tab-pane">
+                    <h3 class="visually-hidden">設定</h3>
+                    <div class="question-setting">
+                        <h4>問題設定</h4>
+                        <!-- ここに問題に関する設定項目を追加するスペース -->
+                        <p>現在、問題設定はありません。</p>
+                    </div>
+                    <div class="sequencer-setting">
+                        <h4>シーケンサー設定</h4>
+                        <div class="tempo-slider">
+                            <label for="tempoRange">テンポ (BPM):</label>
+                            <input type="range" id="tempoRange" name="tempo" min="40" max="240" value="80">
+                            <span id="currentTempoValue">80</span> BPM
+                        </div>
+                        <div class="volume-slider">
+                            <label for="volumeRange">音量:</label>
+                            <input type="range" id="volumeRange" name="volume" min="0" max="100" value="70">
+                            <span id="currentVolumeValue">70</span> %
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- simple-tab-componentのスクリプト -->
+    <script
+        src="https://cdn.jsdelivr.net/gh/kogu0507/module@2.3.0/components/simple-tab-component/script.min.js"></script>
+    <!-- 新しく分離したメインのスクリプトファイル -->
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

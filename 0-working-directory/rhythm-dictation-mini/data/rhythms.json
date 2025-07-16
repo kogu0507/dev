@@ -1,0 +1,77 @@
+{
+    "rhythms": [
+        {
+            "id": "rhythm001",
+            "description": "2分音符",
+            "imagePath": "https://placehold.co/100x100/aabbcc/ffffff?text=Rhythm001",
+            "notes_data": [
+                { "type": "note", "noteId": "1-rhy001", "dur": 2, "pname": "g", "oct": 4}
+            ]
+        },
+        {
+            "id": "rhythm002",
+            "description": "4分音符+4分音符",
+            "imagePath": "https://placehold.co/100x100/aabbcc/ffffff?text=Rhythm002",
+            "notes_data": [
+                { "type": "note", "noteId": "1-rhy002", "dur": 4, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "2-rhy002", "dur": 4, "pname": "g", "oct": 4}
+            ]
+        },
+        {
+            "id": "rhythm003",
+            "description": "4分音符+8分音符+8分音符",
+            "imagePath": "https://placehold.co/100x100/aabbcc/ffffff?text=Rhythm003",
+            "notes_data": [
+                { "type": "note", "noteId": "1-rhy003", "dur": 4, "pname": "g", "oct": 4},
+                { "type": "beam"},
+                { "type": "note", "noteId": "2-rhy003", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "3-rhy003", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "/beam"}
+            ]
+        },
+        {
+            "id": "rhythm004",
+            "description": "8分音符+8分音符+4分音符",
+            "imagePath": "https://placehold.co/100x100/aabbcc/ffffff?text=Rhythm004",
+            "notes_data": [
+                { "type": "beam"},
+                { "type": "note", "noteId": "1-r004", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "2-r004", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "/beam"},
+                { "type": "note", "noteId": "3-r004", "dur": 4, "pname": "g", "oct": 4}
+            ]
+        },
+        {
+            "id": "rhythm005",
+            "description": "8分音符+4分音符+8分音符",
+            "imagePath": "https://placehold.co/100x100/aabbcc/ffffff?text=Rhythm005",
+            "notes_data": [
+                { "type": "note", "noteId": "1-r005", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "2-r005", "dur": 4, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "3-r005", "dur": 8, "pname": "g", "oct": 4}
+            ]
+        },
+        {
+            "id": "rhythm006",
+            "description": "8分音符+8分音符+8分音符+8分音符",
+            "imagePath": "https://placehold.co/100x100/aabbcc/ffffff?text=Rhythm006",
+            "notes_data": [
+                { "type": "beam"},
+                { "type": "note", "noteId": "1-r006", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "2-r006", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "3-r006", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "4-r006", "dur": 8, "pname": "g", "oct": 4},
+                { "type": "/beam"}
+            ]
+        },
+        {
+            "id": "rhythm007",
+            "description": "付点4分音符+8分音符",
+            "imagePath": "https://placehold.co/100x100/aabbcc/ffffff?text=Rhythm007",
+            "notes_data": [
+                { "type": "note", "noteId": "1-r007", "dur": 4, "dots": 1, "pname": "g", "oct": 4},
+                { "type": "note", "noteId": "2-r007", "dur": 8, "pname": "g", "oct": 4}
+            ]
+        }
+    ]
+}

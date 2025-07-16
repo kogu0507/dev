@@ -1,4 +1,4 @@
-// dev-module/verovio/transposer.js
+// module/verovio/transposer.js
 
 /**
  * Transposer は MEI データを指定した半音数だけ移調し、

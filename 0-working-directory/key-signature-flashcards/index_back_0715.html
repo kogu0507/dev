@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-jp="調号フラッシュカード" data-en="Key Signature Flashcards" data-de="Tonartvorzeichen Lernkarten">調号フラッシュカード
+    </title>
+    <style>
+        /* Interフォントを適用 */
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 1rem;
+            background-color: #f8f8f8;
+            /* 非常に薄いグレー */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            /* パディングを幅に含める */
+        }
+
+        /* レスポンシブなパディング */
+        @media (min-width: 640px) {
+
+            /* sm */
+            body {
+                padding: 2rem;
+            }
+        }
+
+        .main-container {
+            max-width: 96rem;
+            /* Tailwind max-w-6xl */
+            width: 100%;
+            background-color: #ffffff;
+            /* 白 */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            /* rounded-xl */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            /* 控えめな影 */
+        }
+
+        @media (min-width: 640px) {
+
+            /* sm */
+            .main-container {
+                padding: 2rem;
+            }
+        }
+
+        /* 新しいH2スタイル（旧H1） */
+        h2 {
+            font-size: 1.875rem;
+            /* text-3xl */
+            font-weight: bold;
+            text-align: center;
+            color: #222222;
+            /* 濃いグレー */
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 640px) {
+
+            /* sm */
+            h2 {
+                font-size: 2.25rem;
+                /* text-4xl */
+            }
+        }
+
+        /* 新しいH3スタイル（旧H2） */
+        h3 {
+            font-size: 1.5rem;
+            /* text-2xl */
+            font-weight: 600;
+            /* font-semibold */
+            color: #333333;
+            /* 中間のグレー */
+            margin-bottom: 1.5rem;
+            text-align: center;
+            border-bottom: 1px solid #cccccc;
+            /* 控えめな下線 */
+            padding-bottom: 0.5rem;
+        }
+
+        @media (min-width: 640px) {
+
+            /* sm */
+            h3 {
+                font-size: 1.875rem;
+                /* text-3xl */
+            }
+        }
+
+        /* 画像の最大幅を設定し、はみ出しを防ぐ */
+        img {
+            max-width: 100%;
+            height: auto;
+        }
+
+        /* ボタンコンテナ */
+        .button-group {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            /* gap-4 */
+            margin-bottom: 2rem;
+            flex-direction: column;
+            /* sm:flex-row */
+            align-items: center;
+        }
+
+        @media (min-width: 640px) {
+
+            /* sm */
+            .button-group {
+                flex-direction: row;
+            }
+        }
+
+        /* ボタンの基本的なスタイル */
+        .custom-button {
+            padding: 0.75rem 1.5rem;
+            /* px-6 py-3 */
+            border-radius: 0.75rem;
+            /* rounded-xl */
+            font-weight: 600;
+            /* font-semibold */
+            font-size: 1.125rem;
+            /* text-lg */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            /* shadow-md */
+            transition: all 0.3s ease-in-out;
+            border: none;
+            /* デフォルトのボーダーを削除 */
+            cursor: pointer;
+            width: 100%;
+            /* w-full */
+        }
+
+        @media (min-width: 640px) {
+
+            /* sm */
+            .custom-button {
+                width: auto;
+                /* sm:w-auto */
+            }
+        }
+
+        /* アクティブなボタンのスタイル */
+        .custom-button.active {
+            background-color: #607d8b;
+            /* スレートグレー */
+            color: #ffffff;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            /* 強い影 */
+        }
+
+        /* 非アクティブなボタンのスタイル */
+        .custom-button:not(.active) {
+            background-color: #dddddd;
+            /* 薄いグレー */
+            color: #333333;
+        }
+
+        .custom-button:not(.active):hover {
+            background-color: #cccccc;
+            /* ホバーで少し濃く */
+        }
+
+        /* 特定のボタンの色 */
+        .btn-green {
+            background-color: #4CAF50;
+            /* 緑 */
+            color: white;
+        }
+
+        .btn-green:hover {
+            background-color: #45a049;
+        }
+
+        .btn-indigo {
+            background-color: #5C6BC0;
+            /* インディゴ */
+            color: white;
+        }
+
+        .btn-indigo:hover {
+            background-color: #515b9f;
+        }
+
+        .btn-gray-dark {
+            background-color: #555555;
+            /* 暗いグレー */
+            color: white;
+        }
+
+        .btn-gray-dark:hover {
+            background-color: #444444;
+        }
+
+        .btn-gray-light {
+            background-color: #aaaaaa;
+            /* 明るいグレー */
+            color: white;
+        }
+
+        .btn-gray-light:hover {
+            background-color: #999999;
+        }
+
+
+        /* セレクターのスタイル */
+        .custom-select {
+            padding: 0.5rem;
+            /* p-2 */
+            border-radius: 0.375rem;
+            /* rounded-md */
+            border: 1px solid #cccccc;
+            /* border border-gray-300 */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            /* shadow-sm */
+            color: #333333;
+            /* text-gray-700 */
+            width: 100%;
+            /* w-full */
+            background-color: #ffffff;
+        }
+
+        @media (min-width: 640px) {
+
+            /* sm */
+            .custom-select {
+                width: auto;
+                /* sm:w-auto */
+            }
+        }
+
+        /* フラッシュカードセクション */
+        .flashcard-section {
+            margin-bottom: 2.5rem;
+            /* mb-10 */
+            padding: 1.5rem;
+            /* p-6 */
+            background-color: #f0f0f0;
+            /* 薄いグレー */
+            border-radius: 0.75rem;
+            /* rounded-xl */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            /* shadow-md */
+        }
+
+        /* 問題/解答表示エリア */
+        .display-area {
+            text-align: center;
+            font-size: 1.25rem;
+            /* text-xl */
+            font-weight: bold;
+            color: #333333;
+            /* text-gray-800 */
+            background-color: #e0e0e0;
+            /* 少し濃いグレー */
+            padding: 1rem;
+            /* p-4 */
+            border-radius: 0.5rem;
+            /* rounded-lg */
+            min-height: 6rem;
+            /* min-h-[6rem] */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .question-display {
+            margin-bottom: 1rem;
+            /* mb-4 */
+            flex-direction: column;
+            /* 問題も縦に並ぶように */
+        }
+
+        .answer-display {
+            flex-direction: column;
+            gap: 0.5rem;
+            /* gap-2 */
+        }
+
+        /* エラーテキスト */
+        .error-text {
+            color: #dc2626;
+            /* text-red-600 */
+        }
+
+        /* 調号アイテムコンテナ */
+        .key-signatures-container {
+            display: flex;
+            justify-content: flex-start;
+            /* justify-start */
+            gap: 1rem;
+            /* gap-4 */
+            padding-bottom: 1rem;
+            /* pb-4 */
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        /* 縦並び時のスタイル */
+        .key-signatures-container.vertical {
+            flex-direction: column;
+            align-items: center;
+            overflow-x: hidden;
+            /* 縦並び時は横スクロールを無効化 */
+            white-space: normal;
+            /* 縦並び時は折り返しを許可 */
+        }
+
+        /* 各調号アイテム */
+        .key-signature-item {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 1rem;
+            /* p-4 */
+            border-radius: 0.5rem;
+            /* rounded-lg */
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+            /* shadow-md */
+            width: 12rem;
+            /* w-48 */
+            flex-shrink: 0;
+            /* flex-shrink-0 */
+            transition: background-color 0.3s ease;
+            /* 背景色変化をスムーズに */
+        }
+
+        /* フラット系カードの背景色 */
+        .key-signature-item[data-sharps-flats^="-"] {
+            background-color: #f0f8ff;
+            /* 非常に薄い青 */
+        }
+
+        /* シャープ系カードの背景色 */
+        .key-signature-item[data-sharps-flats^="1"],
+        .key-signature-item[data-sharps-flats^="2"],
+        .key-signature-item[data-sharps-flats^="3"],
+        .key-signature-item[data-sharps-flats^="4"],
+        .key-signature-item[data-sharps-flats^="5"],
+        .key-signature-item[data-sharps-flats^="6"],
+        .key-signature-item[data-sharps-flats^="7"] {
+            background-color: #fff8f0;
+            /* 非常に薄いオレンジ */
+        }
+
+        /* ナチュラルキーの背景色 */
+        .key-signature-item[data-sharps-flats="0"] {
+            background-color: #f5f5f5;
+            /* 薄いグレー */
+        }
+
+
+        /* 縦並び時のアイテム幅 */
+        .key-signatures-container.vertical .key-signature-item {
+            width: 100%;
+            /* w-full */
+            max-width: 20rem;
+            /* max-w-xs */
+            flex-shrink: 1;
+            /* 縮小を許可 */
+        }
+
+        .key-signature-item p {
+            font-size: 1.125rem;
+            /* text-lg */
+            font-weight: 500;
+            /* font-medium */
+            color: #333333;
+            /* text-gray-700 */
+            margin-bottom: 0.5rem;
+            /* mb-2 */
+            text-align: center;
+        }
+
+        .key-signature-item span {
+            font-size: 0.875rem;
+            /* text-sm */
+            text-align: center;
+            color: #555555;
+            /* text-gray-700 */
+        }
+
+        .key-signature-item img {
+            width: 8rem;
+            /* w-32 */
+            height: 8rem;
+            /* h-32 */
+            object-fit: contain;
+        }
+
+        .key-signature-item .natural-placeholder {
+            width: 8rem;
+            /* w-32 */
+            height: 8rem;
+            /* h-32 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888888;
+            /* text-gray-500 */
+            font-size: 1rem;
+            /* text-base */
+            border: 1px solid #aaaaaa;
+            /* border border-gray-400 */
+            border-radius: 0.375rem;
+            /* rounded-md */
+        }
+
+        /* チェックボックスのコンテナ */
+        .checkbox-container {
+            position: absolute;
+            top: 0.5rem;
+            /* top-2 */
+            left: 0.5rem;
+            /* left-2 */
+        }
+
+        /* チェックボックスの基本スタイル（ブラウザデフォルトを利用） */
+        .memorized-checkbox {
+            height: 1.25rem;
+            /* h-5 */
+            width: 1.25rem;
+            /* w-5 */
+            /* text-blue-600 はブラウザのアクセントカラーに依存するため、ここでは明示的に指定しない */
+            /* rounded はブラウザデフォルトで角丸になることが多い */
+            cursor: pointer;
+        }
+
+        /* 解答表示エリア内のチェックボックス */
+        #answerMemorizedCheckbox {
+            height: 1.5rem;
+            /* h-6 */
+            width: 1.5rem;
+            /* w-6 */
+            /* text-green-600 はブラウザのアクセントカラーに依存するため、ここでは明示的に指定しない */
+        }
+
+        /* 解答表示エリア内のチェックボックスラベル */
+        #answerDisplay label {
+            font-size: 1.125rem;
+            /* text-lg */
+            font-weight: 500;
+            /* font-medium */
+            color: #333333;
+            /* text-gray-700 */
+            margin-left: 0.25rem;
+            /* gap-2 の代わり */
+        }
+
+        /* 横スクロール時のスクロールバーのスタイル調整 */
+        .overflow-x-auto::-webkit-scrollbar {
+            height: 8px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-track {
+            background: #e0e0e0;
+            border-radius: 10px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+
+        .overflow-x-auto::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+
+        .overflow-x-auto {
+            scrollbar-width: thin;
+            scrollbar-color: #888 #e0e0e0;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-100 p-4 sm:p-8 flex flex-col items-center min-h-screen">
+    <div class="main-container">
+        <h2 data-jp="調号フラッシュカード" data-en="Key Signature Flashcards" data-de="Tonartvorzeichen Lernkarten">
+            調号フラッシュカード
+        </h2>
+
+        <!-- フラッシュカードセクション -->
+        <section class="flashcard-section">
+            <h3 data-jp="フラッシュカード" data-en="Flashcard" data-de="Lernkarten">
+                フラッシュカード
+            </h3>
+
+            <div class="button-group">
+                <!-- 出題形式セレクター -->
+                <label for="question-type-selector" class="sr-only">出題形式</label>
+                <select id="question-type-selector" class="custom-select">
+                    <option value="nameToSig" data-jp="調名から調号" data-en="Name to Key Sig" data-de="Name zu Vorzeichen">
+                        調名から調号</option>
+                    <option value="sigToName" data-jp="調号から調名" data-en="Key Sig to Name" data-de="Vorzeichen zu Name">
+                        調号から調名</option>
+                </select>
+
+                <!-- 問題出題ボタン -->
+                <button id="generateQuestionBtn" class="custom-button btn-green" data-jp="問題を出題"
+                    data-en="Generate Question" data-de="Frage generieren">
+                    問題を出題
+                </button>
+                <!-- 解答表示ボタン -->
+                <button id="showAnswerBtn" class="custom-button btn-indigo" data-jp="解答を表示" data-en="Show Answer"
+                    data-de="Antwort anzeigen">
+                    解答を表示
+                </button>
+            </div>
+
+            <!-- 問題表示エリア -->
+            <div id="questionDisplay" class="display-area question-display">
+                <!-- 問題がここに表示されます -->
+            </div>
+
+            <!-- 解答表示エリア (調号画像用) -->
+            <div id="answerDisplay" class="display-area answer-display">
+                <!-- 解答がここに表示されます -->
+            </div>
+        </section>
+
+
+        <!-- レイアウト切り替えボタン -->
+        <div class="button-group">
+            <button id="horizontalLayoutBtn" class="custom-button active" data-jp="横並び" data-en="Horizontal"
+                data-de="Horizontal">
+                横並び
+            </button>
+            <button id="verticalLayoutBtn" class="custom-button" data-jp="縦並び" data-en="Vertical" data-de="Vertikal">
+                縦並び
+            </button>
+        </div>
+
+        <!-- 一括チェック/解除ボタン -->
+        <div class="button-group">
+            <button id="markAllMemorizedBtn" class="custom-button btn-gray-dark" data-jp="すべて暗記済みにする"
+                data-en="Mark All Memorized" data-de="Alle als gelernt markieren">
+                すべて暗記済みにする
+            </button>
+            <button id="unmarkAllMemorizedBtn" class="custom-button btn-gray-light" data-jp="すべて未暗記にする"
+                data-en="Mark All Unmemorized" data-de="Alle als ungelernt markieren">
+                すべて未暗記にする
+            </button>
+        </div>
+
+        <!-- 言語セレクター & フィルターセレクター -->
+        <div class="button-group">
+            <label for="language-selector" class="sr-only">言語選択</label>
+            <select id="language-selector" class="custom-select">
+                <option value="jp">日本語</option>
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+            </select>
+
+            <label for="filter-selector" class="sr-only">表示フィルター</label>
+            <select id="filter-selector" class="custom-select">
+                <option value="all" data-jp="すべて表示" data-en="Show All" data-de="Alle anzeigen">すべて表示</option>
+                <option value="upTo4" data-jp="♭♯4つまで表示" data-en="Up to 4 Sharps/Flats" data-de="Bis zu 4 Kreuze/B">
+                    ♭♯4つまで表示</option>
+                <option value="sharps" data-jp="♯系を表示" data-en="Show Sharps" data-de="Kreuze anzeigen">♯系を表示</option>
+                <option value="flats" data-jp="♭系を表示" data-en="Show Flats" data-de="B-Vorzeichen anzeigen">♭系を表示
+                </option>
+            </select>
+        </div>
+
+        <!-- 全ての調号を表示するコンテナ -->
+        <div id="keySignaturesContainer" class="key-signatures-container">
+            <!-- 各調号アイテム -->
+            <!-- 各divに data-sharps-flats と key-signature-item クラスを追加 -->
+            <!-- フラット7つ -->
+            <div class="key-signature-item" data-sharps-flats="-7">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_f7" class="memorized-checkbox" data-key-id="-7">
+                    <label for="memorized_f7" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♭7" data-en="7 Flats" data-de="7 B">♭7</p>
+                <span data-jp="(変ハ長調/変イ短調)" data-en="(C-flat Major/A-flat minor)" data-de="(Ces-Dur/as-Moll)">
+                    (変ハ長調/変イ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_7f.svg"
+                    alt="フラット7つの調号" data-key-sig-img="-7">
+            </div>
+            <!-- フラット6つ -->
+            <div class="key-signature-item" data-sharps-flats="-6">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_f6" class="memorized-checkbox" data-key-id="-6">
+                    <label for="memorized_f6" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♭6" data-en="6 Flats" data-de="6 B">♭6</p>
+                <span data-jp="(変ト長調/変ホ短調)" data-en="(G-flat Major/E-flat minor)" data-de="(Ges-Dur/es-Moll)">
+                    (変ト長調/変ホ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_6f.svg"
+                    alt="フラット6つの調号" data-key-sig-img="-6">
+            </div>
+            <!-- フラット5つ -->
+            <div class="key-signature-item" data-sharps-flats="-5">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_f5" class="memorized-checkbox" data-key-id="-5">
+                    <label for="memorized_f5" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♭5" data-en="5 Flats" data-de="5 B">♭5</p>
+                <span data-jp="(変ニ長調/変ロ短調)" data-en="(D-flat Major/B-flat minor)" data-de="(Des-Dur/b-Moll)">
+                    (変ニ長調/変ロ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_5f.svg"
+                    alt="フラット5つの調号" data-key-sig-img="-5">
+            </div>
+            <!-- フラット4つ -->
+            <div class="key-signature-item" data-sharps-flats="-4">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_f4" class="memorized-checkbox" data-key-id="-4">
+                    <label for="memorized_f4" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♭4" data-en="4 Flats" data-de="4 B">♭4</p>
+                <span data-jp="(変イ長調/ヘ短調)" data-en="(A-flat Major/F minor)" data-de="(As-Dur/f-Moll)">
+                    (変イ長調/ヘ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_4f.svg"
+                    alt="フラット4つの調号" data-key-sig-img="-4">
+            </div>
+            <!-- フラット3つ -->
+            <div class="key-signature-item" data-sharps-flats="-3">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_f3" class="memorized-checkbox" data-key-id="-3">
+                    <label for="memorized_f3" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♭3" data-en="3 Flats" data-de="3 B">♭3</p>
+                <span data-jp="(変ホ長調/ハ短調)" data-en="(E-flat Major/C minor)" data-de="(Es-Dur/c-Moll)">
+                    (変ホ長調/ハ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_3f.svg"
+                    alt="フラット3つの調号" data-key-sig-img="-3">
+            </div>
+            <!-- フラット2つ -->
+            <div class="key-signature-item" data-sharps-flats="-2">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_f2" class="memorized-checkbox" data-key-id="-2">
+                    <label for="memorized_f2" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♭2" data-en="2 Flats" data-de="2 B">♭2</p>
+                <span data-jp="(変ロ長調/ト短調)" data-en="(B-flat Major/G minor)" data-de="(B-Dur/g-Moll)">
+                    (変ロ長調/ト短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_2f.svg"
+                    alt="フラット2つの調号" data-key-sig-img="-2">
+            </div>
+            <!-- フラット1つ -->
+            <div class="key-signature-item" data-sharps-flats="-1">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_f1" class="memorized-checkbox" data-key-id="-1">
+                    <label for="memorized_f1" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♭1" data-en="1 Flat" data-de="1 B">♭1</p>
+                <span data-jp="(ヘ長調/ニ短調)" data-en="(F Major/D minor)" data-de="(F-Dur/d-Moll)">
+                    (ヘ長調/ニ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_1f.svg"
+                    alt="フラット1つの調号" data-key-sig-img="-1">
+            </div>
+            <!-- 調号なし -->
+            <div id="naturalKeySignature" class="key-signature-item" data-sharps-flats="0">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_n0" class="memorized-checkbox" data-key-id="0">
+                    <label for="memorized_n0" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="調号なし" data-en="No key signature" data-de="Kein Vorzeichen">調号なし</p>
+                <span data-jp="(ハ長調/イ短調)" data-en="(C Major/A minor)" data-de="(C-Dur/a-Moll)">
+                    (ハ長調/イ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_0.svg"
+                    alt="調号なしの調号" data-key-sig-img="0">
+            </div>
+            <!-- シャープ1つ -->
+            <div class="key-signature-item" data-sharps-flats="1">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_s1" class="memorized-checkbox" data-key-id="1">
+                    <label for="memorized_s1" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♯1" data-en="1 Sharp" data-de="1 Kreuz">♯1</p>
+                <span data-jp="(ト長調/ホ短調)" data-en="(G Major/E minor)" data-de="(G-Dur/e-Moll)">
+                    (ト長調/ホ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_1s.svg"
+                    alt="シャープ1つの調号" data-key-sig-img="1">
+            </div>
+            <!-- シャープ2つ -->
+            <div class="key-signature-item" data-sharps-flats="2">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_s2" class="memorized-checkbox" data-key-id="2">
+                    <label for="memorized_s2" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♯2" data-en="2 Sharps" data-de="2 Kreuze">♯2</p>
+                <span data-jp="(ニ長調/ロ短調)" data-en="(D Major/B minor)" data-de="(D-Dur/h-Moll)">
+                    (ニ長長調/ロ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_2s.svg"
+                    alt="シャープ2つの調号" data-key-sig-img="2">
+            </div>
+            <!-- シャープ3つ -->
+            <div class="key-signature-item" data-sharps-flats="3">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_s3" class="memorized-checkbox" data-key-id="3">
+                    <label for="memorized_s3" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♯3" data-en="3 Sharps" data-de="3 Kreuze">♯3</p>
+                <span data-jp="(イ長調/嬰ヘ短調)" data-en="(A Major/F-sharp minor)" data-de="(A-Dur/fis-Moll)">
+                    (イ長調/嬰ヘ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_3s.svg"
+                    alt="シャープ3つの調号" data-key-sig-img="3">
+            </div>
+            <!-- シャープ4つ -->
+            <div class="key-signature-item" data-sharps-flats="4">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_s4" class="memorized-checkbox" data-key-id="4">
+                    <label for="memorized_s4" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♯4" data-en="4 Sharps" data-de="4 Kreuze">♯4</p>
+                <span data-jp="(ホ長調/嬰ハ短調)" data-en="(E Major/C-sharp minor)" data-de="(E-Dur/cis-Moll)">
+                    (ホ長調/嬰ハ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_4s.svg"
+                    alt="シャープ4つの調号" data-key-sig-img="4">
+            </div>
+            <!-- シャープ5つ -->
+            <div class="key-signature-item" data-sharps-flats="5">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_s5" class="memorized-checkbox" data-key-id="5">
+                    <label for="memorized_s5" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♯5" data-en="5 Sharps" data-de="5 Kreuze">♯5</p>
+                <span data-jp="(ロ長調/嬰ト短調)" data-en="(B Major/G-sharp minor)" data-de="(H-Dur/gis-Moll)">
+                    (ロ長調/嬰ト短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_5s.svg"
+                    alt="シャープ5つの調号" data-key-sig-img="5">
+            </div>
+            <!-- シャープ6つ -->
+            <div class="key-signature-item" data-sharps-flats="6">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_s6" class="memorized-checkbox" data-key-id="6">
+                    <label for="memorized_s6" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♯6" data-en="6 Sharps" data-de="6 Kreuze">♯6</p>
+                <span data-jp="(嬰ヘ長調/嬰ニ短調)" data-en="(F-sharp Major/D-sharp minor)" data-de="(Fis-Dur/dis-Moll)">
+                    (嬰ヘ長調/嬰ニ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_6s.svg"
+                    alt="シャープ6つの調号" data-key-sig-img="6">
+            </div>
+            <!-- シャープ7つ -->
+            <div class="key-signature-item" data-sharps-flats="7">
+                <div class="checkbox-container">
+                    <input type="checkbox" id="memorized_s7" class="memorized-checkbox" data-key-id="7">
+                    <label for="memorized_s7" class="sr-only" data-jp="暗記済み" data-en="Memorized"
+                        data-de="Auswendig gelernt">暗記済み</label>
+                </div>
+                <p data-jp="♯7" data-en="7 Sharps" data-de="7 Kreuze">♯7</p>
+                <span data-jp="(嬰ハ長調/嬰イ短調)" data-en="(C-sharp Major/A-sharp minor)" data-de="(Cis-Dur/ais-Moll)">
+                    (嬰ハ長調/嬰イ短調)
+                </span>
+                <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_7s.svg"
+                    alt="シャープ7つの調号" data-key-sig-img="7">
+            </div>
+        </div>
+    </div>
+
+    <!-- language-switcher.min.js を読み込む -->
+    <script type="module" src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/language-switcher.min.js"></script>
+    <script type="module">
+        // language-switcher.min.js から initializeLanguageSwitcher 関数をインポート
+        import { initializeLanguageSwitcher } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/language-switcher.min.js';
+
+        // DOM要素の参照を取得
+        const horizontalLayoutBtn = document.getElementById('horizontalLayoutBtn');
+        const verticalLayoutBtn = document.getElementById('verticalLayoutBtn');
+        const keySignaturesContainer = document.getElementById('keySignaturesContainer');
+        const naturalKeySignature = document.getElementById('naturalKeySignature');
+        const filterSelector = document.getElementById('filter-selector');
+        const languageSelector = document.getElementById('language-selector');
+        const allKeySignatureItems = document.querySelectorAll('.key-signature-item');
+
+        // フラッシュカード関連のDOM要素
+        const questionTypeSelector = document.getElementById('question-type-selector');
+        const generateQuestionBtn = document.getElementById('generateQuestionBtn');
+        const showAnswerBtn = document.getElementById('showAnswerBtn');
+        const questionDisplay = document.getElementById('questionDisplay');
+        const answerDisplay = document.getElementById('answerDisplay');
+
+        // 一括チェック/解除ボタン
+        const markAllMemorizedBtn = document.getElementById('markAllMemorizedBtn');
+        const unmarkAllMemorizedBtn = document.getElementById('unmarkAllMemorizedBtn');
+
+        let currentQuestionKey = null; // 現在出題されている調号の sharpsFlats 値を保持
+
+        // 調名と調号のデータマッピング
+        const keyData = {
+            "-7": { jp: "変ハ長調/変イ短調", en: "C-flat Major/A-flat minor", de: "Ces-Dur/as-Moll", sigText: "♭7" },
+            "-6": { jp: "変ト長調/変ホ短調", en: "G-flat Major/E-flat minor", de: "Ges-Dur/es-Moll", sigText: "♭6" },
+            "-5": { jp: "変ニ長調/変ロ短調", en: "D-flat Major/B-flat minor", de: "Des-Dur/b-Moll", sigText: "♭5" },
+            "-4": { jp: "変イ長調/ヘ短調", en: "A-flat Major/F minor", de: "As-Dur/f-Moll", sigText: "♭4" },
+            "-3": { jp: "変ホ長調/ハ短調", en: "E-flat Major/C minor", de: "Es-Dur/c-Moll", sigText: "♭3" },
+            "-2": { jp: "変ロ長調/ト短調", en: "B-flat Major/G minor", de: "B-Dur/g-Moll", sigText: "♭2" },
+            "-1": { jp: "ヘ長調/ニ短調", en: "F Major/D minor", de: "F-Dur/d-Moll", sigText: "♭1" },
+            "0": { jp: "ハ長調/イ短調", en: "C Major/A minor", de: "C-Dur/a-Moll", sigText: "ナチュラル" },
+            "1": { jp: "ト長調/ホ短調", en: "G Major/E minor", de: "G-Dur/e-Moll", sigText: "♯1" },
+            "2": { jp: "ニ長調/ロ短調", en: "D Major/B minor", de: "D-Dur/h-Moll", sigText: "♯2" },
+            "3": { jp: "イ長調/嬰ヘ短調", en: "A Major/F-sharp minor", de: "A-Dur/fis-Moll", sigText: "♯3" },
+            "4": { jp: "ホ長調/嬰ハ短調", en: "E Major/C-sharp minor", de: "E-Dur/cis-Moll", sigText: "♯4" },
+            "5": { jp: "ロ長調/嬰ト短調", en: "B Major/G-sharp minor", de: "H-Dur/gis-Moll", sigText: "♯5" },
+            "6": { jp: "嬰ヘ長調/嬰ニ短調", en: "F-sharp Major/D-sharp minor", de: "Fis-Dur/dis-Moll", sigText: "♯6" },
+            "7": { jp: "嬰ハ長調/嬰イ短調", en: "C-sharp Major/A-sharp minor", de: "Cis-Dur/ais-Moll", sigText: "♯7" }
+        };
+
+        // ローカルストレージから暗記済み状態を取得する関数
+        function getMemorizedState() {
+            try {
+                const state = localStorage.getItem('memorizedKeySignatures');
+                return state ? JSON.parse(state) : {};
+            } catch (e) {
+                console.error("Failed to load memorized state from localStorage:", e);
+                return {};
+            }
+        }
+
+        // ローカルストレージに暗記済み状態を保存する関数
+        function saveMemorizedState(key, isMemorized) {
+            try {
+                const state = getMemorizedState();
+                state[key] = isMemorized;
+                localStorage.setItem('memorizedKeySignatures', JSON.stringify(state));
+            } catch (e) {
+                console.error("Failed to save memorized state to localStorage:", e);
+            }
+        }
+
+        // チェックボックスIDを生成するヘルパー関数
+        function getCheckboxId(sharpsFlats) {
+            if (sharpsFlats < 0) {
+                return `memorized_f${Math.abs(sharpsFlats)}`;
+            } else if (sharpsFlats > 0) {
+                return `memorized_s${sharpsFlats}`;
+            } else {
+                return `memorized_n0`;
+            }
+        }
+
+        // 全てのチェックボックスの表示状態をローカルストレージと同期させる関数
+        function updateAllCheckboxesDisplay() {
+            const memorizedState = getMemorizedState();
+            allKeySignatureItems.forEach(item => {
+                const sharpsFlats = item.dataset.sharpsFlats;
+                const checkboxId = getCheckboxId(parseInt(sharpsFlats));
+                const checkbox = document.getElementById(checkboxId);
+                if (checkbox) {
+                    checkbox.checked = memorizedState[sharpsFlats] || false;
+                }
+            });
+        }
+
+        // レイアウトを切り替える関数
+        function switchLayout(layoutType) {
+            if (layoutType === 'horizontal') {
+                keySignaturesContainer.classList.remove('vertical');
+                keySignaturesContainer.classList.add('key-signatures-container');
+                allKeySignatureItems.forEach(item => {
+                    item.classList.add('flex-shrink-0');
+                    item.style.width = '12rem';
+                    item.style.maxWidth = 'none';
+                });
+
+                const naturalKeyText = naturalKeySignature.querySelector('.natural-placeholder');
+                if (naturalKeyText) {
+                    naturalKeyText.style.fontSize = '1rem';
+                }
+
+                horizontalLayoutBtn.classList.add('active');
+                verticalLayoutBtn.classList.remove('active');
+
+            } else if (layoutType === 'vertical') {
+                keySignaturesContainer.classList.remove('key-signatures-container');
+                keySignaturesContainer.classList.add('vertical');
+                allKeySignatureItems.forEach(item => {
+                    item.classList.remove('flex-shrink-0');
+                    item.style.width = '100%';
+                    item.style.maxWidth = '20rem';
+                });
+
+                const naturalKeyText = naturalKeySignature.querySelector('.natural-placeholder');
+                if (naturalKeyText) {
+                    naturalKeyText.style.fontSize = '0.875rem';
+                }
+
+                verticalLayoutBtn.classList.add('active');
+                horizontalLayoutBtn.classList.remove('active');
+            }
+            // レイアウト切り替え後も現在のフィルターを適用
+            applyFilter(filterSelector.value);
+        }
+
+        // フィルターを適用する関数
+        function applyFilter(filterType) {
+            const visibleItems = [];
+            allKeySignatureItems.forEach(item => {
+                const sharpsFlats = parseInt(item.dataset.sharpsFlats);
+                let isVisible = false;
+
+                switch (filterType) {
+                    case 'all':
+                        isVisible = true;
+                        break;
+                    case 'upTo4':
+                        if (sharpsFlats >= -4 && sharpsFlats <= 4) {
+                            isVisible = true;
+                        }
+                        break;
+                    case 'sharps':
+                        if (sharpsFlats >= 0) { // シャープ系とナチュラル
+                            isVisible = true;
+                        }
+                        break;
+                    case 'flats':
+                        if (sharpsFlats <= 0) { // フラット系とナチュラル
+                            isVisible = true;
+                        }
+                        break;
+                }
+
+                if (isVisible) {
+                    item.style.display = ''; // デフォルト表示に戻す
+                    visibleItems.push(item); // 表示されるアイテムをリストに追加
+                } else {
+                    item.style.display = 'none'; // 非表示にする
+                }
+            });
+
+            // フィルター適用後、もし横並びならナチュラルを中央にスクロール
+            // または、一番左にスクロール
+            if (horizontalLayoutBtn.classList.contains('active')) {
+                setTimeout(() => {
+                    if (naturalKeySignature && naturalKeySignature.style.display !== 'none') {
+                        naturalKeySignature.scrollIntoView({ behavior: 'smooth', inline: 'center' });
+                    } else {
+                        // ナチュラルが非表示の場合、一番左にスクロール
+                        keySignaturesContainer.scrollTo({ left: 0, behavior: 'smooth' });
+                    }
+                }, 150);
+            }
+            return visibleItems; // 表示されているアイテムのリストを返す
+        }
+
+        // 問題を生成する関数
+        function generateQuestion() {
+            answerDisplay.innerHTML = ''; // 解答をクリア
+            answerDisplay.style.display = 'flex'; // 解答エリアを初期状態に戻す
+            questionDisplay.classList.remove('error-text'); // エラー表示をクリア
+
+            // 現在表示されている（フィルター適用後の）調号アイテムを取得
+            const visibleKeyItems = Array.from(allKeySignatureItems).filter(item => item.style.display !== 'none');
+
+            if (visibleKeyItems.length === 0) {
+                questionDisplay.textContent = languageSelector.value === 'jp' ? "表示する調号がありません。フィルターを変更してください。" :
+                    languageSelector.value === 'en' ? "No key signatures to display. Please change the filter." :
+                        "Keine Tonartvorzeichen zum Anzeigen. Bitte ändern Sie den Filter.";
+                questionDisplay.classList.add('error-text');
+                currentQuestionKey = null;
+                return;
+            }
+
+            const memorizedState = getMemorizedState();
+            const unmemorizedItems = visibleKeyItems.filter(item => !memorizedState[item.dataset.sharpsFlats]);
+            const memorizedItems = visibleKeyItems.filter(item => memorizedState[item.dataset.sharpsFlats]);
+
+            let selectedItem;
+            if (unmemorizedItems.length > 0) {
+                // 暗記していないものがあれば、そこからランダムに選択
+                const randomIndex = Math.floor(Math.random() * unmemorizedItems.length);
+                selectedItem = unmemorizedItems[randomIndex];
+            } else {
+                // すべて暗記済みであれば、暗記済みのものからランダムに選択
+                if (memorizedItems.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * memorizedItems.length);
+                    selectedItem = memorizedItems[randomIndex];
+                } else {
+                    // ここには到達しないはずだが念のため
+                    questionDisplay.textContent = languageSelector.value === 'jp' ? "問題を出題できませんでした。" :
+                        languageSelector.value === 'en' ? "Could not generate a question." :
+                            "Es konnte keine Frage generiert werden.";
+                    questionDisplay.classList.add('error-text');
+                    currentQuestionKey = null;
+                    return;
+                }
+            }
+
+            currentQuestionKey = selectedItem.dataset.sharpsFlats; // 問題の答えとなる調号のキーを保存
+
+            const currentLang = languageSelector.value;
+            const questionType = questionTypeSelector.value;
+            const keyName = keyData[currentQuestionKey][currentLang];
+            const sigText = keyData[currentQuestionKey].sigText;
+            const sharpsFlats = parseInt(currentQuestionKey); // 数値として取得
+
+            if (questionType === 'nameToSig') {
+                // 調名から調号を問う問題
+                questionDisplay.textContent = `${keyName} の調号は何ですか？`;
+                if (currentLang === 'en') questionDisplay.textContent = `What is the key signature for ${keyName}?`;
+                if (currentLang === 'de') questionDisplay.textContent = `Was ist das Tonartvorzeichen für ${keyName}?`;
+            } else {
+                // 調号から調名を問う問題
+                let questionContent = '';
+                const questionPrefix = currentLang === 'jp' ? "次の調号から調名を答えなさい。" :
+                    currentLang === 'en' ? "Identify the key signature below." :
+                        "Bestimmen Sie das folgende Tonartvorzeichen.";
+                questionContent += `<p>${questionPrefix}</p>`;
+
+                // --- ナチュラルキー含め、常に画像で表示する ---
+                const imgUrl =
+                    `https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/` +
+                    `keysig_${Math.abs(sharpsFlats)}` +
+                    (sharpsFlats > 0 ? 's' : sharpsFlats < 0 ? 'f' : '') +
+                    `.svg`;
+                // 例えば sharpsFlats=0 → keysig_0.svg
+                questionContent += `
+                    <img 
+                        src="${imgUrl}" 
+                        alt="${sigText}" 
+                        style="
+                        width: 8rem; 
+                        height: 8rem; 
+                        object-fit: contain; 
+                        margin-top: 0.5rem;
+                        "
+                    >
+                `;
+                questionDisplay.innerHTML = questionContent;
+            }
+        }
+
+        // 解答を表示する関数
+        function showAnswer() {
+            if (currentQuestionKey === null) {
+                answerDisplay.textContent = languageSelector.value === 'jp' ? "まず問題を生成してください。" :
+                    languageSelector.value === 'en' ? "Please generate a question first." :
+                        "Bitte generieren Sie zuerst eine Frage.";
+                answerDisplay.classList.add('error-text');
+                return;
+            }
+
+            const currentLang = languageSelector.value;
+            const answerName = keyData[currentQuestionKey][currentLang];
+            const answerSigText = keyData[currentQuestionKey].sigText;
+            const sharpsFlats = parseInt(currentQuestionKey);
+
+            let answerContent = '';
+
+            // --- 常に画像で表示する ---
+            const imgUrl =
+                `https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/` +
+                `keysig_${Math.abs(sharpsFlats)}` +
+                (sharpsFlats > 0 ? 's' : sharpsFlats < 0 ? 'f' : '') +
+                `.svg`;
+            answerContent += `
+            <img 
+                src="${imgUrl}" 
+                alt="${answerSigText}" 
+                style="
+                width: 8rem; 
+                height: 8rem; 
+                object-fit: contain; 
+                margin: auto;
+                "
+            >
+            `;
+
+            // 調名テキストを追加
+            answerContent += `<p style="margin-top: 0.5rem;">${answerSigText} (${answerName})</p>`;
+
+            // 解答表示エリアにチェックボックスを追加
+            const memorizedState = getMemorizedState();
+            const isMemorized = memorizedState[currentQuestionKey] || false;
+            const memorizedLabel = languageSelector.value === 'jp' ? "暗記済み" :
+                languageSelector.value === 'en' ? "Memorized" :
+                    "Gelernt";
+
+            answerContent += `
+                <div style="margin-top: 1rem; display: flex; align-items: center; justify-content: center; gap: 0.5rem;">
+                    <input type="checkbox" id="answerMemorizedCheckbox" class="memorized-checkbox" ${isMemorized ? 'checked' : ''}>
+                    <label for="answerMemorizedCheckbox" style="font-size: 1.125rem; font-weight: 500; color: #333333;">${memorizedLabel}</label>
+                </div>
+            `;
+
+            answerDisplay.innerHTML = answerContent;
+            answerDisplay.classList.remove('error-text');
+
+            // 動的に生成されたチェックボックスにイベントリスナーを設定
+            const answerMemorizedCheckbox = document.getElementById('answerMemorizedCheckbox');
+            if (answerMemorizedCheckbox) {
+                answerMemorizedCheckbox.addEventListener('change', (event) => {
+                    const isChecked = event.target.checked;
+                    saveMemorizedState(currentQuestionKey, isChecked);
+                    // 下の調号一覧の該当チェックボックスも同期させる
+                    const mainCheckboxId = getCheckboxId(parseInt(currentQuestionKey));
+                    const mainCheckbox = document.getElementById(mainCheckboxId);
+                    if (mainCheckbox) {
+                        mainCheckbox.checked = isChecked;
+                    }
+                });
+            }
+        }
+
+        // イベントリスナーを追加
+        horizontalLayoutBtn.addEventListener('click', () => switchLayout('horizontal'));
+        verticalLayoutBtn.addEventListener('click', () => switchLayout('vertical'));
+
+        filterSelector.addEventListener('change', (event) => {
+            // ① フィルターを適用
+            applyFilter(event.target.value);
+            // ② フィルター適用後に問題を生成
+            generateQuestion();
+        });
+
+        languageSelector.addEventListener('change', () => {
+            initializeLanguageSwitcher();
+            generateQuestion();
+            const filterOptions = filterSelector.querySelectorAll('option');
+            filterOptions.forEach(option => {
+                const langText = option.dataset[languageSelector.value];
+                if (langText) {
+                    option.textContent = langText;
+                }
+            });
+            const questionTypeOptions = questionTypeSelector.querySelectorAll('option');
+            questionTypeOptions.forEach(option => {
+                const langText = option.dataset[languageSelector.value];
+                if (langText) {
+                    option.textContent = langText;
+                }
+            });
+            const bulkButtons = [markAllMemorizedBtn, unmarkAllMemorizedBtn];
+            bulkButtons.forEach(button => {
+                const langText = button.dataset[languageSelector.value];
+                if (langText) {
+                    button.textContent = langText;
+                }
+            });
+        });
+
+        generateQuestionBtn.addEventListener('click', generateQuestion);
+        showAnswerBtn.addEventListener('click', showAnswer);
+
+        // 一括チェック/解除ボタンのイベントリスナー
+        markAllMemorizedBtn.addEventListener('click', () => {
+            allKeySignatureItems.forEach(item => {
+                const sharpsFlats = item.dataset.sharpsFlats;
+                saveMemorizedState(sharpsFlats, true);
+            });
+            updateAllCheckboxesDisplay();
+            generateQuestion();
+        });
+
+        unmarkAllMemorizedBtn.addEventListener('click', () => {
+            allKeySignatureItems.forEach(item => {
+                const sharpsFlats = item.dataset.sharpsFlats;
+                saveMemorizedState(sharpsFlats, false);
+            });
+            updateAllCheckboxesDisplay();
+            generateQuestion();
+        });
+
+
+        // ページ読み込み時の初期化処理
+        document.addEventListener('DOMContentLoaded', () => {
+            allKeySignatureItems.forEach(item => {
+                const sharpsFlats = item.dataset.sharpsFlats;
+                const checkboxId = getCheckboxId(parseInt(sharpsFlats));
+                const checkbox = document.getElementById(checkboxId);
+
+                if (checkbox) {
+                    checkbox.addEventListener('change', (event) => {
+                        saveMemorizedState(sharpsFlats, event.target.checked);
+                    });
+                }
+            });
+
+            switchLayout('horizontal');
+            initializeLanguageSwitcher();
+            applyFilter(filterSelector.value);
+            updateAllCheckboxesDisplay();
+            generateQuestion();
+        });
+    </script>
+</body>
+
+</html>

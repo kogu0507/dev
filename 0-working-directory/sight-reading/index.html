@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>譜読みゲーム</title>
+
+    <!-- SimpleSynthMini のスタイル -->
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/components/simple-synth-mini/style.css">
+
+    <style>
+        /* ラップ用コンテナを相対配置に */
+        #scoreContainer {
+            position: relative;
+            /* 必要なら幅・高さの調整を */
+        }
+
+        /* オーバーレイ本体 */
+        #overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            /* 半透明の白 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 10;
+            /* 譜面より前面に出す */
+        }
+
+        /* 非表示用クラス */
+        #overlay.hidden {
+            display: none;
+        }
+
+        /* オーバーレイ上のスタートボタン */
+        #overlay #startGameButton {
+            /* 幅は50%か最大200px */
+            width: 50%;
+            max-width: 200px;
+
+            /* 見た目 */
+            padding: 0.8em 1.2em;
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: #fff;
+            background-color: #007bff;
+            border: none;
+            border-radius: 6px;
+
+            /* ホバー／フォーカス */
+            cursor: pointer;
+            transition: background-color 0.2s ease, transform 0.1s ease;
+        }
+
+        #overlay #startGameButton:hover:not(:disabled),
+        #overlay #startGameButton:focus {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        /* 無効時 */
+        #overlay #startGameButton:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+
+        /* フィードバックメッセージ */
+        #feedback-message {
+            font-size: 2em;
+            font-weight: bold;
+            margin-bottom: 15px;
+            min-height: 1.5em;
+            /* 空でも高さを確保 */
+        }
+
+        #feedback-message.correct {
+            color: green;
+        }
+
+        #feedback-message.incorrect {
+            color: red;
+        }
+
+        /* 正解キーをハイライト */
+        .correct-key-highlight {
+            animation: highlightCorrectKey 1s forwards;
+        }
+
+        @keyframes highlightCorrectKey {
+            0% {
+                fill: yellow;
+            }
+
+            50% {
+                fill: orange;
+            }
+
+            100% {
+                fill: initial;
+            }
+        }
+
+        /* ゲームコントロール・レイアウト */
+        .game-controls {
+            margin-bottom: 20px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .game-controls select,
+        .game-controls button {
+            padding: 8px 15px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            font-size: 1em;
+            cursor: pointer;
+        }
+
+        .game-controls button {
+            background-color: #007bff;
+            color: white;
+            transition: background-color 0.2s ease;
+        }
+
+        .game-controls button:hover:not(:disabled) {
+            background-color: #0056b3;
+        }
+
+        .game-controls button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>譜読みゲーム</h2>
+        <p>表示された全音符を鍵盤で弾いてみましょう！</p>
+
+        <!-- 難易度選択＆開始ボタン -->
+        <div class="game-area">
+            <div class="game-controls">
+                <label for="difficulty-select">難易度（出題音域）:</label>
+                <select id="difficulty-select">
+                    <option value="easy">かんたん (C4–G4)</option>
+                    <option value="medium" selected>ふつう (C4–C5)</option>
+                    <option value="hard">むずかしい (C4–B5)</option>
+                </select>
+
+            </div>
+            <div id="feedback-message"></div>
+            <div id="scoreBoard" style="font-size:1.2em; margin-bottom:10px;">
+                得点: 0 / 0
+            </div>
+        </div>
+
+        <div id="scoreContainer">
+            <!-- 楽譜表示エリア -->
+            <div id="scoreViewer" class="vrv-simple-viewer" data-score-def-preset="treble" data-key-signature="0"></div>
+            <div id="overlay">
+                <button id="startGameButton">ゲーム開始</button>
+            </div>
+        </div>
+        <!-- 鍵盤シンセサイザー -->
+        <div id="mySynth" class="ssm-simple-synth-mini" data-octaves="2" data-start-note="C4" data-volume-slider="true"
+            data-sound-enabled="true" data-instrument="sine" data-show-note-labels="true"></div>
+
+        <!-- シンセサイザー設定パネル -->
+        <div class="settings-panel">
+            <h3>シンセ設定</h3>
+            <div class="controls-group">
+                <label for="instrument-select">楽器:</label>
+                <select id="instrument-select">
+                    <option value="square">矩形波</option>
+                    <option value="sawtooth">ノコギリ波</option>
+                </select>
+
+                <label for="note-labels-select">ラベル:</label>
+                <select id="note-labels-select">
+                    <option value="true">表示</option>
+                    <option value="false">非表示</option>
+                </select>
+
+                <button id="toggleSoundBtn">サウンドOFF</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MEI テンプレート（Verovio 用） -->
+    <script type="application/mei+xml" id="meiTemplate">
+<?xml version="1.0" encoding="UTF-8"?>
+<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">
+  <meiHead>
+    <fileDesc>
+      <titleStmt><title>{{title}}</title></titleStmt>
+    </fileDesc>
+  </meiHead>
+  <music>
+    <body>
+      <mdiv>
+        <score>
+          <scoreDef>
+            {{staffGrp}}
+          </scoreDef>
+          <section>
+            <measure n="1" right="dbl">
+              <staff n="1"><layer n="1">
+                {{notes}}
+              </layer></staff>
+            </measure>
+          </section>
+        </score>
+      </mdiv>
+    </body>
+  </music>
+</mei>
+  </script>
+
+    <!-- ゲームロジック -->
+    <script type="module" defer>
+        import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/verovio/verovio-manager.min.js';
+        import { svgViewBox } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/verovio/render-options.min.js';
+        import { SimpleSynthMini } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/components/simple-synth-mini/script.min.js';
+
+        // ────────────────────────────────────────────────────
+        // 1. スタッフ定義プリセット
+        // ────────────────────────────────────────────────────
+        const scoreDefPresets = {
+            treble: `<staffGrp><staffDef n='1' lines='5' clef.shape='G' clef.line='2'/></staffGrp>`,
+            bass: `<staffGrp><staffDef n='1' lines='5' clef.shape='F' clef.line='4'/></staffGrp>`,
+            grand: `<staffGrp>
+               <staffDef n='1' lines='5' clef.shape='G' clef.line='2'/>
+               <staffDef n='2' lines='5' clef.shape='F' clef.line='4'/>
+             </staffGrp>`,
+            alto: `<staffGrp><staffDef n='1' lines='5' clef.shape='C' clef.line='3'/></staffGrp>`,
+            tenor: `<staffGrp><staffDef n='1' lines='5' clef.shape='C' clef.line='4'/></staffGrp>`,
+        };
+
+        // ────────────────────────────────────────────────────
+        // 2. 難易度ごとの音域・音名リスト
+        // ────────────────────────────────────────────────────
+        const difficultyRanges = {
+            easy: ['C4', 'D4', 'E4', 'F4', 'G4'],
+            medium: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5'],
+            hard: ['C4', 'D4', 'E4', 'F4', 'G4', 'A4', 'B4', 'C5', 'D5', 'E5', 'F5', 'G5', 'A5', 'B5']
+        };
+
+        // MEI テンプレート文字列を取得
+        const tmpl = document.getElementById('meiTemplate').textContent.trim();
+
+        let vrv;                   // VerovioManager インスタンス
+        let synth;                 // SimpleSynthMini インスタンス
+        let currentMidi = null;    // 正解の MIDI 番号
+        let gameRunning = false;   // ゲーム進行中フラグ
+        let acceptingInput = false;// 入力受付中フラグ
+        let score = 0;      // 正解数
+        let total = 0;      // 出題数
+
+        // DOMContentLoaded 後に初期化
+        window.addEventListener('DOMContentLoaded', async () => {
+            // 2-1) シンセ初期化
+            const synthContainer = document.getElementById('mySynth');
+            synth = new SimpleSynthMini(synthContainer);
+
+            // ★ ここでコンテナに直接登録 ★
+            synthContainer.addEventListener('ssm-key-down', onKeyDown);
+
+
+            // 2-2) Verovio 初期化
+            vrv = new VerovioManager();
+            await vrv.initialize();
+
+            // 2-3) UI イベント登録
+            document.getElementById('startGameButton')
+                .addEventListener('click', () => {
+                    // オーバーレイを非表示に
+                    document.getElementById('overlay').classList.add('hidden');
+                    // ここで nextQuestion() を呼ぶ、譜面＆鍵盤をアクティブ化
+                    startGame();
+                });
+
+            document.getElementById('difficulty-select')
+                .addEventListener('change', () => { /* ラジオ描画時に参照 */ });
+
+            document.getElementById('instrument-select')
+                .addEventListener('change', e => updateSynth('instrument', e.target.value));
+
+            document.getElementById('note-labels-select')
+                .addEventListener('change', e => updateSynth('showNoteLabels', e.target.value === 'true'));
+
+            document.getElementById('toggleSoundBtn')
+                .addEventListener('click', toggleSound);
+
+            // 初期表示：楽譜クリア
+            renderScoreFromTemplate(getPreset(), []);
+        });
+
+        // ────────────────────────────────────────────────────
+        // ゲーム開始
+        // ────────────────────────────────────────────────────
+        function startGame() {
+            if (gameRunning) return;
+            gameRunning = true;
+
+            // ★ 採点リセット
+            score = 0;
+            total = 0;
+            updateScoreBoard();
+
+            document.getElementById('startGameButton').disabled = true;
+            document.getElementById('difficulty-select').disabled = true;
+            document.getElementById('feedback-message').textContent = '';
+
+            nextQuestion();
+        }
+
+        // ────────────────────────────────────────────────────
+        // 次の問題を出題
+        // ────────────────────────────────────────────────────
+        function nextQuestion() {
+            // フィードバッククリア
+            const fb = document.getElementById('feedback-message');
+            fb.textContent = '';
+            fb.className = '';
+
+            // 正解キーのハイライトを消す
+            const prev = document.querySelector('.correct-key-highlight');
+            if (prev) prev.classList.remove('correct-key-highlight');
+
+            // ランダムに音を選択
+            const diff = document.getElementById('difficulty-select').value;
+            const pool = difficultyRanges[diff];
+            const noteName = pool[Math.floor(Math.random() * pool.length)];
+            currentMidi = synth.noteToMidi(noteName);
+
+            // ★ 出題数をカウント
+            total++;
+            updateScoreBoard();
+
+            // 楽譜を表示
+            renderScoreFromTemplate(getPreset(), [noteName]);
+
+            acceptingInput = true;
+        }
+
+        // ────────────────────────────────────────────────────
+        // 鍵盤が押されたときの処理
+        // ────────────────────────────────────────────────────
+        function onKeyDown(e) {
+            // console.log("onKeyDown fired:", e.detail.note, "currentMidi:", currentMidi);
+            if (!gameRunning || !acceptingInput) return;
+            acceptingInput = false;
+
+            const pressed = e.detail.note;           // 例: "C4"
+            const midi = synth.noteToMidi(pressed);
+            const fb = document.getElementById('feedback-message');
+
+            if (midi === currentMidi) {
+                // console.log("正解！");      // <--- 追加
+                // 正解
+                score++;              // ★ 得点アップ
+                updateScoreBoard();   // ★ 表示更新
+                fb.textContent = '〇';
+                fb.classList.add('correct');
+                setTimeout(nextQuestion, 500);
+            } else {
+                // console.log("不正解！");    // <--- 追加
+                // 不正解
+                updateScoreBoard();   // 出題数はカウント済みなので表示更新だけ
+                fb.textContent = '✕';
+                fb.classList.add('incorrect');
+                // 正解キーをハイライト
+                const keyEl = synth.container.querySelector(`[data-note="${synth.midiToNote(currentMidi)}"]`);
+                if (keyEl) keyEl.classList.add('correct-key-highlight');
+                setTimeout(nextQuestion, 1500);
+            }
+        }
+
+        /**
+        * 得点表示を更新する
+        */
+        function updateScoreBoard() {
+            const board = document.getElementById('scoreBoard');
+            board.textContent = `得点: ${score} / ${total}`;
+        }
+
+        // ────────────────────────────────────────────────────
+        // シンセ設定更新
+        // ────────────────────────────────────────────────────
+        function updateSynth(prop, val) {
+            const c = document.getElementById('mySynth');
+            c.dataset[prop] = val;
+            synth.updateSettings();
+        }
+        function toggleSound() {
+            const btn = document.getElementById('toggleSoundBtn');
+            const on = synth.settings.soundEnabled = !synth.settings.soundEnabled;
+            document.getElementById('mySynth').dataset.soundEnabled = on;
+            synth.updateSettings();
+            btn.textContent = on ? 'サウンドOFF' : 'サウンドON';
+        }
+
+        // ────────────────────────────────────────────────────
+        // 楽譜を MEI テンプレート＋Verovio で描画
+        // ────────────────────────────────────────────────────
+        async function renderScoreFromTemplate(preset, notes) {
+            // 1) <staffGrp> を取得
+            const staffGrp = scoreDefPresets[preset];
+            // console.log("[renderScoreFromTemplate]preset: ",preset)
+            // console.log("[renderScoreFromTemplate]staffGrp: ",staffGrp)
+            if (!staffGrp) { console.error(preset + ' not found'); return; }
+
+            // 2) <note> 要素を作成
+            const notesXml = notes.map(name => {
+                const pname = name[0].toLowerCase();
+                const oct = name.slice(1);
+                return `<note dur="1" pname="${pname}" oct="${oct}"/>`;
+            }).join('\n                ');
+
+            // 3) プレースホルダー置換
+            let xml = tmpl
+                .replace('{{title}}', 'Game')
+                .replace('{{staffGrp}}', staffGrp)
+                .replace('{{notes}}', notesXml);
+
+            // 4) Blob→URL
+            const blob = new Blob([xml], { type: 'application/xml' });
+            const url = URL.createObjectURL(blob);
+
+            // 5) レンダリングオプション
+            vrv.setRenderOptions({
+                svgViewBox: false,
+                adjustPageHeight: true,
+                adjustPageWidth: true,
+                //breaks: 'encoded',
+                spacingStaff: 5,
+                spacingSystem: 15,
+                header: "none",
+                footer: 'none',
+                svgViewBox: true,
+                pageMarginTop: 0,
+                pageMarginRight: 0,
+                pageMarginBottom: 0,
+                pageMarginLeft: 0,
+
+            });
+
+            // 6) 描画
+            await vrv.displaySvgFromUrl(url, 'scoreViewer');
+            URL.revokeObjectURL(url);
+        }
+
+        // ────────────────────────────────────────────────────
+        // data-score-def-preset 属性からプリセット名を取得
+        // ────────────────────────────────────────────────────
+        function getPreset() {
+            //console.log("[function getPreset scoreViewer.dataset.scoreDefPreset]: ",document.getElementById('scoreViewer')        .dataset.scoreDefPreset);
+            return document.getElementById('scoreViewer')
+                .dataset.scoreDefPreset || 'treble';
+        }
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,498 @@
+<html><head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>調号・調名同期デモ（データ属性と複数コンポーネント）</title>
+  <style>
+    .smc-key-signature {
+      border: 2px solid #a0a0a0;
+      padding: 15px;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+      border-radius: 8px;
+    }
+    .smc-key-signature h2 {
+      margin-top: 0;
+      color: #333;
+    }
+    .svg-display {
+      border: 1px solid #ccc;
+      padding: 8px;
+      min-height: 150px;
+      margin-bottom: 12px;
+      background-color: white;
+    }
+    .controls {
+      margin-bottom: 8px;
+    }
+    .hidden {
+      display: none !important; /* !important で強制的に非表示にする */
+    }
+    button {
+      padding: 8px 15px;
+      margin-right: 5px;
+      cursor: pointer;
+    }
+    select, input[type="text"] {
+      padding: 8px;
+      margin-right: 5px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container" style="max-width: 800px; margin: 20px auto; padding: 0 15px;">
+    <h1>調号・調名同期デモ（データ属性と複数コンポーネント）</h1>
+    <p>
+      このページでは、`data-`属性を使って初期表示を設定した
+      `KscKeySignatureController`コンポーネントが複数配置されています。<br>
+      各コンポーネントの挙動の違いを確認してください。
+    </p>
+
+    ---
+
+    <div class="smc-key-signature" id="keySelector1" data-svg-display="true" data-controls-display="true">
+      <h2>コンポーネント 1: フル機能</h2>
+      <div id="currentKeyInfo1" class="current-key-info" style="margin-bottom:12px;">
+        調号: <span class="key-signature-value">0</span>
+        ／ 調名: <span class="key-name-value">Cメジャー / Aマイナー</span>
+      </div>
+      <div class="svg-display" data-target="svgDisplay">
+        <div>ロード中…</div>
+      </div>
+      <div class="control-panel" data-target="controlPanel">
+        <div class="controls">
+          <button class="flat-button" disabled="">♭へ</button>
+          <button class="sharp-button" disabled="">♯へ</button>
+        </div>
+        <div class="controls">
+          <label for="keyNameSelect1">調名:</label>
+          <select class="key-name-select" id="keyNameSelect1" disabled=""></select>
+        </div>
+        <div class="controls">
+          <input class="key-name-input" type="text" placeholder="例: Cメジャー または Aマイナー" disabled="">
+          <button class="set-by-name-button" disabled="">設定</button>
+        </div>
+      </div>
+    </div>
+
+    ---
+
+    <div class="smc-key-signature" id="keySelector2" data-svg-display="true" data-controls-display="false">
+      <h2>コンポーネント 2: SVGのみ表示</h2>
+      <p>このコンポーネントは、操作UIが非表示になっています。</p>
+      <div id="currentKeyInfo2" class="current-key-info" style="margin-bottom:12px;">
+        調号: <span class="key-signature-value">0</span>
+        ／ 調名: <span class="key-name-value">Cメジャー / Aマイナー</span>
+      </div>
+      <div class="svg-display" data-target="svgDisplay">
+        <div>ロード中…</div>
+      </div>
+      <div class="control-panel" data-target="controlPanel">
+        <div class="controls">
+          <button class="flat-button" disabled="">♭へ</button>
+          <button class="sharp-button" disabled="">♯へ</button>
+        </div>
+        <div class="controls">
+          <label for="keyNameSelect2">調名:</label>
+          <select class="key-name-select" id="keyNameSelect2" disabled=""></select>
+        </div>
+        <div class="controls">
+          <input class="key-name-input" type="text" placeholder="例: Cメジャー または Aマイナー" disabled="">
+          <button class="set-by-name-button" disabled="">設定</button>
+        </div>
+      </div>
+    </div>
+
+    ---
+
+    <h3>グローバル操作デモ</h3>
+    <p>
+      各コンポーネントのIDを使って、JavaScriptから外部操作を試すことができます。<br>
+      開発者コンソール (F12) を開いて確認してください。
+    </p>
+    <button id="setKeySelector1ToDMinor">コンポーネント1をDマイナーに設定</button>
+    <button id="setKeySelector2ToEFlatMajor">コンポーネント2をE♭メジャーに設定</button>
+    <button id="getSelector1Info">コンポーネント1の情報を取得 (コンソール)</button>
+    <button id="toggleSelector2Controls">コンポーネント2のコントロール表示を切り替え</button>
+    <div id="globalStatusMessage" style="margin-top: 10px; color: blue;"></div>
+
+  </div>
+
+  <script type="module">
+    // Verovio関連のモジュールをインポート
+    import { CoreProcessor } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0/verovio/core-processor.js';
+    import { loadVerovio }   from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0/verovio/loader.min.js';
+
+    /**
+     * @class KscKeySignatureController
+     * 調号の表示と操作を司るUIコンポーネントクラス。
+     * HTMLのdata-属性により初期表示設定が可能。
+     */
+    class KscKeySignatureController {
+      /**
+       * コンポーネントを初期化します。
+       * @param {HTMLElement} rootElement - このコンポーネントが紐づく最上位のDOM要素 (例: <div class="smc-key-signature">)
+       */
+      constructor(rootElement) {
+        this.rootElement = rootElement;
+
+        // --- DOM要素の取得 (rootElement内から検索) ---
+        // クラス名で取得することで、複数のインスタンスに対応
+        this.currentKeyInfoDiv = this.rootElement.querySelector('.current-key-info');
+        this.sigSpan = this.rootElement.querySelector('.key-signature-value');
+        this.nameSpan = this.rootElement.querySelector('.key-name-value');
+        this.svgDisplay = this.rootElement.querySelector('.svg-display');
+        this.controlPanel = this.rootElement.querySelector('.control-panel');
+        this.flatButton = this.rootElement.querySelector('.flat-button');
+        this.sharpButton = this.rootElement.querySelector('.sharp-button');
+        this.nameSelect = this.rootElement.querySelector('.key-name-select');
+        this.nameInput = this.rootElement.querySelector('.key-name-input');
+        this.setByNameButton = this.rootElement.querySelector('.set-by-name-button');
+
+        // --- Verovio関連のプロパティ ---
+        this.coreProcessor = null;
+        this.currentKeySignature = 0; // -7 から +7 までの数値
+
+        // --- data-属性から初期設定を読み込む ---
+        this.initialSvgDisplay = this.rootElement.dataset.svgDisplay === 'true';
+        this.initialControlsDisplay = this.rootElement.dataset.controlsDisplay === 'true';
+
+        /**
+         * 📦 調号の数値ごとの情報オブジェクト
+         * - major : 長調の名前
+         * - minor : 短調の名前
+         */
+        this.keyDataBySignature = {
+          '-7': { major: 'C♭メジャー', minor: 'A♭マイナー' },
+          '-6': { major: 'G♭メジャー', minor: 'E♭マイナー' },
+          '-5': { major: 'D♭メジャー', minor: 'B♭マイナー' },
+          '-4': { major: 'A♭メジャー', minor: 'Fマイナー' },
+          '-3': { major: 'E♭メジャー', minor: 'Cマイナー' },
+          '-2': { major: 'B♭メジャー', minor: 'Gマイナー' },
+          '-1': { major: 'Fメジャー', minor: 'Dマイナー' },
+           '0': { major: 'Cメジャー', minor: 'Aマイナー' },
+           '1': { major: 'Gメジャー', minor: 'Eマイナー' },
+           '2': { major: 'Dメジャー', minor: 'Bマイナー' },
+           '3': { major: 'Aメジャー', minor: 'F♯マイナー' },
+           '4': { major: 'Eメジャー', minor: 'C♯マイナー' },
+           '5': { major: 'Bメジャー', minor: 'G♯マイナー' },
+           '6': { major: 'F♯メジャー', minor: 'D♯マイナー' },
+           '7': { major: 'C♯メジャー', minor: 'A♯マイナー' }
+        };
+
+        /**
+         * 🔄 調名から調号への逆引きデータ
+         * major と minor の両方をキーにして、{ signature, major, minor } を取得できるようにする
+         */
+        this.keyDataByName = {};
+        Object.entries(this.keyDataBySignature).forEach(([sig, info]) => {
+          this.keyDataByName[info.major] = { signature: +sig, major: info.major, minor: info.minor };
+          this.keyDataByName[info.minor] = { signature: +sig, major: info.major, minor: info.minor };
+        });
+
+        this._initEventListeners();
+      }
+
+      /**
+       * @private
+       * 調号の数値からMEI XML用のaccid文字列を生成します。
+       * 例: 0 -> "0", 1 -> "1s", -2 -> "2f"
+       * @param {number} n - 調号の数値 (-7 から +7)
+       * @returns {string} MEI XMLで使用するaccid文字列
+       */
+      _getAccidString(n) {
+        return n === 0 ? '0' : Math.abs(n) + (n > 0 ? 's' : 'f');
+      }
+
+      /**
+       * @private
+       * MEI XML文字列を組み立てます。
+       * @param {number} keySig - 調号の数値
+       * @returns {string} 生成されたMEI XML文字列
+       */
+      _buildMei(keySig) {
+        const accid = this._getAccidString(keySig);
+        return `<?xml version="1.0" encoding="UTF-8"?>
+<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">
+  <meiHead><fileDesc><titleStmt><title>KeySig</title></titleStmt></fileDesc></meiHead>
+  <music><body><mdiv><score>
+    <scoreDef keysig="${accid}">
+      <staffGrp><staffDef n="1" lines="5"
+        clef.shape="G" clef.line="2"/></staffGrp>
+    </scoreDef>
+    <section><measure n="1"><staff n="1"><layer n="1"/></staff></measure></section>
+  </score></mdiv></body></music>
+</mei>`;
+      }
+
+      /**
+       * @private
+       * すべてのUI要素のイベントリスナーを初期化します。
+       */
+      _initEventListeners() {
+        this.flatButton.addEventListener('click', async () => {
+          if (this.currentKeySignature > -7) {
+            this.currentKeySignature--;
+            await this.render();
+          }
+        });
+
+        this.sharpButton.addEventListener('click', async () => {
+          if (this.currentKeySignature < 7) {
+            this.currentKeySignature++;
+            await this.render();
+          }
+        });
+
+        this.nameSelect.addEventListener('change', async () => {
+          this.currentKeySignature = parseInt(this.nameSelect.value, 10);
+          await this.render();
+        });
+
+        this.setByNameButton.addEventListener('click', async () => {
+          const input = this.nameInput.value.trim();
+          this.setKeyByNameString(input);
+        });
+      }
+
+      /**
+       * @private
+       * UIコントロールの有効/無効を切り替えます。
+       * @param {boolean} enable - trueで有効、falseで無効
+       */
+      _enableUI(enable) {
+        this.flatButton.disabled = !enable;
+        this.sharpButton.disabled = !enable;
+        this.nameSelect.disabled = !enable;
+        this.nameInput.disabled = !enable;
+        this.setByNameButton.disabled = !enable;
+      }
+
+      /**
+       * コンポーネントを初期化します。Verovioのロード、UIの生成、最初の描画を行います。
+       */
+      async initialize() {
+        try {
+          this.svgDisplay.textContent = '初期化中…';
+          const toolkit = await loadVerovio();
+          this.coreProcessor = new CoreProcessor(toolkit);
+          this.coreProcessor.setRenderOptions({
+            scale: 80, pageWidth: 600, pageHeight: 300, adjustPageHeight: true
+          });
+
+          // プルダウンに「Major / Minor」オプションを追加
+          Object.entries(this.keyDataBySignature).forEach(([sig, info]) => {
+            const opt = document.createElement('option');
+            opt.value = sig;
+            opt.textContent = `${info.major} / ${info.minor}`;
+            this.nameSelect.appendChild(opt);
+          });
+
+          // data属性に基づいて初期表示を設定
+          this.setSvgDisplayVisibility(this.initialSvgDisplay);
+          this.setControlPanelVisibility(this.initialControlsDisplay);
+
+          await this.render(); // 最初の描画
+          this._enableUI(true); // UIを有効化
+
+        } catch (e) {
+          this.svgDisplay.textContent = '初期化エラー';
+          console.error(`KscKeySignatureController (ID: ${this.rootElement.id}) 初期化エラー:`, e);
+          // エラーメッセージをUIに表示する場合
+          // this.rootElement.querySelector('.status-message').textContent = 'エラー: 初期化に失敗しました。';
+        }
+      }
+
+      /**
+       * UIを再描画します。SVGの生成、表示値の更新、プルダウンの同期を行います。
+       * @returns {Promise<void>} 描画が完了したときに解決されるPromise
+       */
+      async render() {
+        if (!this.coreProcessor) {
+          console.warn(`KscKeySignatureController (ID: ${this.rootElement.id}): Verovio CoreProcessorが初期化されていません。`);
+          return;
+        }
+
+        if (this.svgDisplay) { // svgDisplayが存在するかチェック
+          this.svgDisplay.textContent = 'SVG生成中…';
+        }
+        this._enableUI(false); // 描画中はUIを無効化
+
+        try {
+          const svg = await this.coreProcessor.renderSvgFromMei(this._buildMei(this.currentKeySignature));
+          if (this.svgDisplay) {
+            this.svgDisplay.innerHTML = svg;
+          }
+
+          // 調号と調名を表示領域に反映
+          if (this.sigSpan && this.nameSpan) {
+            this.sigSpan.textContent = this._getAccidString(this.currentKeySignature);
+            const info = this.keyDataBySignature[this.currentKeySignature];
+            this.nameSpan.textContent = `${info.major} / ${info.minor}`;
+          }
+
+
+          // プルダウンを現在の調号に同期
+          if (this.nameSelect) {
+            this.nameSelect.value = this.currentKeySignature.toString();
+          }
+
+        } catch (e) {
+          if (this.svgDisplay) {
+            this.svgDisplay.textContent = 'SVG描画エラー';
+          }
+          console.error(`KscKeySignatureController (ID: ${this.rootElement.id}) SVG描画エラー:`, e);
+          // this.rootElement.querySelector('.status-message').textContent = 'エラー: SVGの描画に失敗しました。';
+        } finally {
+          this._enableUI(true); // 描画完了後にUIを有効化
+        }
+      }
+
+      // --- 外部から呼び出すためのパブリックメソッド ---
+
+      /**
+       * 現在の調号の数値を返します。
+       * @returns {number} 現在の調号の数値 (-7 から +7)
+       */
+      getCurrentKeySignatureNumber() {
+          return this.currentKeySignature;
+      }
+
+      /**
+       * 現在の調号の記号表現（例: "0", "1s", "2f"）を返します。
+       * @returns {string} 現在の調号の記号表現
+       */
+      getCurrentKeySignatureAccidString() {
+          return this._getAccidString(this.currentKeySignature);
+      }
+
+      /**
+       * 現在の調名情報オブジェクトを返します。
+       * 例: { major: 'Cメジャー', minor: 'Aマイナー' }
+       * @returns {object} 現在の調名情報
+       */
+      getCurrentKeyNameInfo() {
+          return this.keyDataBySignature[this.currentKeySignature];
+      }
+
+      /**
+       * 現在表示されている調名文字列（例: 'Cメジャー / Aマイナー'）を返します。
+       * @returns {string} 現在表示されている調名文字列
+       */
+      getCurrentKeyNameString() {
+          const info = this.keyDataBySignature[this.currentKeySignature];
+          return `${info.major} / ${info.minor}`;
+      }
+
+      /**
+       * SVG表示領域の表示/非表示を切り替えます。
+       * @param {boolean} isVisible - trueで表示、falseで非表示
+       */
+      setSvgDisplayVisibility(isVisible) {
+          if (this.svgDisplay) {
+              this.svgDisplay.classList.toggle('hidden', !isVisible);
+          }
+      }
+
+      /**
+       * コントロールパネル（♭/♯ボタン、プルダウン、テキスト入力欄）の表示/非表示を切り替えます。
+       * @param {boolean} isVisible - trueで表示、falseで非表示
+       */
+      setControlPanelVisibility(isVisible) {
+          if (this.controlPanel) {
+              this.controlPanel.classList.toggle('hidden', !isVisible);
+          }
+      }
+
+      /**
+       * 現在の調号・調名情報を表示する要素の表示/非表示を切り替えます。
+       * @param {boolean} isVisible - trueで表示、falseで非表示
+       */
+      setCurrentKeyInfoVisibility(isVisible) {
+          if (this.currentKeyInfoDiv) {
+              this.currentKeyInfoDiv.classList.toggle('hidden', !isVisible);
+          }
+      }
+
+      /**
+       * 数値で調号を指定し、UIを更新します。
+       * @param {number} signatureNumber - 設定する調号の数値 (-7 から +7)
+       * @returns {Promise<void>} UIの更新が完了したときに解決されるPromise
+       */
+      async setKeyBySignatureNumber(signatureNumber) {
+          if (signatureNumber >= -7 && signatureNumber <= 7) {
+              this.currentKeySignature = signatureNumber;
+              await this.render();
+          } else {
+              console.error(`KscKeySignatureController (ID: ${this.rootElement.id}): 無効な調号数値: ${signatureNumber}`);
+          }
+      }
+
+      /**
+       * 調名文字列（例: 'Cメジャー' または 'Aマイナー'）を指定し、UIを更新します。
+       * @param {string} keyNameString - 設定する調名文字列
+       * @returns {Promise<void>} UIの更新が完了したときに解決されるPromise
+       */
+      async setKeyByNameString(keyNameString) {
+          const data = this.keyDataByName[keyNameString.trim()];
+          if (data) {
+              this.currentKeySignature = data.signature;
+              await this.render();
+          } else {
+              console.error(`KscKeySignatureController (ID: ${this.rootElement.id}): 対応する調名が見つかりません: '${keyNameString}'`);
+          }
+      }
+    }
+
+    // --- ページロード時の初期化処理 ---
+    const controllers = {}; // 各コンポーネントのインスタンスを格納するオブジェクト
+
+    window.addEventListener('load', async () => {
+      const globalStatusMessage = document.getElementById('globalStatusMessage');
+
+      // 全ての .smc-key-signature コンポーネント要素を取得
+      const keySelectorElements = document.querySelectorAll('.smc-key-signature');
+
+      for (const element of keySelectorElements) {
+        // 各要素に対して新しい KscKeySignatureController インスタンスを作成
+        const controller = new KscKeySignatureController(element);
+        controllers[element.id] = controller; // IDをキーとしてインスタンスを保存
+
+        // コンポーネントを初期化
+        await controller.initialize();
+      }
+
+      // --- グローバル操作デモのイベントリスナー ---
+      document.getElementById('setKeySelector1ToDMinor').addEventListener('click', async () => {
+          await controllers['keySelector1'].setKeyByNameString('Dマイナー');
+          globalStatusMessage.textContent = 'コンポーネント1をDマイナーに設定しました。';
+      });
+
+      document.getElementById('setKeySelector2ToEFlatMajor').addEventListener('click', async () => {
+          await controllers['keySelector2'].setKeyByNameString('E♭メジャー');
+          globalStatusMessage.textContent = 'コンポーネント2をE♭メジャーに設定しました。';
+      });
+
+      document.getElementById('getSelector1Info').addEventListener('click', () => {
+          const controller1 = controllers['keySelector1'];
+          console.log('--- コンポーネント1の現在の調号・調名情報 ---');
+          console.log('数値:', controller1.getCurrentKeySignatureNumber());
+          console.log('記号:', controller1.getCurrentKeySignatureAccidString());
+          console.log('調名オブジェクト:', controller1.getCurrentKeyNameInfo());
+          console.log('表示文字列:', controller1.getCurrentKeyNameString());
+          globalStatusMessage.textContent = 'コンポーネント1の情報をコンソールに出力しました。';
+      });
+
+      let selector2ControlsVisible = controllers['keySelector2'].initialControlsDisplay; // 初期状態を取得
+      document.getElementById('toggleSelector2Controls').addEventListener('click', () => {
+          selector2ControlsVisible = !selector2ControlsVisible;
+          controllers['keySelector2'].setControlPanelVisibility(selector2ControlsVisible);
+          globalStatusMessage.textContent = `コンポーネント2のコントロールを${selector2ControlsVisible ? '表示' : '非表示'}にしました。`;
+      });
+
+      globalStatusMessage.textContent = 'ページがロードされ、コンポーネントが初期化されました。';
+    });
+  </script>
+
+</body></html>

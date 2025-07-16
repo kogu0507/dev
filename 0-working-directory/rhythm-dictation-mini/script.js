@@ -1,344 +1,205 @@
-/**
- * script.js
- * Rhythm Dictation Mini アプリケーションのメインスクリプトファイル。
- * アプリケーションの初期化、主要なDOM要素の取得、各コンポーネントの初期化、
- * および全体のロジックフローを管理する。
- */
+// script.js
 
-import { initializeRhythmButtons } from './rhythmButtons.js';
-import { initializeActivationButton } from './activationButton.js';
-import {
-    initializeVerovio,
-    generateMeiFromRhythm,
-    renderMeiToElement,
-    playRhythmMidi,
-    addDefaultNoteProperties
-} from './verovioModule.js';
+import { loadVerovio } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0//verovio/loader.min.js';
+import { CoreProcessor } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0//verovio/core-processor.min.js';
+import { ScoreUIHandler } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0//verovio/score-ui-handler.min.js';
+import { defaultOptions } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.4.0//verovio/render-options.js';
 
 // Tone.jsと@tonejs/midiのローダー
-import { loadToneJs } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@2.3.0/tonejs/loader.min.mjs';
-import { loadToneJsMidi } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@2.3.0/tonejs/tonejs-midi-loader.min.mjs';
+import { loadToneJs } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@2.4.0/tonejs/loader.min.mjs';
+import { loadToneJsMidi } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@2.4.0/tonejs/tonejs-midi-loader.min.mjs';
 
-// グローバルなTone.jsとMidiのインスタンス
-let Tone;
-let Midi;
-let synth; // Tone.jsのシンセサイザーインスタンス
 
-// アプリケーションの状態変数
-let currentVolume = 0.7; // 初期音量 (0.0 - 1.0)
-let currentTempo = 80; // 初期テンポ (BPM)
-let allRhythms = []; // rhythmData.jsonから読み込む全リズムデータ
+let coreProcessor = null;
+const uiHandler = new ScoreUIHandler();
+let embeddedMeiString = null;
 
-let currentQuestionRhythm1 = null; // 現在の問題の1小節目リズムデータ
-let currentQuestionRhythm2 = null; // 現在の問題の2小節目リズムデータ
-let selectedRhythmIdFirstHalf = null; // ユーザーが選択した前半のリズムID
-let selectedRhythmIdSecondHalf = null; // ユーザーが選択した後半のリズムID
+// ★ 定数で総小節数を定義します ★
+// 現在は3小節、最終的には49小節になる予定ですが、MEIデータに合わせてここを調整してください。
+const TOTAL_MEASURES_STATIC = 3; 
+let totalMeasures = 0; // initializeVerovioでこの値にTOTAL_MEASURES_STATICを代入します
 
 /**
- * 新しい問題を生成し、楽譜を表示する関数。
- * ランダムなリズムを選択し、MEIを生成して表示する。
+ * Verovioを初期化し、埋め込みMEIデータを読み込みます。
+ * この関数は一度だけ実行されることを想定しています。
  */
-async function generateNewQuestion() {
-    console.log('新しい問題が生成されました！');
-    if (allRhythms.length < 2) {
-        console.error('リズムデータが不足しています。少なくとも2つのリズムが必要です。');
-        document.getElementById('correct-answer-display').innerHTML = '<p style="color: red;">リズムデータが不足しています。</p>';
+async function initializeVerovio() {
+    if (!coreProcessor) {
+        const toolkit = await loadVerovio();
+        coreProcessor = new CoreProcessor(toolkit);
+        // 必要に応じてデフォルトオプションを設定
+        coreProcessor.setRenderOptions({
+            ...defaultOptions,
+            footer: 'none', // フッターを非表示にする
+            header: 'none', // ヘッダーを非表示にする
+            pageHeight: 1000, // 高さを十分に確保
+            pageWidth: 1000,  // 幅を十分に確保
+            adjustPageHeight: true, // コンテンツに合わせて高さを調整
+        });
+
+        const meiScriptTag = document.getElementById('embeddedMei');
+        if (meiScriptTag) {
+            embeddedMeiString = meiScriptTag.textContent;
+            console.log('埋め込みMEIデータを取得しました。');
+
+            // 定義した定数を総小節数として設定
+            totalMeasures = TOTAL_MEASURES_STATIC;
+            console.log(`設定された総小節数: ${totalMeasures}`);
+
+        } else {
+            console.error("ID 'embeddedMei' のMEIデータが見つかりませんでした。");
+            uiHandler.showError("MEIデータが見つかりませんでした。", 'rdmQuestionTab');
+        }
+    }
+}
+
+/**
+ * 指定された小節番号の楽譜をレンダリングして表示します。
+ * @param {number} measureNumber - 表示する小節の番号 (1から始まる)
+ * @param {string} targetElementId - レンダリングしたSVGを表示するDOM要素のID
+ */
+async function displayMeasure(measureNumber, targetElementId) {
+    if (!coreProcessor || !embeddedMeiString) {
+        await initializeVerovio(); // 未初期化の場合は初期化を試みる
+        if (!coreProcessor || !embeddedMeiString) {
+            uiHandler.showError("Verovioの初期化またはMEIデータの読み込みに失敗しました。", targetElementId);
+            return;
+        }
+    }
+
+    const targetDiv = document.getElementById(targetElementId);
+    if (!targetDiv) {
+        console.error(`ターゲット要素ID '${targetElementId}' が見つかりません。`);
         return;
     }
 
-    // 既存のSVGをクリア
-    document.getElementById('correct-answer-display').innerHTML = '';
-    document.getElementById('selected-answer-display').innerHTML = '';
-    
-    // ユーザー選択表示エリアをリセット
-    document.querySelector('.first-half-display').innerHTML = '<p>前半</p>';
-    document.querySelector('.second-half-display').innerHTML = '<p>後半</p>';
-    
-    // ユーザー選択ボタンもクリアし、再生成
-    const userSelectButtonsContainer = document.querySelector('.user-select-buttons');
-    userSelectButtonsContainer.innerHTML = ''; // 既存のボタンをクリア
-    // 選択状態のボタンもリセット
-    document.querySelectorAll('.rhythm-select-button.selected').forEach(btn => btn.classList.remove('selected'));
-    
-    // ユーザー選択リズムIDをリセット
-    selectedRhythmIdFirstHalf = null;
-    selectedRhythmIdSecondHalf = null;
+    uiHandler.clearMessage(targetElementId);
+    targetDiv.classList.add('loading');
+    // targetDiv.textContent = `小節 ${measureNumber} を読み込み中...`; // テキストはUIで見えないようにする
 
-    // ランダムに2つの異なるリズムを選択
-    let rhythm1, rhythm2;
-    do {
-        rhythm1 = allRhythms[Math.floor(Math.random() * allRhythms.length)];
-        rhythm2 = allRhythms[Math.floor(Math.random() * allRhythms.length)];
-    } while (rhythm1.id === rhythm2.id); // 同じリズムが連続しないように
-
-    currentQuestionRhythm1 = rhythm1;
-    currentQuestionRhythm2 = rhythm2;
-
-    // 正解MEIデータを生成し保持
-    const meiTemplate = document.getElementById('meiTemplate').textContent;
-    const correctMeiData = generateMeiFromRhythm(currentQuestionRhythm1, currentQuestionRhythm2, currentTempo);
-
-    // 「正解の楽譜」を正しい答えの場所にレンダリング
-    await renderMeiToElement(correctMeiData, 'correct-answer-display');
-
-    console.log('新しい問題が生成されました:');
-    console.log('1小節目:', currentQuestionRhythm1.description);
-    console.log('2小節目:', currentQuestionRhythm2.description);
-
-    // ユーザー選択ボタンを再初期化 (新しい問題ごとにボタンを再生成するため)
-    const firstHalfDisplay = document.querySelector('.first-half-display');
-    const secondHalfDisplay = document.querySelector('.second-half-display');
-    const rhythmPositionRadios = document.querySelectorAll('input[name="rhythm-position"]');
-    initializeRhythmButtons(userSelectButtonsContainer, firstHalfDisplay, secondHalfDisplay, rhythmPositionRadios, handleUserRhythmSelected);
-    
-    console.log("correctMeiData: ",correctMeiData);
-}
-
-/**
- * ユーザーがリズムボタンを選択した際のコールバック関数。
- * 選択されたリズムのIDと位置を状態変数に保存する。
- * @param {string} rhythmId - 選択されたリズムのID。
- * @param {string} selectedPosition - 'first' または 'second'。
- */
-async function handleUserRhythmSelected(rhythmId, selectedPosition) {
-    console.log(`ユーザーがリズム '${rhythmId}' を '${selectedPosition}' に選択しました。`);
-
-    if (selectedPosition === 'first') {
-        selectedRhythmIdFirstHalf = rhythmId;
-    } else {
-        selectedRhythmIdSecondHalf = rhythmId;
-    }
-
-    // ユーザー選択表示エリアの楽譜を更新（必要であれば）
-    // この関数はrhythmButtons.jsでDOMを直接更新しているので、ここでは状態更新のみ
-    // ただし、もしユーザー選択音源を再生する前に楽譜を結合して表示したい場合は、
-    // ここで generateMeiFromRhythm と renderMeiToElement を呼び出す。
-    // 例:
-    // if (selectedRhythmIdFirstHalf && selectedRhythmIdSecondHalf) {
-    //     const selectedRhythm1 = allRhythms.find(r => r.id === selectedRhythmIdFirstHalf);
-    //     const selectedRhythm2 = allRhythms.find(r => r.id === selectedRhythmIdSecondHalf);
-    //     const userMeiString = generateMeiFromRhythm(selectedRhythm1, selectedRhythm2, currentTempo);
-    //     await renderMeiToElement(userMeiString, 'selected-answer-display');
-    // }
-}
-
-
-/**
- * スライダーの初期化と、値が変更された際の表示更新・コールバック実行を行う関数。
- * @param {string} sliderId - input type="range" 要素のID。
- * @param {string} displayId - 値を表示するspan要素のID。
- * @param {function} [callback] - (オプション) 値が変更された際に実行するコールバック関数。引数として新しい値が渡される。
- */
-function initializeSlider(sliderId, displayId, callback) {
-    const sliderElement = document.getElementById(sliderId);
-    const displayElement = document.getElementById(displayId);
-
-    if (sliderElement && displayElement) {
-        displayElement.textContent = sliderElement.value;
-
-        sliderElement.addEventListener('input', () => {
-            displayElement.textContent = sliderElement.value;
-            if (callback && typeof callback === 'function') {
-                callback(sliderElement.value);
-            }
-        });
-    } else {
-        console.warn(`ID '${sliderId}' のスライダーまたは ID '${displayId}' の表示要素が見つかりません。`);
-    }
-}
-
-/**
- * 単一または複数のボタンにイベントリスナーを設定し、クリック時にコールバックを実行する関数。
- * @param {string} selector - ボタンを特定するためのCSSセレクター。
- * @param {function} callback - ボタンがクリックされた際に実行するコールバック関数。
- * @param {boolean} [isMultiple=false] - セレクターが複数の要素にマッチする場合にtrueを設定。
- */
-function initializeButton(selector, callback, isMultiple = false) {
-    if (isMultiple) {
-        const buttons = document.querySelectorAll(selector);
-        if (buttons.length > 0) {
-            buttons.forEach(button => {
-                // 既存のリスナーを削除することで、複数回初期化されても重複しないようにする
-                button.removeEventListener('click', callback); 
-                button.addEventListener('click', callback);
-            });
-        } else {
-            console.warn(`セレクター '${selector}' にマッチするボタンが見つかりません。`);
-        }
-    } else {
-        const button = document.querySelector(selector);
-        if (button) {
-            // 既存のリスナーを削除することで、複数回初期化されても重複しないようにする
-            button.removeEventListener('click', callback);
-            button.addEventListener('click', callback);
-        } else {
-            console.warn(`セレクター '${selector}' のボタンが見つかりません。`);
-        }
-    }
-}
-
-/**
- * すべてのスライダーのイベントリスナーを初期化する関数。
- */
-function initializeSliders() {
-    // テンポスライダーの初期化
-    initializeSlider('tempoRange', 'currentTempoValue', (tempoValue) => {
-        currentTempo = parseInt(tempoValue, 10);
-        console.log(`新しいテンポ: ${currentTempo} BPM`);
-        if (Tone && Tone.Transport) {
-            Tone.Transport.bpm.value = currentTempo; // Tone.js Transportのテンポを更新
-        }
-    });
-
-    // 音量スライダーの初期化
-    initializeSlider('volumeRange', 'currentVolumeValue', (volumeValue) => {
-        currentVolume = parseInt(volumeValue, 10) / 100; // 0-100を0-1に変換
-        console.log(`新しい音量: ${currentVolume * 100}%`);
-        if (synth && Tone) {
-            synth.volume.value = Tone.gainToDb(currentVolume); // シンセサイザーの音量を更新
-        }
-    });
-}
-
-/**
- * 各種ボタンのイベントリスナーを初期化する関数。
- */
-function initializeButtons() {
-    const questionMain = document.querySelector('.question-main');
-    const activationButton = document.querySelector('.activation-button');
-
-    // 「聴音を開始」ボタン (activationButton.jsで初期化されるため、ここでは呼び出しのみ)
-    initializeActivationButton(activationButton, questionMain, synth, currentVolume);
-
-    // 「出題音源を聴く（もう一度聴く）」と「解答音源を聴く」ボタン
-    initializeButton('.play-correct-answer-button', async () => {
-        console.log('「出題音源を聴く」または「解答音源を聴く」ボタンがクリックされました。');
-        if (currentQuestionRhythm1 && currentQuestionRhythm2) {
-            const meiString = generateMeiFromRhythm(currentQuestionRhythm1, currentQuestionRhythm2, currentTempo);
-            await playRhythmMidi(meiString, Tone, Midi, synth, currentVolume);
-        } else {
-            console.warn('再生する問題のMEIデータがありません。');
-        }
-    }, true); // 複数ボタンに適用するためtrueを指定
-
-    // 「解答を送信」ボタン
-    initializeButton('.show-answer', async () => {
-        console.log('「解答を送信」ボタンがクリックされました。');
-
-        // ユーザーが両方のリズムを選択しているか確認
-        if (!selectedRhythmIdFirstHalf || !selectedRhythmIdSecondHalf) {
-            console.warn('解答を送信するには、前半と後半の両方のリズムを選択してください。');
-            // ユーザーに通知するUIを追加することも可能
+    try {
+        if (measureNumber < 1 || measureNumber > totalMeasures) {
+            uiHandler.showError(`小節番号 ${measureNumber} は範囲外です。1から${totalMeasures}の間で指定してください。`, targetElementId);
             return;
         }
 
-        const selectedRhythm1 = allRhythms.find(r => r.id === selectedRhythmIdFirstHalf);
-        const selectedRhythm2 = allRhythms.find(r => r.id === selectedRhythmIdSecondHalf);
-
-        if (selectedRhythm1 && selectedRhythm2) {
-            const userMeiString = generateMeiFromRhythm(selectedRhythm1, selectedRhythm2, currentTempo);
-            await renderMeiToElement(userMeiString, 'selected-answer-display');
-        } else {
-            document.getElementById('selected-answer-display').innerHTML = '<p>選択された解答の表示中にエラーが発生しました。</p>';
-        }
-
-        // タブを解答タブに切り替える
-        const answerTabButton = document.querySelector('.tab-button[data-tab="answer"]');
-        if (answerTabButton) {
-            answerTabButton.click(); // simple-tab-componentの機能を利用してタブを切り替える
-        }
-    });
-
-    // 「ユーザー選択音源を聴く」ボタン
-    initializeButton('.play-selected-answer-button', async () => {
-        console.log('「ユーザー選択音源を聴く」ボタンがクリックされました。');
-        if (selectedRhythmIdFirstHalf && selectedRhythmIdSecondHalf) {
-            const selectedRhythm1 = allRhythms.find(r => r.id === selectedRhythmIdFirstHalf);
-            const selectedRhythm2 = allRhythms.find(r => r.id === selectedRhythmIdSecondHalf);
-            if (selectedRhythm1 && selectedRhythm2) {
-                const selectedMei = generateMeiFromRhythm(selectedRhythm1, selectedRhythm2, currentTempo);
-                await playRhythmMidi(selectedMei, Tone, Midi, synth, currentVolume);
-            } else {
-                console.warn('選択されたリズムデータが見つかりません。');
-            }
-        } else {
-            console.warn('ユーザーが前半と後半のリズムを両方選択していません。');
-        }
-    });
-
-    // 「新しい問題を生成」ボタン
-    initializeButton('.new-question-button', () => {
-        console.log('「新しい問題を生成」ボタンがクリックされました。');
-        generateNewQuestion(); // 新しい問題を生成
-        // ユーザー選択をリセット
-        selectedRhythmIdFirstHalf = null;
-        selectedRhythmIdSecondHalf = null;
-        // 解答表示エリアをクリア (generateNewQuestionでもクリアされるが念のため)
-        document.getElementById('selected-answer-display').innerHTML = '<p>ここにあなたの選択が表示されます</p>';
-        document.querySelector('.first-half-display').innerHTML = '<p>前半</p>';
-        document.querySelector('.second-half-display').innerHTML = '<p>後半</p>';
-        location.hash = 'question'; // questionタブに移動
-    });
+        const svg = await coreProcessor.renderSvgFromMei(
+            embeddedMeiString,
+            { measureRange: `${measureNumber}-${measureNumber}` }
+        );
+        uiHandler.displaySvg(svg, targetElementId);
+    } catch (e) {
+        console.error(`小節 ${measureNumber} の表示エラー:`, e);
+        uiHandler.showError(`小節 ${measureNumber} の表示に失敗しました。`, targetElementId);
+    } finally {
+        targetDiv.classList.remove('loading');
+    }
 }
 
-
-document.addEventListener('DOMContentLoaded', async () => {
-    // ページロード時にURLハッシュをクリアし、questionタブに移動
-    if (window.location.hash) {
-        history.replaceState(null, document.title, window.location.pathname + window.location.search);
-        console.log('URLハッシュをクリアしました。');
+/**
+ * ランダムな小節番号を生成します。
+ * @returns {number} 1からtotalMeasuresまでのランダムな小節番号
+ */
+function getRandomMeasureNumber() {
+    if (totalMeasures === 0) {
+        console.warn("総小節数がまだ設定されていません。デフォルト値を使用します。");
+        return 1; // または適切なデフォルト値
     }
-    // simple-tab-componentが初期化された後にタブを切り替えるため、少し遅延させる
-    setTimeout(() => {
-        const questionTabButton = document.querySelector('.tab-button[data-tab="question"]');
-        if (questionTabButton) {
-            questionTabButton.click();
+    return Math.floor(Math.random() * totalMeasures) + 1;
+}
+
+// DOM要素の取得
+const rdmQuestionMain = document.querySelector('.rdm-question-main');
+const activationButton = document.querySelector('.rdm-activation-button');
+const playCorrectAnswerButtonQuestionTab = document.querySelector('#rdmQuestionTab .rdm-play-correct-answer-button');
+const showAnswerButton = document.querySelector('.rdm-show-answer');
+const newQuestionButton = document.querySelector('.rdm-new-question-button');
+
+// 問題表示用のイメージ要素
+const rdmFirstHalfImage = document.getElementById('rdmFirstHalfImage');
+const rdmSecondHalfImage = document.getElementById('rdmSecondHalfImage');
+
+// 現在出題中の小節番号を保持する変数
+let currentQuestionMeasure = 0;
+
+// アプリケーションの状態を管理するオブジェクト
+const appState = {
+    isActivated: false,
+};
+
+/**
+ * 新しい問題を生成し、表示します。
+ */
+async function generateNewQuestion() {
+    currentQuestionMeasure = getRandomMeasureNumber();
+    console.log(`新しい問題（小節番号: ${currentQuestionMeasure}）を生成します。`);
+
+    // ユーザー選択エリアの表示をクリア
+    rdmFirstHalfImage.src = '';
+    rdmSecondHalfImage.src = '';
+    rdmFirstHalfImage.alt = '選択した前半のリズム';
+    rdmSecondHalfImage.alt = '選択した後半のリズム';
+
+    const instructionMessage = document.getElementById('rdmInstructionMessage');
+    instructionMessage.textContent = "出題音源を聴いて、リズムを選択してください。";
+
+    // 問題の表示は、現時点では楽譜画像としてではなく、今後のリズム画像ボタンの選択に委ねられます。
+    // そのため、ここでは直接SVGを描画する処理は呼び出しません。
+}
+
+/**
+ * 「聴音を開始」ボタンのクリックハンドラ
+ */
+activationButton.addEventListener('click', async () => {
+    if (!appState.isActivated) {
+        console.log("聴音を開始します。");
+        activationButton.textContent = "準備中...";
+        activationButton.disabled = true;
+
+        await initializeVerovio(); // Verovioを初期化
+
+        if (coreProcessor && embeddedMeiString) {
+            appState.isActivated = true;
+            activationButton.classList.add('rdm-visually-hidden'); // ボタンを非表示に
+            rdmQuestionMain.classList.remove('rdm-visually-hidden'); // 問題セクションを表示
+            await generateNewQuestion(); // 最初の問題を生成
+            activationButton.textContent = "聴音を開始"; // テキストを元に戻すが、非表示なのでユーザーには見えない
+            activationButton.disabled = false;
+        } else {
+            console.error("Verovioの初期化に失敗したため、開始できません。");
+            activationButton.textContent = "エラーが発生しました";
+            activationButton.disabled = false;
         }
-    }, 100); // 100msの遅延
-
-    // question-main を初期状態で非表示
-    document.querySelector('.question-main').classList.add('visually-hidden');
-
-    // Tone.js と @tonejs/midi のロード
-    try {
-        await loadToneJs(); // Tone.js のスクリプトをロード
-        Tone = window.Tone; // グローバルな Tone オブジェクトを代入
-
-        Midi = await loadToneJsMidi(); // @tonejs/midi の Midi クラスをロード
-        console.log('Tone.js と @tonejs/midi のロードが完了しました。');
-
-        // Tone.js シンセサイザーの初期化
-        synth = new Tone.Synth().toDestination();
-        synth.volume.value = Tone.gainToDb(currentVolume); // 初期音量設定
-        Tone.Transport.bpm.value = currentTempo; // 初期テンポ設定
-
-    } catch (error) {
-        console.error('Tone.js または @tonejs/midi のロードに失敗しました:', error);
-        document.body.innerHTML = '<p style="color: red;">音楽再生機能のロードに失敗しました。ページをリロードしてください。</p>';
-        return;
     }
+});
 
-    // MEIテンプレートとリズムデータを読み込む
-    const meiTemplateScript = document.getElementById('meiTemplate');
-    const rhythmDataScript = document.getElementById('rhythmData');
-    const meiTemplate = meiTemplateScript ? meiTemplateScript.textContent : '';
-
-    if (rhythmDataScript) {
-        try {
-            const data = JSON.parse(rhythmDataScript.textContent);
-            allRhythms = addDefaultNoteProperties(data.rhythms); // デフォルトプロパティを追加
-        } catch (e) {
-            console.error('リズムデータのパースに失敗しました:', e);
-        }
+/**
+ * 「出題音源を聴く（もう一度聴く）」ボタンのクリックハンドラ
+ */
+playCorrectAnswerButtonQuestionTab.addEventListener('click', async () => {
+    if (currentQuestionMeasure > 0) {
+        console.log(`問題音源を再生: 小節 ${currentQuestionMeasure}`);
+        // TODO: Tone.jsを使用して、currentQuestionMeasureの音源を再生する処理をここに実装
+    } else {
+        console.warn("出題中の問題がありません。");
     }
+});
 
-    // VerovioManagerを初期化
-    await initializeVerovio(meiTemplate);
+/**
+ * 「解答を送信」ボタンのクリックハンドラ
+ */
+showAnswerButton.addEventListener('click', () => {
+    console.log("解答を送信しました。");
+    // TODO: ユーザーの選択と正しい解答を比較し、結果を解答タブに表示する処理
+    // そして、解答タブに切り替える処理
+    document.querySelector('.simple-tab-component-container')._switchTab('rdmAnswerTab');
+});
 
-    // スライダーとボタンの初期化
-    initializeSliders();
-    initializeButtons();
-
-    // 初期化後、最初の問題を生成して表示
-    generateNewQuestion();
+/**
+ * 「新しい問題を生成」ボタンのクリックハンドラ
+ */
+newQuestionButton.addEventListener('click', async () => {
+    console.log("新しい問題を生成します。");
+    await generateNewQuestion(); // 新しい問題を生成
+    document.querySelector('.simple-tab-component-container')._switchTab('rdmQuestionTab'); // 問題タブに戻る
 });

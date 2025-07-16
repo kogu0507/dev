@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>音源再生速度変更</title>
+    <style>
+        body { font-family: sans-serif; margin: 20px; }
+        .controls { margin-top: 20px; }
+        label { display: block; margin-bottom: 5px; }
+        input[type="range"] { width: 300px; }
+        #playbackRateValue { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>音源再生速度変更</h1>
+
+    <input type="file" id="audioFileInput" accept="audio/*">
+
+    <div class="controls">
+        <label for="playbackRateSlider">再生速度: <span id="playbackRateValue">1.0</span>x</label>
+        <input type="range" id="playbackRateSlider" min="0.5" max="2.0" step="0.1" value="1.0">
+        <button id="playButton">再生</button>
+        <button id="pauseButton">一時停止</button>
+    </div>
+
+    <audio id="audioPlayer" controls></audio>
+
+    <script>
+        const audioFileInput = document.getElementById('audioFileInput');
+        const audioPlayer = document.getElementById('audioPlayer');
+        const playbackRateSlider = document.getElementById('playbackRateSlider');
+        const playbackRateValue = document.getElementById('playbackRateValue');
+        const playButton = document.getElementById('playButton');
+        const pauseButton = document.getElementById('pauseButton');
+
+        // ファイルが選択されたときの処理
+        audioFileInput.addEventListener('change', (event) => {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    audioPlayer.src = e.target.result;
+                    audioPlayer.load(); // ソースが変更されたらロードし直す
+                    // audioPlayer.play(); // 必要であれば自動再生
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // 再生速度スライダーが変更されたときの処理
+        playbackRateSlider.addEventListener('input', () => {
+            audioPlayer.playbackRate = parseFloat(playbackRateSlider.value);
+            playbackRateValue.textContent = playbackRateSlider.value;
+        });
+
+        // 再生ボタン
+        playButton.addEventListener('click', () => {
+            audioPlayer.play();
+        });
+
+        // 一時停止ボタン
+        pauseButton.addEventListener('click', () => {
+            audioPlayer.pause();
+        });
+
+        // audioPlayerのplaybackRateが変更されたときにスライダーの表示も更新
+        // (例えば、他の方法でplaybackRateが変更された場合など)
+        audioPlayer.addEventListener('ratechange', () => {
+            playbackRateSlider.value = audioPlayer.playbackRate;
+            playbackRateValue.textContent = audioPlayer.playbackRate.toFixed(1); // 小数点以下1桁に丸める
+        });
+
+        // 初期表示を更新
+        playbackRateValue.textContent = playbackRateSlider.value;
+    </script>
+</body>
+</html>

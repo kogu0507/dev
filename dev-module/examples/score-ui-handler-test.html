@@ -1,4 +1,4 @@
-<!-- dev-module/examples/score-ui-handler-test.html -->
+<!-- module/examples/score-ui-handler-test.html -->
 <!DOCTYPE html>
 <html lang="ja">
 <head>
@@ -17,9 +17,9 @@
   <button id="errorBtn">エラー表示テスト</button>
 
   <script type="module">
-    import { loadVerovio } from '../../dev-module/verovio/loader.js';
-    import { CoreProcessor } from '../../dev-module/verovio/core-processor.js';
-    import { ScoreUIHandler } from '../../dev-module/verovio/score-ui-handler.js';
+    import { loadVerovio } from '../../module/verovio/loader.js';
+    import { CoreProcessor } from '../../module/verovio/core-processor.js';
+    import { ScoreUIHandler } from '../../module/verovio/score-ui-handler.js';
 
     const handler = new ScoreUIHandler();
     document.getElementById('loadBtn').addEventListener('click', async () => {

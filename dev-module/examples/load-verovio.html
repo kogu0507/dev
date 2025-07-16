@@ -1,0 +1,68 @@
+<!-- index.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <title>Verovio Loader サンプル</title>
+  <style>
+    body { font-family: sans-serif; padding: 2em; }
+    button { padding: .5em 1em; font-size: 1rem; }
+    #status { margin-top: 1em; }
+    #viewer { margin-top: 1em; border:1px solid #ccc; padding:1em; }
+  </style>
+</head>
+<body>
+
+  <h1>Verovio Loader テスト</h1>
+  <button id="btn">楽譜をロード＆レンダリング</button>
+  <div id="status">まだ何も起きていません。</div>
+  <div id="viewer"></div>
+
+  <script type="module">
+    // import { loadVerovio } from '../verovio/loader.mjs';
+    import { loadVerovio } from '../verovio/loader.min.mjs';
+
+    const btn    = document.getElementById('btn');
+    const status = document.getElementById('status');
+    const view   = document.getElementById('viewer');
+
+    btn.addEventListener('click', async () => {
+      btn.disabled = true;
+      status.textContent = 'Verovio をロード中…';
+      view.innerHTML = '';
+
+      try {
+        // Verovio の初期化完了を待つ
+        const tk = await loadVerovio();
+        status.textContent = '初期化完了 → MEI を取得してレンダリング中…';
+
+        // サンプル MEI を取得して
+        const resp = await fetch('./sample.mei');
+        const mei  = await resp.text();
+
+        // MEI をロードしてオプションを設定
+        tk.loadData(mei);
+        tk.setOptions({
+          pageWidth:  800,
+          pageHeight: 600,
+          scale:      40
+        });
+
+        // SVG を生成して表示
+        const svg = tk.renderToSVG(1, {});
+        view.innerHTML = svg;
+        status.textContent = 'レンダリング完了！';
+      }
+      catch (err) {
+        console.error(err);
+        status.textContent = 'エラー: ' + err.message;
+      }
+      finally {
+        btn.disabled = false;
+      }
+    });
+  </script>
+
+</body>
+</html>

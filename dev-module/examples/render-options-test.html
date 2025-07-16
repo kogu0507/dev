@@ -1,4 +1,4 @@
-<!-- dev-module/examples/render-options-test.html -->
+<!-- module/examples/render-options-test.html -->
 <!DOCTYPE html>
 <html lang="ja">
 
@@ -15,7 +15,9 @@
         #notation {
             border: 1px solid #ccc;
             padding: 1em;
-            min-height: 200px;
+            /* min-height: 200px; */
+
+            overflow-x: auto;
         }
     </style>
 </head>
@@ -28,16 +30,18 @@
         <button id="btnHighRes">高解像度</button>
         <button id="btnMobile">モバイル</button>
         <button id="btnPrint">印刷向け</button>
+        <button id="btnViewBox">親要素幅</button>
     </div>
     <div id="notation"></div>
     <script type="module">
-        import { VerovioManager } from '../../dev-module/verovio/verovio-manager.js';
+        import { VerovioManager } from '../../module/verovio/verovio-manager.js';
         import {
             defaultOptions,
             highResOptions,
             mobileOptions,
-            printOptions
-        } from '../../dev-module/verovio/render-options.js';
+            printOptions,
+            svgViewBox
+        } from '../../module/verovio/render-options.js';
 
         const manager = new VerovioManager();
         const meiUrl = './sample.mei';
@@ -62,6 +66,10 @@
         };
         document.getElementById('btnPrint').onclick = async () => {
             manager.setRenderOptions(printOptions);
+            await manager.displayMeiOnElement(meiUrl, targetId);
+        };
+        document.getElementById('btnViewBox').onclick = async () => {
+            manager.setRenderOptions(svgViewBox);
             await manager.displayMeiOnElement(meiUrl, targetId);
         };
     </script>

@@ -1,14 +1,6 @@
 <!DOCTYPE html>
 <html lang="ja">
 
-<!-- 
- TODO:
- 前半の入力が終わったら、自動で後半のラジオボタンを選択。後半の入力が終わったら、自動で前半を選択。
- 問題文？メッセージ？みたいなもので、今何をするかを教えてくれるとよい。
- ・前半のリズムを選択してください。
- ・後半のリズムを選択してください。
- ・解答を送信してください。
--->
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -16,112 +8,53 @@
 
     <!-- 既存のsimple-tab-componentのスタイルシート -->
     <link rel="stylesheet"
-        href="https://cdn.jsdelivr.net/gh/kogu0507/module@2.3.0/components/simple-tab-component/style.min.css">
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@2.4.0/components/simple-tab-component/style.min.css">
     <!-- 新しく分離したスタイルシート -->
     <link rel="stylesheet" href="style.css">
     <!-- Tone.js CDNの追加 (script.js内のローダーが動的に読み込むため、ここでは必須ではないが、既存に合わせて残す) -->
-    <script src="https://unpkg.com/tone"></script>
+    <!-- <script src="https://unpkg.com/tone"></script> -->
     <!-- @tonejs/midi CDNの追加 (script.js内のローダーが動的に読み込むため、ここでは必須ではないが、既存に合わせて残す) -->
-    <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.2/build/midi.min.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.2/build/midi.min.js"></script> -->
 
-    <style>
-        /* 視覚的に要素を隠すが、スクリーンリーダーからはアクセス可能にするためのスタイル */
-        .visually-hidden {
-            position: absolute;
-            width: 1px;
-            height: 1px;
-            margin: -1px;
-            padding: 0;
-            overflow: hidden;
-            clip: rect(0, 0, 0, 0);
-            border: 0;
-        }
-    </style>
     <!-- リズムボタンのテンプレートを追加 -->
-    <template id="rhythm-button-template">
-        <button class="rhythm-select-button">
-            <img src="" alt="" class="rhythm-image">
+    <template id="rdmRhythmButtonTemplate">
+        <button class="rdm-rhythm-select-button">
+            <img src="" alt="" class="rdm-rhythm-image">
         </button>
     </template>
+
+    <!-- 復習問題表示用のテンプレートを追加 -->
+    <template id="rdmIncorrectAnswerTemplate">
+        <div class="rdm-incorrect-answer-item">
+            <h4>問題 <span class="rdm-problem-number"></span></h4>
+            <div class="rdm-review-display-container">
+                <div class="rdm-correct-answer-review">
+                    <h5>正しい解答</h5>
+                    <div class="rdm-score-display">
+                        <img src="" alt="正しい前半のリズム" class="rdm-review-correct-first-half-image">
+                        <img src="" alt="正しい後半のリズム" class="rdm-review-correct-second-half-image">
+                    </div>
+                    <button class="rdm-play-review-correct-button">音源を聴く</button>
+                </div>
+                <div class="rdm-selected-answer-review">
+                    <h5>あなたの選択</h5>
+                    <div class="rdm-score-display">
+                        <img src="" alt="選択した前半のリズム" class="rdm-review-selected-first-half-image">
+                        <img src="" alt="選択した後半のリズム" class="rdm-review-selected-second-half-image">
+                    </div>
+                    <button class="rdm-play-review-selected-button">音源を聴く</button>
+                </div>
+            </div>
+            <hr>
+        </div>
+    </template>
+
 </head>
 
 <body>
-
-    <!-- リズムデータとMEIテンプレートのセクション（視覚的に隠す） -->
-    <section id="data-section" class="visually-hidden">
-        <script id="rhythmData" type="application/json">
-            {
-                "rhythms": [
-                    {
-                        "id": "rhythm001",
-                        "description": "2分音符",
-                        "notes_data": [
-                            { "type": "note", "noteId": "1-rhy001", "dur": 2, "pname": "g", "oct": 4}
-                        ]
-                    },
-                    {
-                        "id": "rhythm002",
-                        "description": "4分音符+4分音符",
-                        "notes_data": [
-                            { "type": "note", "noteId": "1-rhy002", "dur": 4, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "2-rhy002", "dur": 4, "pname": "g", "oct": 4}
-                        ]
-                    },
-                    {
-                        "id": "rhythm003",
-                        "description": "4分音符+8分音符+8分音符",
-                        "notes_data": [
-                            { "type": "note", "noteId": "1-rhy003", "dur": 4, "pname": "g", "oct": 4},
-                            { "type": "beam"},
-                            { "type": "note", "noteId": "2-rhy003", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "3-rhy003", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "/beam"}
-                        ]
-                    },
-                    {
-                        "id": "rhythm004",
-                        "description": "8分音符+8分音符+4分音符",
-                        "notes_data": [
-                            { "type": "beam"},
-                            { "type": "note", "noteId": "1-r004", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "2-r004", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "/beam"},
-                            { "type": "note", "noteId": "3-r004", "dur": 4, "pname": "g", "oct": 4}
-                        ]
-                    },
-                    {
-                        "id": "rhythm005",
-                        "description": "8分音符+4分音符+8分音符",
-                        "notes_data": [
-                            { "type": "note", "noteId": "1-r005", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "2-r005", "dur": 4, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "3-r005", "dur": 8, "pname": "g", "oct": 4}
-                        ]
-                    },
-                    {
-                        "id": "rhythm006",
-                        "description": "8分音符+8分音符+8分音符+8分音符",
-                        "notes_data": [
-                            { "type": "beam"},
-                            { "type": "note", "noteId": "1-r006", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "2-r006", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "3-r006", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "4-r006", "dur": 8, "pname": "g", "oct": 4},
-                            { "type": "/beam"}
-                        ]
-                    },
-                    {
-                        "id": "rhythm007",
-                        "description": "付点4分音符+8分音符",
-                        "notes_data": [
-                            { "type": "note", "noteId": "1-r007", "dur": 4, "dots": 1, "pname": "g", "oct": 4},
-                            { "type": "note", "noteId": "2-r007", "dur": 8, "pname": "g", "oct": 4}
-                        ]
-                    }
-                ]
-            }
-        </script>
-        <script id="meiTemplate" type="application/mei+xml">
+    <!-- メインコンテンツ領域 -->
+    <main>
+        <script type="application/mei+xml" id="embeddedMei">
             <?xml version="1.0" encoding="UTF-8"?>
             <?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
             <?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
@@ -137,28 +70,19 @@
                     <body>
                         <mdiv>
                             <score>
-                                <scoreDef keysig="0" key.mode="major">
+                                <scoreDef keysig="0" key.mode="major" meter.count="4" meter.unit="4">
                                     <staffGrp>
                                         <staffDef n="1" clef.shape="G" clef.line="2" lines="5"/>
                                     </staffGrp>
                                 </scoreDef>
                                 <section>
-                                    <measure n="1" right="dashed">
+                                    <measure n="1">
                                         <staff n="1">
                                             <layer n="1">
-                                                ##placeholder_note1##
+                                                {{placeholder}}
                                             </layer>
                                         </staff>
                                     </measure>
-                                    <measure n="2">
-                                        <staff n="1">
-                                            <layer n="1">
-                                                ##placeholder_note2##
-                                            </layer>
-                                        </staff>
-                                        <tempo midi.bpm="##placeholder_tempo##"></tempo>
-                                    </measure>
-                                    <sb/>
                                 </section>
                             </score>
                         </mdiv>
@@ -166,110 +90,352 @@
                 </music>
             </mei>
         </script>
-    </section>
 
-    <!-- メインアプリケーションセクション -->
-    <section id="rhythm-dictation-mini-app-section">
-        <div class="simple-tab-component-container" data-default-tab="question" data-deep-link="true">
+
+        <script type="application/mei+xml" id="fullRhythmLibraryMei">
+            <?xml version="1.0" encoding="UTF-8"?>
+            <?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+            <?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+            <mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">
+            <meiHead>
+                <fileDesc>
+                    <titleStmt>
+                        <title>リズムカードマスター　テスト (全49小節)</title>
+                    </titleStmt>
+                </fileDesc>
+            </meiHead>
+            <music>
+                <body>
+                    <mdiv>
+                        <score>
+                            <scoreDef keysig="0" key.mode="major" meter.count="4" meter.unit="4">
+                                <staffGrp>
+                                    <staffDef n="1" clef.shape="G" clef.line="2" lines="5"/>
+                                </staffGrp>
+                            </scoreDef>
+                            <section>
+                                <measure n="1">
+                                    <staff n="1">
+                                        <layer n="1">
+                                            <note xml:id="m1_p1_n1" dur="2" pname="g" oct="4"/>
+                                            <note xml:id="m1_p2_n1" dur="2" pname="g" oct="4"/>
+                                        </layer>
+                                    </staff>
+                                </measure>
+                                <measure n="2">
+                                    <staff n="1">
+                                        <layer n="1">
+                                            <note xml:id="m2_p1_n1" dur="2" pname="g" oct="4"/>
+                                            <note xml:id="m2_p2_n1" dur="4" pname="g" oct="4"/>
+                                            <note xml:id="m2_p2_n2" dur="4" pname="g" oct="4"/>
+                                        </layer>
+                                    </staff>
+                                </measure>
+                                <measure n="3">
+                                    <staff n="1">
+                                        <layer n="1">
+                                            <note xml:id="m3_p1_n1" dur="2" pname="g" oct="4"/>
+                                            <note xml:id="m3_p2_n1" dur="4" pname="g" oct="4"/>
+                                            <beam>
+                                                <note xml:id="m3_p2_n2" dur="8" pname="g" oct="4"/>
+                                                <note xml:id="m3_p2_n3" dur="8" pname="g" oct="4"/>
+                                            </beam>
+                                        </layer>
+                                    </staff>
+                                </measure>
+
+                            </section>
+                        </score>
+                    </mdiv>
+                </body>
+            </music>
+            </mei>
+        </script>
+
+
+        <!-- メインアプリケーションセクション -->
+        <div class="simple-tab-component-container" data-default-tab="初期タブID" data-deep-link="true">
             <div class="tabs">
-                <button class="tab-button" data-tab="question">問題</button>
-                <button class="tab-button" data-tab="answer">解答</button>
-                <button class="tab-button" data-tab="settings">設定</button>
+                <button class="tab-button" data-tab="tab1">タブ1</button>
+                <button class="tab-button" data-tab="tab2">タブ2</button>
             </div>
-
             <div class="tab-content">
-                <!-- 問題タブ -->
-                <div id="question" class="tab-pane">
-                    <h3 class="visually-hidden">出題</h3>
-                    <button class="activation-button">聴音を開始</button>
-                    <div class="question-main visually-hidden"> <!-- 初期状態で非表示にする -->
-                        <button class="play-correct-answer-button">出題音源を聴く（もう一度聴く）</button>
-                        <div class="user-select-area">
-                            <div class="score-display selected-answer-display">
-                                <!-- ユーザーが選択したリズムが表示される場所 -->
-                                <div class="first-half-display">
-                                    <p>前半</p>
-                                </div>
-                                <div class="second-half-display">
-                                    <p>後半</p>
-                                </div>
-                            </div>
-                            <div>
-                                <p>リズムをどの位置に配置しますか？</p>
-                                <div class="flex-container">
-                                    <label class="radio-label">
-                                        <input type="radio" class="form-radio" name="rhythm-position" value="first" checked>
-                                        <span class="radio-text">前半</span>
-                                    </label>
-                                    <label class="radio-label">
-                                        <input type="radio" class="form-radio" name="rhythm-position" value="second">
-                                        <span class="radio-text">後半</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="user-select-buttons">
-                                <!-- JavaScriptによってリズムの画像ボタンがここに動的に挿入されます -->
-                            </div>
-                        </div>
-                        <hr>
-                        <button class="show-answer">解答を送信</button>
-                    </div>
-                </div>
-
-                <!-- 解答タブ -->
-                <div id="answer" class="tab-pane">
-                    <h3 class="visually-hidden">解答</h3>
-                    <div class="correct-answer">
-                        <h4>正しい解答</h4>
-                        <div class="score-display correct-answer-display" id="correct-answer-display">
-                            <!-- 正しいリズムが表示される場所 -->
-                            <p>ここに正しいリズムが表示されます</p>
-                        </div>
-                        <button class="play-correct-answer-button">解答音源を聴く</button>
-                    </div>
-                    <div class="selected-answer">
-                        <h4>あなたの選択</h4>
-                        <div class="score-display selected-answer-display" id="selected-answer-display">
-                            <!-- ユーザーが選択したリズムが表示される場所 -->
-                            <p>ここにあなたの選択が表示されます</p>
-                        </div>
-                        <button class="play-selected-answer-button">ユーザー選択音源を聴く</button>
-                    </div>
-                    <hr>
-                    <button class="new-question-button">新しい問題を生成</button>
-                </div>
-
-                <!-- 設定タブ -->
-                <div id="settings" class="tab-pane">
-                    <h3 class="visually-hidden">設定</h3>
-                    <div class="question-setting">
-                        <h4>問題設定</h4>
-                        <!-- ここに問題に関する設定項目を追加するスペース -->
-                        <p>現在、問題設定はありません。</p>
-                    </div>
-                    <div class="sequencer-setting">
-                        <h4>シーケンサー設定</h4>
-                        <div class="tempo-slider">
-                            <label for="tempoRange">テンポ (BPM):</label>
-                            <input type="range" id="tempoRange" name="tempo" min="40" max="240" value="80">
-                            <span id="currentTempoValue">80</span> BPM
-                        </div>
-                        <div class="volume-slider">
-                            <label for="volumeRange">音量:</label>
-                            <input type="range" id="volumeRange" name="volume" min="0" max="100" value="70">
-                            <span id="currentVolumeValue">70</span> %
-                        </div>
-                    </div>
-                </div>
+                <div id="tab1" class="tab-pane">...</div>
+                <div id="tab2" class="tab-pane">...</div>
             </div>
         </div>
-    </section>
+
+        <section id="rdmAppSection">
+            <div class="simple-tab-component-container" data-default-tab="rdmQuestionTab" data-deep-link="true">
+                <div class="tabs">
+                    <button class="tab-button" data-tab="rdmQuestionTab">問題</button>
+                    <button class="tab-button" data-tab="rdmAnswerTab">解答</button>
+                    <button class="tab-button" data-tab="rdmSettingsTab">設定</button>
+                    <button class="tab-button" data-tab="rdmHowToUseTab">使用方法</button>
+                    <button class="tab-button" data-tab="rdmReviewTab">復習</button>
+                </div>
+
+                <div class="tab-content">
+                    <!-- 問題タブ -->
+                    <div id="rdmQuestionTab" class="tab-pane">
+                        <h3 class="rdm-visually-hidden">出題</h3>
+                        <button class="rdm-activation-button">聴音を開始</button>
+                        <!-- <div class="rdm-question-main rdm-visually-hidden"> -->
+                        <div class="rdm-question-main">
+                            <!-- ユーザーへのメッセージ表示エリア -->
+                            <p id="rdmInstructionMessage" class="rdm-message-text"></p>
+                            <button class="rdm-play-correct-answer-button">出題音源を聴く（もう一度聴く）</button>
+                            <!-- ユーザーセレクトエリア -->
+                            <div class="rdm-user-select-area">
+                                <!-- ユーザーが入力したリズム -->
+                                <div class="rdm-score-display rdm-selected-answer-display">
+                                    <!-- Verovioで生成される placeholderにボタンのMEI断片を挿入 -->
+                                </div>
+                                <!-- リズム選択ボタン群 -->
+                                <div class="rdm-rhythm-buttons">
+                                    <!-- １拍のリズム -->
+                                    <div class="rdm-rhythm-category" data-category="one-beat" id="oneBeatCategory">
+                                        <h4>1拍のリズム</h4>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<note dur='4' pname='g' oct='4'/>">
+                                            四分音符
+                                        </button>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<beam><note dur='8' pname='g' oct='4'/><note dur='8' pname='g' oct='4'/></beam>">
+                                            八分音符2つ
+                                        </button>
+                                    </div>
+
+                                    <div class="rdm-rhythm-category" data-category="two-beat">
+                                        <h4>2拍のリズム</h4>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<note dur='4' pname='g' oct='4'/><note dur='4' pname='g' oct='4'/>">
+                                            四分音符＋四分音符
+                                        </button>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<note dur='4' pname='g' oct='4'/><beam><note dur='8' pname='g' oct='4'/><note dur='8' pname='g' oct='4'/></beam>">
+                                            四分音符＋八分音符2つ
+                                        </button>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<beam><note dur='8' pname='g' oct='4'/><note dur='8' pname='g' oct='4'/></beam><note dur='4' pname='g' oct='4'/>">
+                                            八分音符2つ＋四分音符
+                                        </button>
+                                        <style>
+                                        </style>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<beam><note dur='8' pname='g' oct='4'/><note dur='8' pname='g' oct='4'/></beam><beam><note dur='8' pname='g' oct='4'/><note dur='8' pname='g' oct='4'/></beam>">
+                                            八分音符4つ
+                                            <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"><defs><g id="DefNoteHead"><path transform="scale(1,-1)" d="M0 -39c0 68 73 172 200 172c66 0 114 -37 114 -95c0 -84 -106 -171 -218 -171c-64 0 -96 30 -96 94z"/></g></defs><g transform="translate(50,0)scale(.9)"><g class="notehead" transform="translate(0,400)"><use xlink:href="#DefNoteHead" transform="translate(0,0)scale(.4)"/><use xlink:href="#DefNoteHead" transform="translate(250,0)scale(.4)"/><use xlink:href="#DefNoteHead" transform="translate(500,0)scale(.4)"/><use xlink:href="#DefNoteHead" transform="translate(750,0)scale(.4)"/></g><g class="stem" transform="translate(120,-10)"><path d="M0 100L0 400M250 100L250 400M500 100L500 400M750 100L750 400" stroke-width="10" fill="black" stroke="black"/></g><g class="beam" transform="translate(115,0)scale(1.014)"><path d="M0 100L750 100" stroke-width="60" fill="black" stroke="black"/></g></g></svg>
+                                        </button>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<note dur='8' pname='g' oct='4'/><note dur='4' pname='g' oct='4'/><note dur='8' pname='g' oct='4'/>">
+                                            シンコペーション
+                                            
+                                        </button>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<note dur='4' pname='g' oct='4' dots='1'/><note dur='8' pname='g' oct='4'/>">
+                                            付点四分音符＋八分音符
+                                        </button>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<note dur='2' pname='g' oct='4'/>">
+                                            二分音符
+                                        </button>
+
+                                    </div>
+
+                                    <div class="rdm-rhythm-category" data-category="use-ties" id="useTiesCategory">
+                                        <h4>タイを使ったリズム</h4>
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<note dur='4' pname='g' oct='4' tie='i'/><note dur='8' pname='g' oct='4' tie='t'/><note dur='8' pname='g' oct='4'/>">
+                                            タイ付四分音符＋八分音符２つ
+                                        </button>
+
+                                        <button class="rdm-rhythm-select-button"
+                                            data-mei-fragment="<note dur='8' pname='g' oct='4'/><note dur='8' pname='g' oct='4' tie='i'/><note dur='8' pname='g' oct='4' tie='t'/><note dur='8' pname='g' oct='4'/>">
+                                            タイ付シンコペーション
+                                        </button>
+                                    </div>
+
+                                    <p>操作</p>
+                                    <div><label><input type="checkbox" id="toggleOneBeat"
+                                                data-target-id="oneBeatCategory" checked> 1拍のリズムカードを表示／非表示</label></div>
+                                    <div><label><input type="checkbox" id="toggleUseTies"
+                                                data-target-id="useTiesCategory" checked> タイを使った表記を表示／非表示</label></div>
+                                    <div><button class="rdm-reset-button">入力済のリズムをリセット</button></div>
+
+
+                                </div>
+                            </div>
+                            <hr>
+                            <button class="rdm-show-answer">解答を送信</button>
+                        </div>
+                    </div>
+
+                    <!-- 解答タブ -->
+                    <div id="rdmAnswerTab" class="tab-pane">
+                        <h3 class="rdm-visually-hidden">解答</h3>
+                        <div class="rdm-correct-answer">
+                            <h4>正しい解答</h4>
+                            <div class="rdm-score-display rdm-correct-answer-display" id="rdmCorrectAnswerDisplay">
+                                <!-- 正しいリズムが表示される場所 -->
+                                <img src="" alt="正しい前半のリズム" class="rdm-correct-rhythm-image"
+                                    id="rdmCorrectFirstHalfImage">
+                                <img src="" alt="正しい後半のリズム" class="rdm-correct-rhythm-image"
+                                    id="rdmCorrectSecondHalfImage">
+                            </div>
+                            <button class="rdm-play-correct-answer-button">解答音源を聴く</button>
+                        </div>
+                        <div class="rdm-selected-answer">
+                            <h4>あなたの選択</h4>
+                            <div class="rdm-score-display rdm-selected-answer-display" id="rdmSelectedAnswerDisplay">
+                                <!-- ユーザーが選択したリズムが表示される場所 -->
+                                <img src="" alt="選択した前半のリズム" class="rdm-selected-rhythm-image"
+                                    id="rdmSelectedFirstHalfImage">
+                                <img src="" alt="選択した後半のリズム" class="rdm-selected-rhythm-image"
+                                    id="rdmSelectedSecondHalfImage">
+                            </div>
+                            <button class="rdm-play-selected-answer-button">ユーザー選択音源を聴く</button>
+                        </div>
+                        <hr>
+                        <button class="rdm-new-question-button">新しい問題を生成</button>
+                    </div>
+
+                    <!-- 設定タブ -->
+                    <div id="rdmSettingsTab" class="tab-pane">
+                        <h3 class="rdm-visually-hidden">設定</h3>
+                        <div class="rdm-question-setting">
+                            <h4>問題設定</h4>
+                            <!-- 拍子選択の追加 -->
+                            <div class="rdm-time-signature-setting">
+                                <label for="rdmTimeSignatureSelect">拍子:</label>
+                                <select id="rdmTimeSignatureSelect" name="time-signature">
+                                    <option value="4/4">4/4拍子</option>
+                                    <option value="6/8" disabled>6/8拍子 (近日公開予定)</option>
+                                </select>
+                            </div>
+                            <!-- リズムの種類選択の追加 -->
+                            <div class="rdm-rhythm-type-setting">
+                                <label>出題するリズムの種類:</label>
+                                <div id="rdmRhythmTypeOptions" class="rdm-flex-container">
+                                    <!-- JavaScriptによってリズムの種類ボタンがここに動的に挿入されます -->
+                                    <p>リズムの種類選択は近日公開予定です。</p>
+                                </div>
+                            </div>
+                            <p>現在、その他の問題設定はありません。</p>
+                        </div>
+                        <div class="rdm-sequencer-setting">
+                            <h4>シーケンサー設定</h4>
+                            <div class="rdm-tempo-slider">
+                                <label for="rdmTempoRange">テンポ (BPM):</label>
+                                <input type="range" id="rdmTempoRange" name="tempo" min="40" max="240" value="80">
+                                <span id="rdmCurrentTempoValue">80</span> BPM
+                            </div>
+                            <div class="rdm-volume-slider">
+                                <label for="rdmVolumeRange">音量:</label>
+                                <input type="range" id="rdmVolumeRange" name="volume" min="0" max="100" value="70">
+                                <span id="rdmCurrentVolumeValue">70</span> %
+                            </div>
+                            <!-- プリカウント設定の追加 -->
+                            <div class="rdm-precount-setting">
+                                <label class="rdm-checkbox-label">
+                                    <input type="checkbox" id="rdmPrecountEnabled" class="rdm-form-checkbox" checked>
+                                    <span class="rdm-checkbox-text">プリカウントを有効にする</span>
+                                </label>
+                            </div>
+                            <!-- メトロノーム設定の追加 -->
+                            <div class="rdm-metronome-setting">
+                                <label class="rdm-checkbox-label">
+                                    <input type="checkbox" id="rdmMetronomeEnabled" class="rdm-form-checkbox" checked>
+                                    <span class="rdm-checkbox-text">メトロノームを有効にする</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 使用方法タブ -->
+                    <div id="rdmHowToUseTab" class="tab-pane">
+                        <h3>Rhythm Dictation Mini 遊び方</h3>
+                        <p>Rhythm Dictation Miniは、聴こえてくるリズムを聴き取り、正しいリズムを選ぶシンプルなアプリです。</p>
+
+                        <h4>課題に挑戦する</h4>
+                        <ol>
+                            <li>**出題音源を聴く**<br>「聴音を開始」ボタンで問題をスタート。出題されたリズムをよく聴きましょう。「出題音源を聴く（もう一度聴く）」ボタンで、何度でも聴き直せます。
+                            </li>
+                            <li>**リズムを選択し、解答を送信する**<br>聴こえたリズムに合わせて、画面下部のリズム画像から正しいものを選びます。それが「前半」か「後半」かを選んで画像をタップし、白い表示エリアに表示させたら「解答を送信」ボタンで答えを送ります。
+                            </li>
+                            <li>**解答を確認し、新しい問題に挑戦する**<br>「解答」タブで正解とあなたの答えを見比べられます。「新しい問題を生成」ボタンで、次の問題に進みましょう。</li>
+                        </ol>
+
+                        <h4>設定を変更する</h4>
+                        <p>「設定」タブでは、リズム練習をより快適にするための調整ができます。</p>
+                        <ul>
+                            <li>**問題設定**:
+                                <ul>
+                                    <li>**拍子**: 出題されるリズムの拍子を選択できます。（現在4/4拍子のみ選択可能。6/8拍子は近日公開予定です。）</li>
+                                    <li>**リズムの種類**: 出題されるリズムの種類（例: 8分音符、16分音符など）を選択できます。（近日公開予定です。）</li>
+                                </ul>
+                            </li>
+                            <li>**シーケンサー設定**: リズムの**テンポ（速さ）**や**音量**をスライダーで自由に変えられます。</li>
+                            <li>**プリカウント**: 問題開始前にカウントインを鳴らすかどうかを設定できます。</li>
+                            <li>**メトロノーム**: 問題再生中にメトロノーム音を鳴らすかどうかを設定できます。</li>
+                        </ul>
+
+                        <hr>
+
+                        <h4>近日公開予定の機能</h4>
+                        <p>以下の機能は現在開発中です。ご期待ください！</p>
+                        <ul>
+                            <!-- 問題設定として、使用するリズムの種類（例: 8分音符、16分音符など）を選択できる機能。 -->
+                            <!-- 上記は設定に移動したため削除 -->
+                        </ul>
+                    </div>
+
+                    <!-- 復習タブの追加 -->
+                    <div id="rdmReviewTab" class="tab-pane">
+                        <h3>間違えた問題の復習</h3>
+                        <p>ここに間違えた問題が表示されます。</p>
+                        <div id="rdmIncorrectAnswersList">
+                            <p>まだ間違えた問題はありません。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
 
     <!-- simple-tab-componentのスクリプト -->
     <script
-        src="https://cdn.jsdelivr.net/gh/kogu0507/module@2.3.0/components/simple-tab-component/script.min.js"></script>
+        src="https://cdn.jsdelivr.net/gh/kogu0507/module@2.4.0/components/simple-tab-component/script.min.js"></script>
     <!-- 新しく分離したメインのスクリプトファイル -->
     <script type="module" src="script.js"></script>
+    <script>
+        // 後で別モジュールとするかもなので、script.jsとは別にここ。
+        document.addEventListener('DOMContentLoaded', () => {
+            /**
+             * チェックボックスのチェック状態に基づいて要素の表示/非表示を切り替えます。
+             * @param {HTMLInputElement} checkbox - 表示/非表示を制御するチェックボックス要素。
+             */
+            const toggleTargetElementVisibility = (checkbox) => {
+                const targetId = checkbox.dataset.targetId; // data-target-idの値を取得
+                const targetElement = document.getElementById(targetId); // ターゲット要素をIDで取得
+
+                if (targetElement) {
+                    targetElement.style.display = checkbox.checked ? '' : 'none';
+                }
+            };
+
+            // すべての該当するチェックボックスを取得
+            const toggleCheckboxes = document.querySelectorAll('input[type="checkbox"][data-target-id]');
+
+            // 各チェックボックスに対して初期状態を設定し、イベントリスナーを追加
+            toggleCheckboxes.forEach(checkbox => {
+                toggleTargetElementVisibility(checkbox); // 初期表示を設定
+                checkbox.addEventListener('change', () => {
+                    toggleTargetElementVisibility(checkbox); // 変更時に表示を更新
+                });
+            });
+        });
+    </script>
 </body>
 
 </html>

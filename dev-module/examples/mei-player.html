@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>MEI Score Viewer & Player</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      margin: 20px;
+    }
+
+    #score-container {
+      border: 1px solid #ccc;
+      padding: 10px;
+      margin-top: 20px;
+      overflow-x: auto;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      cursor: pointer;
+      margin-right: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>MEI Score Viewer & Player</h1>
+  <p>指定のMEIファイルを読み込み、楽譜を表示し、音を再生します。</p>
+
+  <div>
+    <label for="meiUrl">MEI URL:</label>
+    <input type="text" id="meiUrl" size="80" value="https://www.verovio.org/examples/downloads/Schubert_Lindenbaum.mei">
+    <button id="loadAndRender">楽譜をロード＆表示</button>
+    <button id="playMusic" disabled>音を再生</button>
+  </div>
+
+  <div id="score-container">
+    <p>楽譜がここに表示されます。</p>
+  </div>
+
+  <script type="module">
+    import { loadToneJs } from '../tonejs/loader.mjs';
+    import { loadVerovio } from '../verovio/loader.js';//NEWバージョン
+    import { loadToneJsMidi } from '../tonejs/tonejs-midi-loader.mjs';
+
+    let verovioToolkit, Midi, synth, scorePlayer;
+    const meiUrlInput = document.getElementById('meiUrl');
+    const loadBtn = document.getElementById('loadAndRender');
+    const playBtn = document.getElementById('playMusic');
+    const scoreContainer = document.getElementById('score-container');
+
+    async function fetchMeiData(url) {
+      console.log('[fetch] MEI取得開始:', url);
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const txt = await res.text();
+      console.log('[fetch] MEI取得完了');
+      return txt;
+    }
+
+    async function renderScore(meiData) {
+      console.log('[render] 開始');
+      if (!verovioToolkit) verovioToolkit = await loadVerovio();
+      verovioToolkit.setOptions({ pageHeight: 600, pageWidth: 1200, scale: 40 });
+      verovioToolkit.loadData(meiData);
+      const svg = verovioToolkit.renderToSVG(1);
+      scoreContainer.innerHTML = svg;
+      console.log('[render] 完了');
+    }
+
+    async function setupMidiPlayback(meiData) {
+      // setupMidiPlayback の冒頭に
+      await Tone.start();  // 保険
+      console.log('[test] AudioContext state:', Tone.context.state);
+
+      // 単音テスト
+      const testSynth = new Tone.Synth().toDestination();
+      testSynth.triggerAttackRelease('C4', '4n');
+      console.log('[test] C4 を鳴らしました');
+      // ---------- ↑追加してテスト　 テスト用・単音発声ログを挟む（音が鳴った）
+
+
+
+
+      console.log('[MIDI] 準備開始');
+      if (!Tone) await loadToneJs();
+      if (!Midi) Midi = await loadToneJsMidi();
+
+      if (!synth) {
+        synth = new Tone.PolySynth(Tone.Synth).toDestination();
+        console.log('[MIDI] Synth初期化');
+        synth.set({ oscillator: { type: 'sawtooth' } });
+        console.log('[MIDI] Oscillator → sawtooth');
+      }
+
+      // Verovio→MIDI生成＆パース
+      const midiBase64 = verovioToolkit.renderToMIDI();
+      const arr = Uint8Array.from(atob(midiBase64), c => c.charCodeAt(0));
+      const midi = new Midi(arr);
+
+      // Note オブジェクトを Tone.Part 用に整形
+      const rawNotes = midi.tracks[0]?.notes || [];
+      const events = rawNotes.map(n => ({
+        time: n.time,      // 秒
+        noteName: n.name,      // ← 重要：.name を .noteName にコピー
+        duration: n.duration,  // 秒
+        velocity: n.velocity   // 0～1
+      }));
+      console.log('[MIDI] 整形後の最初の5イベント:', events.slice(0, 5));
+
+      // 既存プレイヤーをクリア
+      if (scorePlayer) {
+        scorePlayer.stop();
+        scorePlayer.dispose();
+      }
+
+      // Part に渡してスケジュール
+      if (events.length) {
+        // Optional: もし MIDI ヘッダに bpm があれば設定
+        if (typeof midi.header.bpm === 'number') {
+          Tone.Transport.bpm.value = midi.header.bpm;
+          console.log('[MIDI] BPM を', midi.header.bpm, 'に設定');
+        }
+
+        scorePlayer = new Tone.Part((time, ev) => {
+          synth.triggerAttackRelease(
+            ev.noteName,
+            ev.duration,
+            time,
+            ev.velocity
+          );
+        }, events).start(0);
+
+        console.log('[MIDI] ノート数:', events.length);
+        playBtn.disabled = false;
+      } else {
+        console.warn('[MIDI] 再生可能なノートがありません');
+      }
+    }
+
+    loadBtn.addEventListener('click', async () => {
+      try {
+        await Tone.start();
+        console.log('[load] AudioContext started');
+        const url = meiUrlInput.value.trim();
+        if (!url) return alert('URLを入力してください');
+        loadBtn.disabled = true;
+        playBtn.disabled = true;
+        scoreContainer.innerHTML = '<p>ロード中...</p>';
+
+        const mei = await fetchMeiData(url);
+        await renderScore(mei);
+        await setupMidiPlayback(mei);
+      } catch (e) {
+        console.error('[load] エラー:', e);
+        scoreContainer.innerHTML = '<p style="color:red;">エラーが発生しました</p>';
+      } finally {
+        loadBtn.disabled = false;
+      }
+    });
+
+    playBtn.addEventListener('click', async () => {
+      console.log('[play] クリック, state:', Tone.Transport.state);
+      if (Tone.context.state !== 'running') {
+        await Tone.start();
+        console.log('[play] AudioContext started');
+      }
+      if (Tone.Transport.state === 'started') {
+        Tone.Transport.stop();
+        playBtn.textContent = '音を再生';
+        console.log('[play] 停止');
+      } else {
+        Tone.Transport.start();
+        playBtn.textContent = '再生中... (クリックで停止)';
+        console.log('[play] 再生開始');
+      }
+    });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      Promise.all([loadVerovio(), loadToneJs(), loadToneJsMidi()])
+        .then(() => console.log('[init] 事前ロード完了'))
+        .catch(e => console.error('[init] 事前ロード失敗:', e));
+    });
+  </script>
+</body>
+
+</html>

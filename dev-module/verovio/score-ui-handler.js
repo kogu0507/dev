@@ -1,4 +1,4 @@
-// dev-module/verovio/score-ui-handler.js
+// module/verovio/score-ui-handler.js
 
 /**
  * ScoreUIHandler は DOM 操作を通じて

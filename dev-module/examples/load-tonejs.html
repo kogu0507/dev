@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tone.js Loader Test</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; margin: 0; background-color: #f4f7f6; color: #333; }
+        .container { background-color: #ffffff; padding: 40px; border-radius: 12px; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1); text-align: center; max-width: 500px; width: 90%; }
+        h1 { color: #2c3e50; margin-bottom: 25px; }
+        button { padding: 15px 30px; font-size: 1.1em; font-weight: bold; cursor: pointer; background-color: #28a745; color: white; border: none; border-radius: 8px; box-shadow: 0 4px 8px rgba(0,0,0,0.2); transition: all 0.3s ease; outline: none; }
+        button:hover { background-color: #218838; transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.25); }
+        button:active { transform: translateY(0); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        #status { margin-top: 30px; font-size: 1.1em; color: #555; background-color: #e9f5e9; border: 1px solid #d4edda; border-radius: 6px; padding: 15px; min-height: 50px; display: flex; align-items: center; justify-content: center; word-break: break-word; }
+        .success { color: #155724; background-color: #d4edda; border-color: #c3e6cb; }
+        .error { color: #721c24; background-color: #f8d7da; border-color: #f5c6cb; }
+        .loading { color: #004085; background-color: #cce5ff; border-color: #b8daff; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tone.js Loader Test</h1>
+        <button id="startButton">Load Tone.js & Play C4</button>
+        <div id="status" class="loading">Click the button to load Tone.js and play a sound.</div>
+    </div>
+
+    <script type="module">
+        // module/example/load-tonejs.html から見た相対パス
+        //import { loadToneJs } from '../tonejs/loader.mjs';
+        import { loadToneJs } from '../tonejs/loader.min.mjs';
+
+        const startButton = document.getElementById('startButton');
+        const statusDiv = document.getElementById('status');
+
+        startButton.addEventListener('click', async () => {
+            statusDiv.textContent = 'Loading Tone.js...';
+            statusDiv.className = 'loading';
+            startButton.disabled = true; // ロード中はボタンを無効化
+
+            try {
+                await loadToneJs(); // Tone.jsをロード
+
+                // Tone.jsがロードされたことを確認
+                if (typeof Tone !== 'undefined') {
+                    statusDiv.textContent = 'Tone.js loaded successfully. Initializing audio context...';
+                    statusDiv.className = 'status'; // ロード完了
+                    
+                    // Web Audio APIのコンテキストを開始
+                    await Tone.start();
+                    statusDiv.textContent = 'Audio context started. Playing C4...';
+
+                    // シンセサイザーを作成してC4を再生
+                    const synth = new Tone.Synth().toDestination();
+                    synth.triggerAttackRelease("C4", "8n");
+
+                    statusDiv.textContent = 'C4 played! Check your audio. You can click again to replay.';
+                    statusDiv.className = 'status success';
+
+                } else {
+                    throw new Error('Tone object not found after loading.');
+                }
+            } catch (error) {
+                statusDiv.textContent = `Error loading Tone.js: ${error.message}`;
+                statusDiv.className = 'status error';
+                console.error('Failed to load or initialize Tone.js:', error);
+            } finally {
+                startButton.disabled = false; // 処理完了後にボタンを有効化
+            }
+        });
+    </script>
+</body>
+</html>

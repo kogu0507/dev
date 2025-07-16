@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>VRV Simple Viewer サンプル</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <!-- vrv-simple-viewer を module script で初期化 -->
+    <!-- script.js を type="module" で読み込み、内部で VerovioManager を import します -->
+
+    <!--
+    属性の意味:
+      data-score-def-preset: 'treble,bass,grand,alto,tenor' のいずれか（複数可）
+      data-key-signature: 調号 (例 '2f')
+      data-meter: 文字列形式の meter 属性 (例 "sym='common'", "form='cut'", "count='3' unit='8' form='num'" )
+      data-meter-count/data-meter-unit: 数値型で指定する場合
+      data-tempo: BPM を数値指定
+  -->
+    <h1>test</h1>
+    <div class="vrv-simple-viewer" data-score-def-preset="treble" data-key-signature="2f">
+        <!--
+      content セクション:
+      小節 (<measure>) や <tempo midi.bpm="..."/> を個別に記述可能
+    -->
+        <script type="application/mei+xml" data-mei-section="content">
+
+        <measure n="1" right="dbl">
+        <staff n="1">
+        <layer n="1">
+        <note dur="1" pname="g" oct="4" />
+        <note dur="1" pname="a" oct="4" />
+        <note dur="1" pname="b" oct="4" />
+        <note dur="1" pname="c" oct="5" />
+        <note dur="1" pname="d" oct="5" />
+        <note dur="1" pname="e" oct="5" accid="n" />
+        <note dur="1" pname="f" oct="5" accid="s" />
+        <note dur="1" pname="g" oct="5" />
+
+
+        </layer>
+        </staff>
+        </measure>
+
+    </script>
+    </div>
+
+    <div class="vrv-simple-viewer" data-score-def-preset="treble" data-key-signature="2f">
+        <!--
+      content セクション:
+      小節 (<measure>) や <tempo midi.bpm="..."/> を個別に記述可能
+    -->
+        <script type="application/mei+xml" data-mei-section="content">
+        <measure n="1" right="dbl">
+        <staff n="1">
+        <layer n="1">
+
+        <note dur="1" pname="g" oct="5" />
+        <note dur="1" pname="f" oct="5"><accid accid="n" func="edit" /></note>
+        <note dur="1" pname="e" oct="5"><accid accid="f" func="edit" /></note>
+        <note dur="1" pname="d" oct="5" />
+        <note dur="1" pname="c" oct="5" />
+        <note dur="1" pname="b" oct="4" />
+        <note dur="1" pname="a" oct="4" />
+        <note dur="1" pname="g" oct="4" />
+
+        </layer>
+        </staff>
+      </measure>
+
+    </script>
+    </div>
+
+    <div class="vrv-simple-viewer" data-score-def-preset="treble" data-key-signature="1s">
+        <script type="application/mei+xml" data-mei-section="content">
+
+            <measure n="1" right="dbl">
+            <staff n="1">
+            <layer n="1">
+            <note dur="1" pname="g" oct="4" />
+            <note dur="1" pname="a" oct="4" />
+            <note dur="1" pname="b" oct="4" />
+            <note dur="1" pname="c" oct="5" />
+            <note dur="1" pname="d" oct="5" />
+            <note dur="1" pname="e" oct="5" />
+            <note dur="1" pname="f" oct="5" accid.gen="s" />
+            <note dur="1" pname="g" oct="5" />
+            </layer>
+            </staff>
+            </measure>
+        </script>
+    </div>
+
+
+
+    <!-- ビューア初期化用スクリプトを type=module で読み込み -->
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

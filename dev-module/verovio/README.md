@@ -1,139 +1,136 @@
 # Verovio モジュール群
 
-このリポジトリでは、Verovio Toolkit を Web アプリケーションで簡単かつ柔軟に利用できるように、責務ごとに分離したモジュール群を提供します。
+Web アプリケーションで Verovio Toolkit を簡単かつ柔軟に利用するためのモジュール集です。各責務を分離し、ビルド後は `.min.js` ファイルを配布できる構成になっています。
 
 ---
 
 ## 目的
 
-* Verovio Toolkit の初期化／ロード処理を抽象化
-* MEI データの SVG／MIDI 生成ロジックを提供
-* DOM 操作による楽譜表示およびエラー／ローディング管理
-* 楽譜データの移調機能
-* 各機能を統合した高レベル API で簡単に利用可能に
-* レンダリングオプションのプリセット集で設定切り替えを容易に
+* WASM ローダーの抽象化 (loader.min.js)
+* MEI → SVG/MIDI 変換ロジックの提供 (core-processor.min.js)
+* DOM 操作による楽譜表示およびローディング/エラー管理 (score-ui-handler.min.js)
+* MEI の移調機能 (transposer.min.js)
+* レンダリングオプションのプリセット集 (render-options.js)
+* 高レベル API (`VerovioManager`) による統合利用 (verovio-manager.min.js)
 
 ---
 
 ## ディレクトリ構成
 
 ```
-dev-module/
+module/
 ├── verovio/
-│   ├── loader.js              # WASM ローダー
-│   ├── core-processor.js      # MEI → SVG/MIDI 変換ロジック
-│   ├── score-ui-handler.js    # DOM 操作による表示管理
-│   ├── transposer.js          # MEI 移調機能
-│   ├── render-options.js      # レンダリングオプションプリセット
-│   └── verovio-manager.js     # 高レベル API（統合ファサード）
+│   ├── loader.min.js               # WASM ローダー
+│   ├── core-processor.min.js       # MEI → SVG/MIDI 変換ロジック
+│   ├── score-ui-handler.min.js     # DOM 操作による表示管理
+│   ├── transposer.min.js           # MEI 移調機能
+│   ├── render-options.js           # レンダリングオプションプリセット
+│   └── verovio-manager.min.js      # 高レベル API（Facade）
 └── examples/
-    ├── verovio-loader.html
-    ├── core-processor-test.html
-    ├── score-ui-handler-test.html
-    ├── verovio-manager-test.html
-    └── render-options-test.html
+    └── 20250704-test.html          # 確認用テストページ
 ```
 
-本番用ビルド時には `dev-module/` から `module/` へ `.min.js` 版を出力し、適宜パスを更新してください。
+ビルド前は `module/verovio/*.js`、ビルド後は同名の `.min.js` が生成されます。
 
 ---
 
 ## モジュール一覧
 
-### loader.js
+### loader.min.js
 
-* **責務**: Verovio の WASM スクリプトを動的に読み込み、オンランタイム初期化完了後に `Toolkit` インスタンスを返却します。
-* **特徴**: キャッシュ保持、タイムアウト／ポーリング対応、オプション引数で URL・タイムアウト時間を変更可能。
+* **責務**: Verovio の WASM スクリプトを動的読み込みし、`Toolkit` インスタンスを返します。
+* **特徴**: キャッシュ保持、タイムアウト/ポーリング、オプション引数で URL・タイムアウト設定可能。
 
-### core-processor.js
+### core-processor.min.js
 
-* **責務**: Verovio Toolkit を使い、MEI → SVG／MIDI 変換を行います。
-* **機能**:
+* **責務**: Verovio Toolkit を使い、MEI → SVG/MIDI 変換を行います。
+* **主なメソッド**:
 
-  * `renderSvgFromUrl(url)`, `renderSvgFromMei(meiData)`
-  * `renderMidiFromUrl(url)`, `renderMidiFromMei(meiData)`
+  * `renderSvgFromUrl(url, { page, measureRange })`
+  * `renderSvgFromMei(meiString, { page, measureRange })`
+  * `renderMidiFromUrl(url)`
+  * `renderMidiFromMei(meiString)`
   * `getPageCount()`
 
-### score-ui-handler.js
+### score-ui-handler.min.js
 
-* **責務**: DOM 操作で SVG 表示、ローディング表示、エラー表示を管理。
-* **機能**:
+* **責務**: DOM 操作で SVG 挿入、ローディング/エラー表示を管理。
+* **主なメソッド**:
 
   * `showLoading(elementId)`, `hideLoading(elementId)`
   * `displaySvg(svgString, elementId)`
   * `showError(message, elementId)`
 
-### transposer.js
+### transposer.min.js
 
-* **責務**: MEI データを半音または音楽的インターバル／トニック指定で移調。
-* **機能**:
+* **責務**: MEI データを指定半音で移調し、移調後の MEI を取得します。
+* **主なメソッド**:
 
-  * `transposeMei(meiData, semitonesOrString)`（数値または文字列で指定）
+  * `transposeMei(meiString, semitones)` → `Promise<string>`
 
 ### render-options.js
 
-* **責務**: コアレンダラー用のオプションプリセット集。
+* **責務**: CoreProcessor に渡すレンダリングオプションのプリセット集。
 * **プリセット**:
 
-  * `defaultOptions`, `highResOptions`, `mobileOptions`, `printOptions`
+  * `defaultOptions`, `highResOptions`, `mobileOptions`, `printOptions`, `svgViewBox`
 
-### verovio-manager.js
+### verovio-manager.min.js
 
-* **責務**: 上記モジュールを統合し、外部から簡単に利用できるファサードを提供。
-* **機能**:
+* **責務**: 上記モジュールを統合し、簡単に利用できる高レベル API を提供。
+* **主なメソッド**:
 
-  * `initialize()` でロード・初期化
+  * `initialize()` → `Promise<void>`
   * `setRenderOptions(options)`
-  * `displayMeiOnElement(url, elementId)`
-  * `displayTransposedMeiOnElement(url, elementId, semitonesOrString)`
-  * `getMidiFromMei(url)`
+  * `displaySvgFromUrl(meiUrl, elementId, options)`
+  * `displayTransposedSvgFromUrl(meiUrl, elementId, semitones, options)`
+  * `getMidiFromUrl(meiUrl, options)`
 
 ---
 
 ## 使用例
 
-以下のコードは、`VerovioManager` のインスタンスを作成すれば、
-今回のモジュール群で提供される全機能を簡単に呼び出せる例です。
-
 ```js
 import { VerovioManager } from './module/verovio/verovio-manager.min.js';
+import { defaultOptions } from './module/verovio/render-options.js';
 
-const manager = new VerovioManager();
+(async () => {
+  const manager = new VerovioManager();
+  await manager.initialize();
+  manager.setRenderOptions(defaultOptions);
 
-// 1. 初期化（Toolkit のロード）
-await manager.initialize();
+  // MEI → SVG 表示
+  await manager.displaySvgFromUrl(
+    'path/to/score.mei',
+    'score-container',
+    { page: 1, measureRange: '1-5' }
+  );
 
-// 2. オプション設定（必要に応じて）
-manager.setRenderOptions({ pageWidth: 800, scale: 70 });
+  // 移調表示 (半音 +2)
+  await manager.displayTransposedSvgFromUrl(
+    'path/to/score.mei',
+    'score-container',
+    2,
+    { page: 1, measureRange: 'start-end' }
+  );
 
-// 3. MEI → SVG 表示
-await manager.displayMeiOnElement('path/to/score.mei', 'score-container');
-
-// 4. 移調表示（例：長2度上）
-await manager.displayTransposedMeiOnElement(
-  'path/to/score.mei',
-  'score-container',
-  'M2'
-);
-
-// 5. MIDI データ取得
-const midiArrayBuffer = await manager.getMidiFromMei('path/to/score.mei');
+  // MIDI データ取得
+  const midiBuffer = await manager.getMidiFromUrl('path/to/score.mei');
+  // Blob → ダウンロードや再生に利用
+})();
 ```
 
-```htmlhtml
+```html
 <!DOCTYPE html>
 <html>
 <head>
   <script type="module">
     import { VerovioManager } from './module/verovio/verovio-manager.min.js';
-
-    const manager = new VerovioManager();
-    const meiUrl = 'path/to/sample.mei';
-    const containerId = 'score-container';
-
-    await manager.initialize();
-    await manager.displayMeiOnElement(meiUrl, containerId);
-    // manager.displayTransposedMeiOnElement(meiUrl, containerId, 'M2');
+    (async () => {
+      const manager = new VerovioManager();
+      await manager.initialize();
+      await manager.displaySvgFromUrl('path/to/sample.mei', 'score-container');
+    })();
   </script>
 </head>
 <body>
@@ -144,31 +141,30 @@ const midiArrayBuffer = await manager.getMidiFromMei('path/to/score.mei');
 
 ---
 
-### CDN (jsDelivr) での読み込み例
-
-npm パッケージや GitHub リポジトリが公開されている場合、jsDelivr を利用して直接モジュールを読み込むこともできます。
-バージョン部分 (`@<version>`) は実際のリリースタグやコミット SHA に置き換えてください。
+## CDN(jsDelivr) での読み込み例
 
 ```html
 <script type="module">
-  import { VerovioManager } from 
+  import { VerovioManager } from
     'https://cdn.jsdelivr.net/gh/<ユーザー名>/<リポジトリ名>@<version>/module/verovio/verovio-manager.min.js';
 
   (async () => {
     const manager = new VerovioManager();
     await manager.initialize();
-    await manager.displayMeiOnElement('path/to/score.mei', 'score-container');
+    await manager.displaySvgFromUrl('path/to/score.mei', 'score-container');
   })();
 </script>
 ```
 
+---
+
 ## ビルド
 
 ```bash
-# 開発モードで単一ファイルを動作確認
+# 開発サーバー起動
 npm run start
 
-# 本番ビルド: dev-module/*.js → module/*.min.js
+# 本番ビルド: dev-module → module/*.min.js
 npm run build
 ```
 

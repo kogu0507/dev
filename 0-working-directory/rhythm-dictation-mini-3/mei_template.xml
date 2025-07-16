@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://relaxng.org/ns/structure/1.0"?>
+<?xml-model href="https://music-encoding.org/schema/dev/mei-all.rng" type="application/xml" schematypens="http://purl.oclc.org/dsdl/schematron"?>
+<mei xmlns="http://www.music-encoding.org/ns/mei" meiversion="5.1">
+    <meiHead>
+        <fileDesc>
+            <titleStmt>
+                <title></title>
+            </titleStmt>
+        </fileDesc>
+    </meiHead>
+    <music>
+        <body>
+            <mdiv>
+                <score>
+                    <scoreDef keysig="0" key.mode="major">
+                        <staffGrp>
+                            <staffDef n="1" clef.shape="G" clef.line="2" lines="5"/>
+                        </staffGrp>
+                    </scoreDef>
+                    <section>
+                        <measure n="1" right="dashed">
+                            <staff n="1">
+                                <layer n="1">
+                                    ##placeholder_note1##
+                                </layer>
+                            </staff>
+                            <tempo midi.bpm="##placeholder_tempo##"></tempo>
+                        </measure>
+                        <measure n="2">
+                            <staff n="1">
+                                <layer n="1">
+                                    ##placeholder_note2##
+                                </layer>
+                            </staff>
+                            <tempo midi.bpm="##placeholder_tempo##"></tempo>
+                        </measure>
+                        <sb/>
+                    </section>
+                </score>
+            </mdiv>
+        </body>
+    </music>
+</mei>

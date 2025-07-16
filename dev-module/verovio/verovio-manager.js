@@ -1,9 +1,9 @@
-// dev-module/verovio/verovio-manager.js
+// module/verovio/verovio-manager.js
 
-import { loadVerovio } from './loader.js';
-import { CoreProcessor } from './core-processor.js';
-import { ScoreUIHandler } from './score-ui-handler.js';
-import { Transposer } from './transposer.js';
+import { loadVerovio } from './loader.min.js';
+import { CoreProcessor } from './core-processor.min.js';
+import { ScoreUIHandler } from './score-ui-handler.min.js';
+import { Transposer } from './transposer.min.js';
 
 /**
  * VerovioManager は VerovioToolkit のロードから
@@ -14,101 +14,119 @@ export class VerovioManager {
   /** @private */
   #toolkit = null;
   /** @private */
-  #coreProcessor = null;
+  #core = null;
   /** @private */
-  #scoreUIHandler = null;
+  #ui = null;
   /** @private */
   #transposer = null;
+  /** @private */
+  _initPromise = null;
 
   /**
-   * インスタンスを作成します。
-   * 実際のロードは initialize() で行います。
-   */
-  constructor() {}
-
-  /**
-   * Verovio と関連モジュールを初期化します。
+   * Verovio および関連モジュールを初期化します。
    * @returns {Promise<void>}
    */
   async initialize() {
-    if (this.#toolkit) {
-      console.warn('既に初期化済みです。');
-      return;
+    if (this._initPromise) {
+      return this._initPromise;
     }
-    try {
+    this._initPromise = (async () => {
       this.#toolkit = await loadVerovio();
-      this.#coreProcessor = new CoreProcessor(this.#toolkit);
-      this.#scoreUIHandler = new ScoreUIHandler();
+      this.#core = new CoreProcessor(this.#toolkit);
+      this.#ui = new ScoreUIHandler();
       this.#transposer = new Transposer(this.#toolkit);
-      console.log('VerovioManager の初期化が完了しました。');
-    } catch (error) {
-      console.error('初期化中にエラーが発生しました:', error);
-      throw error;
+      console.log('VerovioManager initialized');
+    })();
+    return this._initPromise;
+  }
+
+  /** @private */
+  _ensureInit() {
+    if (!this.#toolkit) {
+      throw new Error('initialize() を先に呼び出してください。');
     }
   }
 
   /**
    * レンダリングオプションを設定します。
-   * @param {object} options - setOptions 引数
+   * @param {import('./render-options.js').RenderOptions} options
    */
   setRenderOptions(options) {
-    this.#ensureInit();
-    this.#coreProcessor.setRenderOptions(options);
+    this._ensureInit();
+    this.#core.setRenderOptions(options);
   }
 
   /**
-   * MEI ファイルを URL から読み込み、指定要素に SVG を表示します。
-   * @param {string} meiUrl
-   * @param {string} targetId
+   * URL から MEI を読み込み、SVG を描画します。
+   * @param {string} meiUrl      - MEI ファイルの URL
+   * @param {string} targetId    - 表示先要素の ID
+   * @param {object} [options]
+   * @param {number} [options.page=1]
+   * @param {string} [options.measureRange='start-end']
    */
-  async displayMeiOnElement(meiUrl, targetId) {
-    this.#ensureInit();
-    this.#scoreUIHandler.showLoading(targetId);
+  async displaySvgFromUrl(meiUrl, targetId, { page = 1, measureRange = 'start-end' } = {}) {
+    this._ensureInit();
+    this.#ui.showLoading(targetId);
     try {
-      const svg = await this.#coreProcessor.renderSvgFromUrl(meiUrl);
-      this.#scoreUIHandler.displaySvg(svg, targetId);
+      const svg = await this.#core.renderSvgFromUrl(meiUrl, { page, measureRange });
+      this.#ui.displaySvg(svg, targetId);
     } catch (error) {
-      console.error('表示エラー:', error);
-      this.#scoreUIHandler.showError('楽譜の表示に失敗しました。', targetId);
+      console.error('displaySvgFromUrl error:', error);
+      this.#ui.showError('楽譜の表示に失敗しました。', targetId);
+      throw error;
     }
   }
 
   /**
-   * MEI を指定量移調し、SVG を指定要素に表示します。
+   * URL から MEI を読み込み、MIDI を取得します。
    * @param {string} meiUrl
-   * @param {string} targetId
-   * @param {number} semitones
-   */
-  async displayTransposedMeiOnElement(meiUrl, targetId, semitones) {
-    this.#ensureInit();
-    this.#scoreUIHandler.showLoading(targetId);
-    try {
-      const res = await fetch(meiUrl);
-      if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-      const mei = await res.text();
-      const transposed = await this.#transposer.transposeMei(mei, semitones);
-      const svg = this.#coreProcessor.renderSvgFromMei(transposed);
-      this.#scoreUIHandler.displaySvg(svg, targetId);
-    } catch (error) {
-      console.error('移調表示エラー:', error);
-      this.#scoreUIHandler.showError('移調表示に失敗しました。', targetId);
-    }
-  }
-
-  /**
-   * MEI から MIDI データを取得します。
-   * @param {string} meiUrl
+   * @param {object} [options]
+   * @param {string} [options.measureRange]
    * @returns {Promise<ArrayBuffer>}
    */
-  async getMidiFromMei(meiUrl) {
-    this.#ensureInit();
-    return this.#coreProcessor.renderMidiFromUrl(meiUrl);
+  async getMidiFromUrl(meiUrl, { measureRange } = {}) {
+    this._ensureInit();
+    if (measureRange) {
+      return this._getMidiRange(meiUrl, measureRange);
+    }
+    return this.#core.renderMidiFromUrl(meiUrl);
   }
 
   /** @private */
-  #ensureInit() {
-    if (!this.#toolkit) {
-      throw new Error('initialize() を先に呼び出してください。');
+  async _getMidiRange(meiUrl, measureRange) {
+    // 範囲指定を適用しつつ MEI を読み込む
+    await this.#core.renderSvgFromUrl(meiUrl, { page: 1, measureRange });
+    return this.#core.renderCurrentMidi();
+  }
+
+  /**
+   * URL から MEI を読み込み、指定半音で移調した SVG を描画します。
+   * @param {string} meiUrl
+   * @param {string} targetId
+   * @param {number} semitones
+   * @param {object} [options]
+   * @param {number} [options.page=1]
+   * @param {string} [options.measureRange='start-end']
+   */
+  async displayTransposedSvgFromUrl(
+    meiUrl,
+    targetId,
+    semitones,
+    { page = 1, measureRange = 'start-end' } = {}
+  ) {
+    this._ensureInit();
+    this.#ui.showLoading(targetId);
+    try {
+      const res = await fetch(meiUrl);
+      if (!res.ok) throw new Error(`MEI fetch failed: ${res.status}`);
+      const mei = await res.text();
+      const transposed = await this.#transposer.transposeMei(mei, semitones);
+      const svg = await this.#core.renderSvgFromMei(transposed, { page, measureRange });
+      this.#ui.displaySvg(svg, targetId);
+    } catch (error) {
+      console.error('displayTransposedSvgFromUrl error:', error);
+      this.#ui.showError('移調表示に失敗しました。', targetId);
+      throw error;
     }
   }
 }

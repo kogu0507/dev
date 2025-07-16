@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="ja">
+<!--
+ TODO:
+
+◆エラーがでてる
+
+
+◆設定タブの問題設定
+使用するrhythmを選択できるようにする。
+ということは、ここもJavaScripで生成かな？
+
+◆解答タブに正解／不正解を表示
+
+◆間違えたデータを保持しておく
+
+◆他の拍子に対応
+・テンプレートの更新（プレースホルダーを足す）
+・コードのプレースホルダー部分を更新
+・データ更新
+◆2/4拍子の練習
+cardBeatUnit: 4, // (1) カードの単位は四分音符
+cardBeatNum: 2,  // (2) カードの音価は(1)が2拍分
+measureCardNum: 1 // (3) 2/4拍子にはカードが1枚
+
+◆4/4拍子の練習
+cardBeatUnit: 4, // (1) カードの単位は四分音符
+cardBeatNum: 2,  // (2) カードの音価は(1)が2拍分
+measureCardNum: 2 // (3) 4/4拍子にはカードが2枚
+
+◆3/8拍子の練習
+cardBeatUnit: 8, // (1) カードの単位は八分音符
+cardBeatNum: 3,  // (2) カードの音価は(1)が3拍分
+measureCardNum: 2 // (3) 3/8拍子にはカードが1枚
+
+◆6/8拍子の練習
+cardBeatUnit: 8, // (1) カードの単位は八分音符
+cardBeatNum: 3,  // (2) カードの音価は(1)が3拍分
+measureCardNum: 2 // (3) 6/8拍子にはカードが2枚
+
+◆9/8拍子の練習
+cardBeatUnit: 8, // (1) カードの単位は八分音符
+cardBeatNum: 3,  // (2) カードの音価は(1)が3拍分
+measureCardNum: 3 // (3) 9/8拍子にはカードが3枚
+
+◆12/8拍子の練習
+cardBeatUnit: 8, // (1) カードの単位は八分音符
+cardBeatNum: 3,  // (2) カードの音価は(1)が3拍分
+measureCardNum: 4 // (3) 12/8拍子にはカードが4枚
+
+
+{
+  "times": [
+    {
+        "time": "4/4",
+        "rhythmIds":[
+            "rhythm001",
+            "rhythm002",
+            "rhythm003",
+            "rhythm004",
+            "rhythm005",
+            "rhythm006",
+            "rhythm007"
+        ],
+        "cardBeatUnit": 4,
+        "cardBeatNum": 2, 
+        "measureCardNum": 2
+
+    },
+  ]
+  "rhythms": [
+    {
+        "id": "rhythm001",
+        "description": "2分音符",
+        "notes_data": [
+            { "type": "note", "noteId": "1-rhy001", "dur": 2, "pname": "g", "oct": 4}
+        ]
+    },
+  ]
+}
+
+
+（１つのJSONにまとめて表記かな。そのリズムがどの拍子に用いられるかのデータを保持？または、
+4/4：[1,2,4,6,8,9]
+6/8：[3,5]
+みたいな「拍子とrhythmの紐づけjson」を作るか？いくつかの拍子で使える重複データがあると思うから、拍子とrhythmの紐づけjsonがよさそうかな？
+この辺はGeminiと相談
+
+
+◆CSSの検討（ワードプレスに移動するうえで不要を削除）
+・必要なのはどこ？
+.visually-hidden アプリ的に隠したいものをこれで隠している
+
+◆その都度使用方法タブを更新（プチ仕様書として）
+
+
+-->
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rhythm Dictation Mini</title>
+
+    <!-- 既存のsimple-tab-componentのスタイルシート -->
+    <link rel="stylesheet"        
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@2.3.0/components/simple-tab-component/style.min.css">
+    <!-- 新しく分離したスタイルシート -->
+    <link rel="stylesheet" href="style.css">
+    <!-- Tone.js CDNの追加 (script.js内のローダーが動的に読み込むため、ここでは必須ではないが、既存に合わせて残す) -->
+    <script src="https://unpkg.com/tone"></script>
+    <!-- @tonejs/midi CDNの追加 (script.js内のローダーが動的に読み込むため、ここでは必須ではないが、既存に合わせて残す) -->
+    <script src="https://cdn.jsdelivr.net/npm/@tonejs/midi@2.0.2/build/midi.min.js"></script>
+
+    <!-- リズムボタンのテンプレートを追加 -->
+    <template id="rhythm-button-template">
+        <button class="rhythm-select-button">
+            <img src="" alt="" class="rhythm-image">
+        </button>
+    </template>
+</head>
+
+<body>
+
+    <!-- メインアプリケーションセクション -->
+    <section id="rhythm-dictation-mini-app-section">
+        <div class="simple-tab-component-container" data-default-tab="question" data-deep-link="true">
+            <div class="tabs">
+                <button class="tab-button" data-tab="question">問題</button>
+                <button class="tab-button" data-tab="answer">解答</button>
+                <button class="tab-button" data-tab="settings">設定</button>
+                <button class="tab-button" data-tab="how-to-use">使用方法</button>
+            </div>
+
+            <div class="tab-content">
+                <!-- 問題タブ -->
+                <div id="question" class="tab-pane">
+                    <h3 class="visually-hidden">出題</h3>
+                    <button class="activation-button">聴音を開始</button>
+                    <div class="question-main visually-hidden"> <!-- 初期状態で非表示にする -->
+                        <!-- ユーザーへのメッセージ表示エリア -->
+                        <p id="instruction-message" class="message-text"></p>
+                        <button class="play-correct-answer-button">出題音源を聴く（もう一度聴く）</button>
+                        <div class="user-select-area">
+                            <div class="score-display selected-answer-display">
+                                <!-- ユーザーが選択したリズムが表示される場所 -->
+                                <div class="first-half-display">
+                                    <p>前半</p>
+                                    <img src="" alt="前半のリズム" class="selected-rhythm-image" id="first-half-image">
+                                </div>
+                                <div class="second-half-display">
+                                    <p>後半</p>
+                                    <img src="" alt="後半のリズム" class="selected-rhythm-image" id="second-half-image">
+                                </div>
+                            </div>
+                            <div>
+                                <p>リズムをどの位置に配置しますか？</p>
+                                <div class="flex-container">
+                                    <label class="radio-label">
+                                        <input type="radio" class="form-radio" name="rhythm-position" value="first"
+                                            checked>
+                                        <span class="radio-text">前半</span>
+                                    </label>
+                                    <label class="radio-label">
+                                        <input type="radio" class="form-radio" name="rhythm-position" value="second">
+                                        <span class="radio-text">後半</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="user-select-buttons">
+                                <!-- JavaScriptによってリズムの画像ボタンがここに動的に挿入されます -->
+                            </div>
+                        </div>
+                        <hr>
+                        <button class="show-answer">解答を送信</button>
+                    </div>
+                </div>
+
+                <!-- 解答タブ -->
+                <div id="answer" class="tab-pane">
+                    <h3 class="visually-hidden">解答</h3>
+                    <div class="correct-answer">
+                        <h4>正しい解答</h4>
+                        <div class="score-display correct-answer-display" id="correct-answer-display">
+                            <!-- 正しいリズムが表示される場所 -->
+                            <img src="" alt="正しい前半のリズム" class="correct-rhythm-image" id="correct-first-half-image">
+                            <img src="" alt="正しい後半のリズム" class="correct-rhythm-image" id="correct-second-half-image">
+                        </div>
+                        <button class="play-correct-answer-button">解答音源を聴く</button>
+                    </div>
+                    <div class="selected-answer">
+                        <h4>あなたの選択</h4>
+                        <div class="score-display selected-answer-display" id="selected-answer-display">
+                            <!-- ユーザーが選択したリズムが表示される場所 -->
+                            <img src="" alt="選択した前半のリズム" class="selected-rhythm-image" id="selected-first-half-image">
+                            <img src="" alt="選択した後半のリズム" class="selected-rhythm-image" id="selected-second-half-image">
+                        </div>
+                        <button class="play-selected-answer-button">ユーザー選択音源を聴く</button>
+                    </div>
+                    <hr>
+                    <button class="new-question-button">新しい問題を生成</button>
+                </div>
+
+                <!-- 設定タブ -->
+                <div id="settings" class="tab-pane">
+                    <h3 class="visually-hidden">設定</h3>
+                    <div class="question-setting">
+                        <h4>問題設定</h4>
+                        <!-- ここに問題に関する設定項目を追加するスペース -->
+                        <p>現在、問題設定はありません。</p>
+                    </div>
+                    <div class="sequencer-setting">
+                        <h4>シーケンサー設定</h4>
+                        <div class="tempo-slider">
+                            <label for="tempoRange">テンポ (BPM):</label>
+                            <input type="range" id="tempoRange" name="tempo" min="40" max="240" value="80">
+                            <span id="currentTempoValue">80</span> BPM
+                        </div>
+                        <div class="volume-slider">
+                            <label for="volumeRange">音量:</label>
+                            <input type="range" id="volumeRange" name="volume" min="0" max="100" value="70">
+                            <span id="currentVolumeValue">70</span> %
+                        </div>
+                    </div>
+                </div>
+
+                <div id="how-to-use" class="tab-pane">
+                    <h3>Rhythm Dictation Mini 遊び方</h3>
+                    <p>Rhythm Dictation Miniは、聴こえてくるリズムを聴き取り、正しいリズムを選ぶシンプルなアプリです。</p>
+
+                    <h4>課題に挑戦する</h4>
+                    <ol>
+                        <li>**出題音源を聴く**<br>「聴音を開始」ボタンで問題をスタート。出題されたリズムをよく聴きましょう。「出題音源を聴く（もう一度聴く）」ボタンで、何度でも聴き直せます。</li>
+                        <li>**リズムを選択し、解答を送信する**<br>聴こえたリズムに合わせて、画面下部のリズム画像から正しいものを選びます。それが「前半」か「後半」かを選んで画像をタップし、白い表示エリアに表示させたら「解答を送信」ボタンで答えを送ります。
+                        </li>
+                        <li>**解答を確認し、新しい問題に挑戦する**<br>「解答」タブで正解とあなたの答えを見比べられます。「新しい問題を生成」ボタンで、次の問題に進みましょう。</li>
+                    </ol>
+
+                    <h4>設定を変更する</h4>
+                    <p>「設定」タブでは、リズム練習をより快適にするための調整ができます。</p>
+                    <ul>
+                        <li>**シーケンサー設定**: リズムの**テンポ（速さ）**や**音量**をスライダーで自由に変えられます。</li>
+                    </ul>
+
+                    <hr>
+
+                    <h4>開発中の機能 (TODO)</h4>
+                    <p>以下の機能は現在開発中です。ご期待ください！</p>
+                    <ul>
+                        <li>間違えた問題を記録し、後で復習できる機能。</li>
+                        <li>問題設定として、使用するリズムの種類（例: 8分音符、16分音符など）を選択できる機能。</li>
+                        <li>拍子（例: 2/4拍子、3/4拍子、4/4拍子など）を選択できる機能。選択した拍子に合わせて、表示されるリズム画像を動的に切り替える予定です。</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- simple-tab-componentのスクリプト -->
+    <script        
+        src="https://cdn.jsdelivr.net/gh/kogu0507/module@2.3.0/components/simple-tab-component/script.min.js"></script>
+    <!-- 新しく分離したメインのスクリプトファイル -->
+    <script type="module" src="script.js"></script>
+</body>
+
+</html>

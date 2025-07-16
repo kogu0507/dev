@@ -1,18 +1,30 @@
-
-
 <!-- dev-module/examples/verovio-manager-test.html -->
 <!DOCTYPE html>
 <html lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>VerovioManager テスト</title>
   <style>
-    body { font-family: sans-serif; padding:1em; }
-    #container { border:1px solid #ccc; padding:1em; min-height:200px; }
-    button { margin-right:0.5em; }
+    body {
+      font-family: sans-serif;
+      padding: 1em;
+    }
+
+    #container {
+      border: 1px solid #ccc;
+      padding: 1em;
+      min-height: 200px;
+      overflow-x: auto;
+    }
+
+    button {
+      margin-right: 0.5em;
+    }
   </style>
 </head>
+
 <body>
   <h1>VerovioManager 統合テスト</h1>
   <div id="container">ここに楽譜が表示されます</div>
@@ -22,7 +34,13 @@
   </div>
 
   <script type="module">
-    import { VerovioManager } from '../../dev-module/verovio/verovio-manager.js';
+    import { VerovioManager } from '../../module/verovio/verovio-manager.js';
+    import {
+      defaultOptions,
+      highResOptions,
+      mobileOptions,
+      printOptions
+    } from '../../module/verovio/render-options.js';
 
     const manager = new VerovioManager();
     const containerId = 'container';
@@ -31,16 +49,21 @@
     // 初期化
     manager.initialize().catch(err => console.error(err));
 
+
+
     document.getElementById('btnLoad').onclick = () => {
+      manager.setRenderOptions(defaultOptions);// optionsを設定
       manager.displayMeiOnElement(meiUrl, containerId);
     };
     document.getElementById('btnTranspose').onclick = () => {
-      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "2");
-      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "m2");
-      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "M2");
-      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "P5");
-      manager.displayTransposedMeiOnElement(meiUrl, containerId, "F"); // Tonic指定 F Major Key
+      manager.setRenderOptions(defaultOptions);// optionsを設定
+      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "2"); // 半音２つ↑
+      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "m2"); // 短2度↑
+      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "M2"); // 長2度↑
+      // manager.displayTransposedMeiOnElement(meiUrl, containerId, "P5"); // 完全5度↑
+      manager.displayTransposedMeiOnElement(meiUrl, containerId, "Bb"); // Tonic指定 Bb Major Key
     };
   </script>
 </body>
+
 </html>

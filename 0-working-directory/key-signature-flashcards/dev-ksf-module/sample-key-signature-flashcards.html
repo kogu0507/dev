@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>調号フラッシュカード</title>
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/components/simple-tab-component/style.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/components/simple-tab-component/script.min.js"
+        defer></script>
+
+
+    <style>
+        .quiz-area {
+            text-align: center;
+            margin-bottom: 25px;
+            background-color: #fdfdfd;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 25px;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        .quiz-area p {
+            font-size: 1.2em;
+            color: #555;
+            margin-bottom: 15px;
+        }
+
+        #questionDisplay,
+        #answerDisplay {
+            font-size: 1.6em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            min-height: 120px;
+            /* 画像を表示するのに十分な高さ */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            color: #34495e;
+            flex-direction: column;
+            /* テキストと画像を縦に並べる */
+        }
+
+        #questionDisplay img,
+        #answerDisplay img {
+            max-width: 90%;
+            /* 親要素の幅に合わせる */
+            max-height: 150px;
+            /* 高さを制限 */
+            height: auto;
+            border-radius: 5px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+            /* テキストとの間にスペース */
+        }
+
+        #answerDisplay .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 20px;
+            align-items: center;
+            font-size: 1em;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        button,
+        select,
+        input[type="button"] {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            padding: 10px 20px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover,
+        select:hover,
+        input[type="button"]:hover {
+            background-color: #2980b9;
+        }
+
+        label {
+            font-size: 1em;
+            color: #555;
+        }
+
+        input[type="checkbox"] {
+            transform: scale(1.2);
+            margin-right: 5px;
+        }
+
+        hr {
+            margin: 40px 0;
+            border: none;
+            border-top: 1px dashed #cccccc;
+        }
+
+        .controls-panel {
+            background-color: #ffffff;
+            border: 1px solid #e0e6ed;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .card-list {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #e0e6ed;
+            background-color: #fdfdfd;
+            border-radius: 8px;
+            max-height: 500px;
+            /* 少し高くして多くのカードを見れるように */
+            overflow-y: auto;
+            box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .card-item {
+            display: flex;
+            flex-direction: column;
+            /*justify-content: space-between;*/
+            align-items: flex-start;
+            padding: 8px 0;
+            border-bottom: 1px dotted #e0e6ed;
+            font-size: 0.95em;
+        }
+
+        .card-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .card-item div {
+            margin-bottom: 5px;
+            color: #444;
+        }
+
+        .card-item .memorized-status {
+            font-weight: bold;
+            padding: 3px 8px;
+            border-radius: 4px;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .card-item .memorized {
+            background-color: #e6ffe6;
+            color: #28a745;
+        }
+
+        .card-item .unmemorized {
+            background-color: #ffe6e6;
+            color: #dc3545;
+        }
+
+        .card-item img {
+            height: 30px;
+            /* リスト表示用に小さく */
+            width: auto;
+            vertical-align: middle;
+            margin-right: 10px;
+        }
+
+        #memorization-list-container {
+            display: flex;
+            gap: 20px;
+            padding: 20px;
+            background-color: #f9f9f9;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        /* 縦並び用のスタイル */
+        #memorization-list-container.vertical-layout {
+            flex-wrap: wrap;
+            /* 折り返す */
+            overflow-x: hidden;
+            /* 横スクロールを無効にする */
+            justify-content: center;
+            /* 縦並びの時に中央揃えにしたい場合 */
+            /* 必要に応じて、最大幅などを調整 */
+            max-width: 100%;
+            /* 縦並びの時は幅いっぱいに使う */
+        }
+
+        /* 横並び用のスタイル */
+        #memorization-list-container.horizontal-layout {
+            flex-wrap: nowrap;
+            /* 折り返さない */
+            overflow-x: auto;
+            /* 横スクロールを可能にする */
+            /* 横並びの時にコンテナの幅を制限してスクロールさせる */
+            max-width: calc(100vw - 40px);
+            /* 例: ビューポートの幅から余白を引いた値 */
+            /* justify-content: flex-start; */
+            /* 通常は左寄せでOK */
+        }
+
+        /* 各カードのスタイル */
+        .memorization-item-display {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #fff;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            padding: 15px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            transition: transform 0.2s ease-in-out;
+            width: 200px;
+            height: 200px;
+            text-align: center;
+            box-sizing: border-box;
+            flex-shrink: 0;
+            /* 横並びのときに縮小しないように */
+        }
+
+        .memorization-item-display:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+
+        .memorization-item-display span {
+            font-size: 1.1em;
+            color: #333;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .memorization-item-display img {
+            max-width: 100%;
+            height: auto;
+            display: block;
+        }
+
+        /* Optional: Responsive adjustments */
+        @media (max-width: 768px) {
+            .memorization-item-display {
+                width: calc(50% - 20px);
+                /* Two items per row on smaller screens, accounting for gap */
+            }
+        }
+
+        @media (max-width: 480px) {
+            .memorization-item-display {
+                width: 100%;
+                /* One item per row on very small screens */
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <h2>調号フラッシュカード</h2>
+    <div id="flashcard_location"></div>
+    <div class="simple-tab-component-container" data-default-tab="sig2name" data-deep-link="true">
+        <div class="tabs">
+            <button class="tab-button" data-tab="sig2name">調号→調名</button>
+            <button class="tab-button" data-tab="name2sig">調名→調号</button>
+            <button class="tab-button" data-tab="status">学習状況とカード一覧</button>
+        </div>
+        <div class="tab-content">
+            <div id="sig2name" class="tab-pane">
+                <div id="sig2name_flashcard">
+                    <div class="quiz-area">
+                        <p>調名を答えましょう</p>
+                        <div class="question-display" id="questionDisplay"></div>
+                    </div>
+                    <button class="show-answer-btn">解答を見る</button>
+                    <hr>
+                    <div class="quiz-area">
+                        <p>解答：</p>
+                        <div class="answer-display" id="answerDisplay"></div>
+                    </div>
+                    <button class="generate-question-btn">次の問題</button>
+                </div>
+            </div>
+            <div id="name2sig" class="tab-pane">
+                <div id="name2sig_flashcard">
+                    <div class="quiz-area">
+                        <p>調号を答えましょう</p>
+                        <div class="question-display" id="name2sigQuestionDisplay"></div>
+                    </div>
+                    <button class="show-answer-btn">解答を見る</button>
+                    <hr>
+                    <div class="quiz-area">
+                        <p>解答：</p>
+                        <div class="answer-display" id="name2sigAnswerDisplay"></div>
+                    </div>
+                    <button class="generate-question-btn">次の問題</button>
+                </div>
+            </div>
+            <div id="status" class="tab-pane">
+                <div class="controls-panel">
+                    <button id="resetStateBtn">このセットの状態をリセット</button>
+                    <button id="markAllMemorizedBtn">全カードを暗記済みにする</button>
+                    <button id="markAllUnmemorizedBtn">全カードを未暗記にする</button>
+                </div>
+                <h3>調号 → 調名 カードの学習状況</h3>
+                <div class="card-status-list" data-card-type="sig2name"> </div>
+                <hr>
+                <h3>調名 → 調号 カードの学習状況</h3>
+                <div class="card-status-list" data-card-type="name2sig"> </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <hr>
+
+    <h3>暗記用の調号カード</h3>
+    <select id="language-selector2">
+        <option value="jp">日本語</option>
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+    </select>
+    <div>
+        <button id="horizontalBtn">横に並べる</button>
+        <button id="verticalBtn">縦に並べる</button>
+    </div>
+    <select id="language-selector">
+        <option value="jp">日本語</option>
+        <option value="en">English</option>
+        <option value="de">Deutsch</option>
+    </select>
+
+    <div id="memorization-list-container">
+        <div class="memorization-item-display">
+            <span data-jp="変ハ長調／変イ短調" data-en="C-flat Major / A-flat Minor" data-de="Ces-Dur / as-Moll">変ハ長調／変イ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_7f.svg"
+                alt="変ハ長調と変イ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="変ト長調／変ホ短調" data-en="G-flat Major / E-flat Minor" data-de="Ges-Dur / es-Moll">変ト長調／変ホ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_6f.svg"
+                alt="変ト長調と変ホ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="変ニ長調／変ロ短調" data-en="D-flat Major / B-flat Minor" data-de="Des-Dur / b-Moll">変ニ長調／変ロ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_5f.svg"
+                alt="変ニ長調と変ロ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="変イ長調／ヘ短調" data-en="A-flat Major / F Minor" data-de="As-Dur / f-Moll">変イ長調／ヘ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_4f.svg"
+                alt="変イ長調とヘ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="変ホ長調／ハ短調" data-en="E-flat Major / C Minor" data-de="Es-Dur / c-Moll">変ホ長調／ハ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_3f.svg"
+                alt="変ホ長調とハ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="変ロ長調／ト短調" data-en="B-flat Major / G Minor" data-de="B-Dur / g-Moll">変ロ長調／ト短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_2f.svg"
+                alt="変ロ長調とト短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="ヘ長調／ニ短調" data-en="F Major / D Minor" data-de="F-Dur / d-Moll">ヘ長調／ニ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_1f.svg"
+                alt="ヘ長調とニ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="ハ長調／イ短調" data-en="C Major / A Minor" data-de="C-Dur / a-Moll">ハ長調／イ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_0.svg"
+                alt="ハ長調とイ短調の調号の画像" />
+        </div>
+        <div class="memorization-item-display">
+            <span data-jp="ト長調／ホ短調" data-en="G Major / E Minor" data-de="G-Dur / e-Moll">ト長調／ホ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_1s.svg"
+                alt="ト長調とホ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="ニ長調／ロ短調" data-en="D Major / B Minor" data-de="D-Dur / h-Moll">ニ長調／ロ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_2s.svg"
+                alt="ニ長調とロ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="イ長調／嬰ヘ短調" data-en="A Major / F-sharp Minor" data-de="A-Dur / fis-Moll">イ長調／嬰ヘ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_3s.svg"
+                alt="イ長調と嬰ヘ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="ホ長調／嬰ハ短調" data-en="E Major / C-sharp Minor" data-de="E-Dur / cis-Moll">ホ長調／嬰ハ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_4s.svg"
+                alt="ホ長調と嬰ハ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="ロ長調／嬰ト短調" data-en="B Major / G-sharp Minor" data-de="H-Dur / gis-Moll">ロ長調／嬰ト短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_5s.svg"
+                alt="ロ長調と嬰ト短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="嬰ヘ長調／嬰ニ短調" data-en="F-sharp Major / D-sharp Minor"
+                data-de="Fis-Dur / dis-Moll">嬰ヘ長調／嬰ニ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_6s.svg"
+                alt="嬰ヘ長調と嬰ニ短調の調号の画像" />
+        </div>
+
+        <div class="memorization-item-display">
+            <span data-jp="嬰ハ長調／嬰イ短調" data-en="C-sharp Major / A-sharp Minor"
+                data-de="Cis-Dur / ais-Moll">嬰ハ長調／嬰イ短調</span>
+            <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_7s.svg"
+                alt="嬰ハ長調と嬰イ短調の調号の画像" />
+        </div>
+    </div>
+    </div>
+
+    <div id="flashcards" style="display: none;" data-quiz-set-id="key_signature_quiz">
+        <div class="memorize-card" data-id="sig2name_keysig_0" data-tags="基本" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_0.svg"
+            data-answer-textjp="ハ長調 / イ短調" data-answer-texten="C major / A minor" data-answer-textde="C-Dur / a-Moll">
+        </div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_1s" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_1s.svg"
+            data-answer-textjp="ト長調 / ホ短調" data-answer-texten="G major / E minor" data-answer-textde="G-Dur / e-Moll">
+        </div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_2s" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_2s.svg"
+            data-answer-textjp="ニ長調 / ロ短調" data-answer-texten="D major / B minor" data-answer-textde="D-Dur / h-Moll">
+        </div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_3s" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_3s.svg"
+            data-answer-textjp="イ長調 / 嬰ヘ短調" data-answer-texten="A major / F-sharp minor"
+            data-answer-textde="A-Dur / fis-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_4s" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_4s.svg"
+            data-answer-textjp="ホ長調 / 嬰ハ短調" data-answer-texten="E major / C-sharp minor"
+            data-answer-textde="E-Dur / cis-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_5s" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_5s.svg"
+            data-answer-textjp="ロ長調 / 嬰ト短調" data-answer-texten="B major / G-sharp minor"
+            data-answer-textde="H-Dur / gis-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_6s" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_6s.svg"
+            data-answer-textjp="嬰ヘ長調 / 嬰ニ短調" data-answer-texten="F-sharp major / D-sharp minor"
+            data-answer-textde="Fis-Dur / dis-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_7s" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_7s.svg"
+            data-answer-textjp="嬰ハ長調 / 嬰イ短調" data-answer-texten="C-sharp major / A-sharp minor"
+            data-answer-textde="Cis-Dur / ais-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_1f" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_1f.svg"
+            data-answer-textjp="ヘ長調 / ニ短調" data-answer-texten="F major / D minor" data-answer-textde="F-Dur / d-Moll">
+        </div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_2f" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_2f.svg"
+            data-answer-textjp="変ロ長調 / ト短調" data-answer-texten="B-flat major / G minor"
+            data-answer-textde="B-Dur / g-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_3f" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_3f.svg"
+            data-answer-textjp="変ホ長調 / ハ短調" data-answer-texten="E-flat major / C minor"
+            data-answer-textde="Es-Dur / c-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_4f" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_4f.svg"
+            data-answer-textjp="変イ長調 / ヘ短調" data-answer-texten="A-flat major / F minor"
+            data-answer-textde="As-Dur / f-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_5f" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_5f.svg"
+            data-answer-textjp="変ニ長調 / 変ロ短調" data-answer-texten="D-flat major / B-flat minor"
+            data-answer-textde="Des-Dur / b-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_6f" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_6f.svg"
+            data-answer-textjp="変ト長調 / 変ホ短調" data-answer-texten="G-flat major / E-flat minor"
+            data-answer-textde="Ges-Dur / es-Moll"></div>
+
+        <div class="memorize-card" data-id="sig2name_keysig_7f" data-tags="" data-category="sig2name"
+            data-question-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_7f.svg"
+            data-answer-textjp="変ハ長調 / 変イ短調" data-answer-texten="C-flat major / A-flat minor"
+            data-answer-textde="Ces-Dur / as-Moll"></div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <div class="memorize-card" data-id="name2sig_keysig_0" data-tags="基本" data-category="name2sig"
+            data-answer-textjp="ハ長調 / イ短調" data-answer-texten="C major / A minor" data-answer-textde="C-Dur / a-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_0.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_1s" data-tags="" data-category="name2sig"
+            data-answer-textjp="ト長調 / ホ短調" data-answer-texten="G major / E minor" data-answer-textde="G-Dur / e-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_1s.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_2s" data-tags="" data-category="name2sig"
+            data-answer-textjp="ニ長調 / ロ短調" data-answer-texten="D major / B minor" data-answer-textde="D-Dur / h-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_2s.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_3s" data-tags="" data-category="name2sig"
+            data-answer-textjp="イ長調 / 嬰ヘ短調" data-answer-texten="A major / F-sharp minor"
+            data-answer-textde="A-Dur / fis-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_3s.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_4s" data-tags="" data-category="name2sig"
+            data-answer-textjp="ホ長調 / 嬰ハ短調" data-answer-texten="E major / C-sharp minor"
+            data-answer-textde="E-Dur / cis-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_4s.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_5s" data-tags="" data-category="name2sig"
+            data-question-textjp="ロ長調 / 嬰ト短調"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_5s.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_6s" data-tags="" data-category="name2sig"
+            data-answer-textjp="ロ長調 / 嬰ト短調" data-answer-texten="B major / G-sharp minor"
+            data-answer-textde="H-Dur / gis-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_6s.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_7s" data-tags="" data-category="name2sig"
+            data-answer-textjp="嬰ハ長調 / 嬰イ短調" data-answer-texten="C-sharp major / A-sharp minor"
+            data-answer-textde="Cis-Dur / Ais-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_7s.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_1f" data-tags="" data-category="name2sig"
+            data-answer-textjp="ヘ長調 / ニ短調" data-answer-texten="F major / D minor" data-answer-textde="F-Dur / d-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_1f.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_2f" data-tags="" data-category="name2sig"
+            data-answer-textjp="変ロ長調 / ト短調" data-answer-texten="B-flat major / G minor"
+            data-answer-textde="B-Dur / g-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_2f.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_3f" data-tags="" data-category="name2sig"
+            data-answer-textjp="変ホ長調 / ハ短調" data-answer-texten="E-flat major / C minor"
+            data-answer-textde="Es-Dur / c-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_3f.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_4f" data-tags="" data-category="name2sig"
+            data-answer-textjp="変イ長調 / ヘ短調" data-answer-texten="A-flat major / F minor"
+            data-answer-textde="As-Dur / f-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_4f.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_5f" data-tags="" data-category="name2sig"
+            data-answer-textjp="変ニ長調 / 変ロ短調" data-answer-texten="D-flat major / B-flat minor"
+            data-answer-textde="Des-Dur / b-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_5f.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_6f" data-tags="" data-category="name2sig"
+            data-answer-textjp="変ト長調 / 変ホ短調" data-answer-texten="G-flat major / E-flat minor"
+            data-answer-textde="Ges-Dur / es-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_6f.svg">
+        </div>
+
+        <div class="memorize-card" data-id="name2sig_keysig_7f" data-tags="" data-category="name2sig"
+            data-answer-textjp="変ハ長調 / 変イ短調" data-answer-texten="C-flat major / A-flat minor"
+            data-answer-textde="Ces-Dur / as-Moll"
+            data-answer-url="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/assets/svg/music-notation/keysig/keysig_7f.svg">
+        </div>
+    </div>
+
+    <script type="module" src="./flashcard.js"></script>
+    <script type="module">
+        // flashcard.js から必要なクラスと関数をインポート
+        import { CardCollection, FlashcardQuiz, loadState, saveState, updateAllCardStatusDisplays, flashcardState, actualStorageKey } from './flashcard.js';
+        import { initializeLanguageSwitcher } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.6.0/language-switcher.min.js'; // ファイル名が 'language-switcher.js' の場合
+
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[Init] DOMContentLoaded - Entrypoint');
+
+            // クイズセクションの言語切り替えを初期化・処理する関数
+            const setupQuizLanguageSwitcher = () => { // アロー関数形式
+                const languageSelector = document.getElementById('language-selector2');
+
+                if (languageSelector) {
+                    let currentLang = languageSelector.value;
+                    console.log("クイズの初期言語:", currentLang);
+
+                    languageSelector.addEventListener('change', (event) => {
+                        currentLang = event.target.value;
+                        console.log(`[App] クイズの言語が変更されました: ${currentLang}`);
+                        // quiz.generateQuestion(currentLang);
+                    });
+                } else {
+                    console.warn("ID 'language-selector2' を持つ言語セレクターが見つかりませんでした。");
+                }
+            }; // ここにセミコロンが必要
+
+            // 初期化処理の呼び出し
+            initializeLanguageSwitcher();
+            setupQuizLanguageSwitcher();
+            console.log("currentLang: ", currentLang);
+
+            // ----------
+
+            const mainFlashcardsContainer = document.getElementById('flashcards');
+            // quizSetId を正確に取得
+            const quizSetId = mainFlashcardsContainer?.dataset.quizSetId || 'default_key_signature_quiz_set';
+            console.log(`[Init] Current Quiz Set ID: "${quizSetId}"`);
+
+            // 状態をロード
+            loadState(quizSetId);
+
+            // 全てのカードを一度に読み込む CardCollection
+            const overallCollection = new CardCollection('.memorize-card'); // HTML上の全ての.memorize-cardを対象
+
+            // --- 各タブパネル内のクイズセットを初期化 ---
+
+            // 1. 調号→調名 クイズの初期化
+            const sig2namePane = document.getElementById('sig2name');
+            if (sig2namePane) {
+                const sig2nameQuizContainer = sig2namePane.querySelector('#sig2name_flashcard');
+                if (sig2nameQuizContainer) {
+                    const sig2nameQuiz = new FlashcardQuiz(
+                        overallCollection,
+                        { maxHistory: 5, weights: { review: 1.2, difficult: 1.5 } },
+                        {
+                            questionDisplay: sig2nameQuizContainer.querySelector('.question-display'),
+                            answerDisplay: sig2nameQuizContainer.querySelector('.answer-display'),
+                            generateBtn: sig2nameQuizContainer.querySelector('.generate-question-btn'),
+                            showAnswerBtn: sig2nameQuizContainer.querySelector('.show-answer-btn')
+                        },
+                        'sig2name' // このクイズが出題するカードのカテゴリ
+                    );
+
+                    // ボタンにイベントリスナーを設定
+                    sig2nameQuizContainer.querySelector('.generate-question-btn')?.addEventListener('click', () => sig2nameQuiz.generateQuestion(currentLang));
+                    sig2nameQuizContainer.querySelector('.show-answer-btn')?.addEventListener('click', () => sig2nameQuiz.showAnswer(currentLang));
+
+                    if (overallCollection.filterByCategory('sig2name').length > 0) {
+                        sig2nameQuiz.generateQuestion(currentLang);
+                    } else {
+                        sig2nameQuizContainer.querySelector('.question-display').innerHTML = '<p>調号→調名のカードが見つかりませんでした。</p>';
+                    }
+                } else { console.warn('[Init] #sig2name_flashcard not found inside #sig2name.'); }
+            } else { console.warn('[Init] #sig2name not found.'); }
+
+
+            // 2. 調名→調号 クイズの初期化
+            const name2sigPane = document.getElementById('name2sig');
+            if (name2sigPane) {
+                const name2sigQuizContainer = name2sigPane.querySelector('#name2sig_flashcard');
+                if (name2sigQuizContainer) {
+                    const name2sigQuiz = new FlashcardQuiz(
+                        overallCollection,
+                        { maxHistory: 5, weights: { review: 1.2, difficult: 1.5 } },
+                        {
+                            questionDisplay: name2sigQuizContainer.querySelector('.question-display'),
+                            answerDisplay: name2sigQuizContainer.querySelector('.answer-display'),
+                            generateBtn: name2sigQuizContainer.querySelector('.generate-question-btn'),
+                            showAnswerBtn: name2sigQuizContainer.querySelector('.show-answer-btn')
+                        },
+                        'name2sig' // このクイズが出題するカードのカテゴリ
+                    );
+
+                    // ボタンにイベントリスナーを設定
+                    name2sigQuizContainer.querySelector('.generate-question-btn')?.addEventListener('click', () => name2sigQuiz.generateQuestion(currentLang));
+                    name2sigQuizContainer.querySelector('.show-answer-btn')?.addEventListener('click', () => name2sigQuiz.showAnswer(currentLang));
+
+                    if (overallCollection.filterByCategory('name2sig').length > 0) {
+                        name2sigQuiz.generateQuestion(currentLang);
+                    } else {
+                        name2sigQuizContainer.querySelector('.question-display').innerHTML = '<p>調名→調号のカードが見つかりませんでした。</p>';
+                    }
+                } else { console.warn('[Init] #name2sig_flashcard not found inside #name2sig.'); }
+            } else { console.warn('[Init] #name2sig not found.'); }
+
+
+            // --- グローバル操作ボタンのイベントリスナー設定 (statusタブ内のボタン) ---
+            // これらは全体のカードコレクションに対して作用します
+            document.getElementById('resetStateBtn')?.addEventListener('click', () => {
+                if (confirm('全てのカードの「暗記済み」と「間違い回数」の状態をリセットしますか？')) {
+                    // グローバルな flashcardState オブジェクトを直接操作
+                    // actualStorageKey を使用して localStorage から削除
+                    for (const key in flashcardState) {
+                        delete flashcardState[key];
+                    }
+                    localStorage.removeItem(actualStorageKey); // actualStorageKey を使用
+                    console.log(`[Init] Cleared localStorage key: "${actualStorageKey}"`);
+                    updateAllCardStatusDisplays(overallCollection);
+                    console.log('[Init] All card states reset.');
+                }
+            });
+
+            document.getElementById('markAllMemorizedBtn')?.addEventListener('click', () => {
+                if (confirm('全てのカードを「暗記済み」にしますか？')) {
+                    overallCollection.markAll(true); // markAll 内部で saveState が呼ばれる
+                    console.log('[Init] All cards marked as memorized.');
+                }
+            });
+
+            document.getElementById('markAllUnmemorizedBtn')?.addEventListener('click', () => {
+                if (confirm('全てのカードを「未暗記」にしますか？')) {
+                    overallCollection.markAll(false); // markAll 内部で saveState が呼ばれる
+                    console.log('[Init] All cards marked as unmemorized.');
+                }
+            });
+
+            // ページ非表示時（ブラウザを閉じたりタブを移動したりする前）に即時保存
+            window.addEventListener('pagehide', () => {
+                saveState(false, overallCollection); // debounce=false で即時保存
+                console.log('[State] State saved immediately on pagehide event.');
+            });
+
+            // 初期表示の更新
+            updateAllCardStatusDisplays(overallCollection);
+
+            // タブが切り替わったときに学習状況を更新
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.addEventListener('click', () => {
+                    // statusタブがアクティブになったときにのみ更新
+                    if (button.dataset.tab === 'status') {
+                        updateAllCardStatusDisplays(overallCollection);
+                    }
+                });
+            });
+
+
+
+            // 暗記用の調号カードを縦並び／横並びの切り替え
+            const horizontalBtn = document.getElementById('horizontalBtn');
+            const verticalBtn = document.getElementById('verticalBtn');
+            const container = document.getElementById('memorization-list-container');
+
+            // 横に並べるボタンのクリックイベント
+            horizontalBtn.addEventListener('click', () => {
+                container.classList.remove('vertical-layout'); // 縦並びクラスを削除
+                container.classList.add('horizontal-layout');  // 横並びクラスを追加
+            });
+
+            // 縦に並べるボタンのクリックイベント
+            verticalBtn.addEventListener('click', () => {
+                container.classList.remove('horizontal-layout'); // 横並びクラスを削除
+                container.classList.add('vertical-layout');    // 縦並びクラスを追加
+            });
+
+            // 初期表示を設定
+            // ページロード時にどちらのレイアウトで始めるかをここで指定します。
+            // 例: 初期は縦並び
+            container.classList.add('vertical-layout');
+
+
+
+
+            // すべてのタブコンテンツを囲む共通の親要素を取得
+            // 今回のHTML構造から、.tab-content が適切です
+            const tabContentContainer = document.querySelector('.tab-content');
+
+            if (tabContentContainer) {
+                tabContentContainer.addEventListener('click', (event) => {
+                    // クリックされた要素が 'generate-question-btn' クラスを持っているか、
+                    // またはその子孫であるかを確認します。
+                    const clickedButton = event.target.closest('.generate-question-btn');
+
+                    if (clickedButton) {
+                        // クリックされたボタンがどのフラッシュカードタイプに属するかを特定
+                        // closest() を使って、ボタンの最も近い親要素で id="sig2name_flashcard"
+                        // または id="name2sig_flashcard" を持つものを探します。
+                        const parentFlashcard = clickedButton.closest('#sig2name_flashcard, #name2sig_flashcard');
+
+                        if (parentFlashcard) {
+                            const flashcardType = parentFlashcard.id; // 'sig2name_flashcard' または 'name2sig_flashcard'
+
+                            console.log(`「次の問題」ボタンがクリックされました！ タイプ: ${flashcardType}`);
+
+                            // 次の問題が解きやすいところへ移動 問題の作成などはモジュールがやってる
+                            const targetElement = document.getElementById('flashcard_location');
+                            targetElement.scrollIntoView({ behavior: 'smooth' });
+                        }
+                    }
+                });
+            } else {
+                console.warn('クラス "tab-content" を持つ要素が見つかりませんでした。');
+            }
+
+
+
+        });
+    </script>
+
+</body>
+
+</html>

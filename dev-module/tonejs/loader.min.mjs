@@ -1,0 +1,1 @@
+import{loadScript as o}from"../library-loader.min.mjs";export function loadToneJs(){return o("Tone.js","https://unpkg.com/tone@15.1.22/build/Tone.js")}

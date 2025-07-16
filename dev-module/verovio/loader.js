@@ -1,4 +1,4 @@
-// dev-module/verovio/loader.js
+// module/verovio/loader.js
 
 import { loadScript } from '../library-loader.min.js';
 
