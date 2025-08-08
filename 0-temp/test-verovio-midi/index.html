@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+     
+    <meta charset="UTF-8" />
+     
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+      <title>VerovioManager MIDI情報確認 (Tone.js)</title>
+      <style>
+        body {
+            font-family: sans-serif;
+            padding: 1em;
+        }
+
+        #container {
+            border: 1px solid #ccc;
+            padding: 1em;
+            min-height: 300px;
+            overflow-x: auto;
+            margin-bottom: 1em;
+        }
+
+        #midiInfo {
+            margin-top: 1em;
+            padding: 1em;
+            border: 1px solid #007bff;
+            background-color: #eaf5ff;
+        }
+
+        button {
+            margin: 0.2em;
+        }
+    </style>
+</head>
+
+<body>
+      <h1>VerovioManager MIDI情報確認 (Tone.js)</h1>
+      <p>ボタンを押すと、MEIからMIDIを生成し、テンポと拍子の情報を表示します。</p>
+
+      <div id="container"></div>
+
+      <div>
+            <button id="btnDisplaySvg">楽譜を表示</button>
+            <button id="btnCheckMidiInfo">MIDI情報確認</button>
+          </div>
+
+      <div id="midiInfo">
+            <strong>MIDI情報:</strong>
+            <ul>
+                  <li>テンポ: <span id="tempoValue">--</span></li>
+                  <li>拍子: <span id="timeSignatureValue">--</span></li>
+                </ul>
+          </div>
+
+     
+    <script type="module">
+        import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/verovio/verovio-manager.js';
+
+        // MEIファイルのURL
+        const meiUrl = "https://kogu0507.github.io/dev/0-temp/sample.mei";
+        const containerId = 'container';
+
+        // @tonejs/midi を動的にロードする関数
+        async function loadToneJsMidi() {
+            console.log('[@tonejs/midi] Skypack経由でロード開始...');
+            try {
+                const module = await import('https://cdn.skypack.dev/@tonejs/midi@2.0.28');
+                if (!module || typeof module.Midi !== 'function') {
+                    throw new Error('Midi クラスが見つかりません！');
+                }
+                console.log('[@tonejs/midi] ロード成功！');
+                return module.Midi;
+            } catch (e) {
+                console.error('[@tonejs/midi] ロード失敗:', e);
+                throw e;
+            }
+        }
+
+        // VerovioManager と Tone.js.Midi クラスを初期化
+        const manager = new VerovioManager();
+        await manager.initialize();
+        const Midi = await loadToneJsMidi();
+
+        // ボタン要素
+        const btnDisplaySvg = document.getElementById('btnDisplaySvg');
+        const btnCheckMidiInfo = document.getElementById('btnCheckMidiInfo');
+
+        // 表示用要素
+        const tempoValueSpan = document.getElementById('tempoValue');
+        const timeSignatureValueSpan = document.getElementById('timeSignatureValue');
+
+        // 楽譜表示ボタンの処理
+        btnDisplaySvg.onclick = () => {
+            manager.displaySvgFromUrl(meiUrl, containerId);
+        };
+
+        // MIDI情報確認ボタンの処理
+        btnCheckMidiInfo.onclick = async () => {
+            console.log("MEIからMIDIを生成中...");
+
+            // VerovioManagerでMIDIバイナリデータを取得
+            // midi.includeTempo: true を設定してテンポ情報を含める
+            const midiArray = await manager.getMidiFromUrl(meiUrl, { midi: { includeTempo: true } });
+            console.log("MIDI生成完了。Tone.jsで解析を開始します。");
+
+            try {
+                // MidiクラスのコンストラクタにMIDIデータを渡し、解析
+                const midi = new Midi(midiArray);
+
+                console.log("--- MIDI情報 ---");
+
+                // テンポ情報の確認と表示
+                if (midi.header.tempos.length > 0) {
+                    const tempoBpm = midi.header.tempos[0].bpm;
+                    console.log(`✅ テンポ (BPM): ${tempoBpm}`);
+                    tempoValueSpan.textContent = `${tempoBpm} BPM`;
+                } else {
+                    console.log("❌ テンポ情報は見つかりませんでした。");
+                    tempoValueSpan.textContent = "見つかりませんでした";
+                }
+
+                // 拍子情報の確認と表示
+                if (midi.header.timeSignatures.length > 0) {
+                    const timeSig = midi.header.timeSignatures[0];
+                    const timeSigString = `${timeSig.timeSignature[0]}/${timeSig.timeSignature[1]}`;
+                    console.log(`✅ 拍子: ${timeSigString}`);
+                    timeSignatureValueSpan.textContent = timeSigString;
+                } else {
+                    console.log("❌ 拍子情報は見つかりませんでした。");
+                    timeSignatureValueSpan.textContent = "見つかりませんでした";
+                }
+
+            } catch (e) {
+                console.error("MIDI解析中にエラーが発生しました:", e);
+                tempoValueSpan.textContent = "エラー";
+                timeSignatureValueSpan.textContent = "エラー";
+            }
+        };
+
+        // ページ読み込み時に楽譜を自動表示
+        btnDisplaySvg.click();
+    </script>
+</body>
+
+</html>
