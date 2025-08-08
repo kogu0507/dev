@@ -38,7 +38,7 @@
                                     <note xml:id="m2_s1_l1_n2" dur="8" pname="a" oct="4"/>
                                     <note xml:id="m2_s1_l1_n3" dur="8" pname="b" oct="4"/>
                                     </beam>
-                                    <note xml:id="m2_s1_l1_n4" dur="2" pname="g" oct="4"/>
+                                    <note xml:id="m2_s1_l1_n4" dur="4" pname="g" oct="4"/>
                                 </layer>
                             </staff>
                         </measure>
