@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Melody Dictation</title>
+    <style>
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 無効化されたタブボタンのスタイル */
+        .tab-button.is-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1><!-- 最終的にはワードプレスに移行するので不要 --></h1>
+    </header>
+
+    <main>
+        <section id="data">
+            <script id="ezmelo-json-data" type="application/json">
+                [
+                    {
+                        "id": "001",
+                        "meiURL": "./melody-dictation-001.mei",
+                        "exerciseInfo": "旋律聴音 ハ長調 4/4拍子 4小節",
+                        "tonicChordSpec": { "notes": ["C4","E4","G4"] },
+                        "playbackDef": [
+                            { "range": "1-2", "interval": 5 },
+                            { "range": "2-3", "interval": 10 }
+                        ],
+                        "endBellSpec": { "bellId": "endBell1" }
+                    },
+                    {
+                        "id": "002",
+                        "meiURL": "./melody-dictation-002.mei",
+                        "exerciseInfo": "旋律聴音 ハ長調 4/4拍子 8小節",
+                        "tonicChordSpec": { "notes": ["C4","E4","G4"] },
+                        "playbackDef": [
+                            { "range": "5-6", "interval": 3 }
+                        ],
+                        "endBellSpec": { "bellId": "endBell1" }
+                    }
+                ]
+            </script>
+        </section>
+
+        <!-- カスタムHTML 1 -->
+        <section id="tab-ui">
+            <link rel="stylesheet"
+                href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/components/simple-tab-component/style.min.css" />
+            <script
+                src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/components/simple-tab-component/script.min.js"></script>
+
+            <div class="simple-tab-component-container" data-default-tab="exercise-selection" data-deep-link="true">
+                <div class="tabs">
+                    <button class="tab-button" data-tab="exercise-selection">課題選択</button>
+                    <button class="tab-button" data-tab="exercise">課題</button>
+                    <button class="tab-button" data-tab="answer">解答</button>
+                    <button class="tab-button" data-tab="settings">設定</button>
+                </div>
+
+                <div class="tab-content">
+                    <div id="exercise-selection" class="tab-pane">
+                        <h3 style="display:none;">課題選択</h3>
+                        <section class="ezmelo-exercise-selection-section">
+                            JSONから課題を読込中...
+                        </section>
+                    </div>
+
+                    <div id="exercise" class="tab-pane">
+                        <h3 style="display:none;">課題</h3>
+
+                        <section class="ezmelo-exercise-section">
+                            <h4>課題情報</h4>
+                            <div class="ezmelo-exercise-info">課題情報を読込中...</div>
+                            <div class="ezmelo-playback-info">プレイバック情報を読込中...</div>
+                        </section>
+
+
+                        <h4>プレイヤー</h4>
+                        <section class="ezmelo-player-section" id="exercise-player-section"
+                            data-template-id="ezmelo-player-template">
+                            プレイヤー読込中...
+                        </section>
+
+                        <h4>簡易キーボード</h4>
+                        <section class="ezmelo-keyboard-section" id="exercise-keyboard-section"
+                            data-template-id="ezmelo-keyboard-template">
+                            キーボード読込中...
+                        </section>
+
+                    </div>
+
+                    <div id="answer" class="tab-pane">
+                        <h3 style="display:none;">解答</h3>
+                        <h4>解答画像</h4>
+                        <section class="ezmelo-answer-display">
+                            <div class="score-container" id="answer-score-container">
+                                解答楽譜を読込中...
+                            </div>
+                        </section>
+
+                        <h4>プレイヤー</h4>
+                        <section class="ezmelo-player-section" id="answer-player-section"
+                            data-template-id="ezmelo-player-template">
+                            プレイヤー読込中...
+                        </section>
+
+                        <h4>簡易キーボード</h4>
+                        <section class="ezmelo-keyboard-section" id="answer-keyboard-section"
+                            data-template-id="ezmelo-keyboard-template">
+                            キーボード読込中...
+                        </section>
+                    </div>
+
+                    <div id="settings" class="tab-pane">
+                        <h3 style="display:none;">設定</h3>
+                        <section class="ezmelo-player-setting-section">
+                            <p>（将来用設定UIをここに）</p>
+                        </section>
+                        <section class="ezmelo-playlist-setting-section">
+                            <p>（playbackDef編集UIを作るならここに）</p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+            <section id="template-section">
+                <template id="ezmelo-player-template">
+                    <div class="ezmelo-control-buttons">
+                        <div class="ezmelo-playback-status" data-role="status" aria-live="polite">
+                            🎧 再生ステータスがここに表示されます
+                        </div>
+                        <div class="button-group">
+                            <button class="ezmelo-control-button" data-role="start-playlist">試験再生</button>
+                            <button class="ezmelo-control-button" data-role="stop">停止</button>
+                            <button class="ezmelo-control-button" data-role="mute">ミュート</button>
+                        </div>
+                        <div class="ezmelo-play-range" data-player-mode="practice">
+                            <select id="play-range-select">
+                                <option value="1-1" data-start-measure="1" data-end-measure="1">1小節目</option>
+                                <option value="1-1" data-start-measure="2" data-end-measure="2">2小節目</option>
+                                <option value="1-1" data-start-measure="3" data-end-measure="3">3小節目</option>
+                                <option value="1-1" data-start-measure="4" data-end-measure="4">4小節目</option>
+                                <option>---</option>
+                                <option value="1-2" data-start-measure="1" data-end-measure="2">1-2小節</option>
+                                <option value="3-4" data-start-measure="3" data-end-measure="4">3-4小節</option>
+                                <option>---</option>
+                                <option value="1-4" data-start-measure="1" data-end-measure="4">1-4小節</option>
+                            </select>
+                            <button class="ezmelo-control-button" data-role="play-range">指定範囲再生</button>
+                        </div>
+                        <label style="display:flex; align-items:center; gap:4px;">
+                            Vol:
+                            <input type="range" data-role="volume" min="0" max="100" value="50" />
+                        </label>
+                    </div>
+
+
+
+                </template>
+
+                <template id="ezmelo-keyboard-template">
+                    <link rel="stylesheet"
+                        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/components/simple-synth-mini/style.min.css">
+                    <style>
+
+                    </style>
+                    <section class="ssm-demo-section">
+                        <div class="ssm-simple-synth-mini" data-volume-slider="true" data-octaves="2"
+                            data-start-note="C4" data-sound-enabled="true" data-instrument="sine"
+                            data-show-note-labels="false">
+                            <div class="ssm-keyboard-wrapper">
+                            </div>
+                        </div>
+                    </section>
+                    <script type="module" defer>
+                        import { SimpleSynthMini } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/components/simple-synth-mini/script.min.js';
+
+                        // querySelectorAll を使用して、すべてのキーボード要素を取得
+                        const synthElements = document.querySelectorAll('.ssm-simple-synth-mini');
+
+                        synthElements.forEach(synthElement => {
+                            if (synthElement) {
+                                if (!synthElement.id) {
+                                    synthElement.id = `ssm-${Math.random().toString(36).slice(2)}`;
+                                }
+                                new SimpleSynthMini(synthElement);
+                            }
+                        });
+                    </script>
+                </template>
+
+
+            </section>
+        </section>
+    </main>
+
+    <script defer>
+
+
+    </script>
+    <!--
+    template-loader.js: 
+        HTMLファイル内の template タグで定義された内容を、指定された場所に自動的に読み込んで表示する 
+    toggle-visibility.js
+        特定のボタンがクリックされたときに、別の要素の表示/非表示を切り替える
+    -->
+    <script defer src="./template-loader.js"></script>
+    <script defer src="./toggle-visibility.js"></script>
+    <script defer type="module" src="./app.js"></script>
+
+</body>
+
+</html>

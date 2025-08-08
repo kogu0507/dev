@@ -1,133 +1,441 @@
-<!DOCTYPE html>
-<html lang="ja">
+<html>
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Chord Type Dictation Mini</title>
-    <link rel="stylesheet" href="./style.css">
-    <script type="module" src="./script.js"></script>
+    <title>chord-type-dictation-mini 開発中</title>
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/components/simple-tab-component/style.min.css">
+    <script
+        src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/components/simple-tab-component/script.min.js"></script>
 </head>
 
 <body>
-
-    <section id="control-section" class="container">
-        <div class="button-group">
-            <button id="startButton">問題を生成</button>
+    <h1>chord-type-dictation-mini 開発中モ</h1>
+    <p>WordPressへ移行予定（カスタムhtmlで実験。本番はエントリーポイントとなるjsとcssを一つだけ読み込む</p>
+    <h2></h2>
+    <div class="simple-tab-component-container" data-default-tab="question" data-deep-link="true">
+        <div class="tabs" id="myTabs">
+            <button class="tab-button" data-tab="question">出題</button>
+            <button class="tab-button" data-tab="answer">解答</button>
+            <button class="tab-button" data-tab="settings">設定</button>
         </div>
-
-        <p class="message" id="statusMessage">準備中...</p>
-
-        <div class="button-group">
-            <button id="playNormalChordButton">もう１回 再生</button>
-            <button id="playArpeggioButton">分散和音で再生</button>
-        </div>
-    </section>
-
-    <section id="answer-section" class="container">
-        <div class="section-header"> <span>解答</span>
-            <button class="visibility-toggle-button" data-visibility-toggle-target="answerDisplay">解答を表示</button>
-        </div>
-        <div id="answerDisplay" class="hidden">
-            <div id="correctAnswer"></div>
-        </div>
-    </section>
-
-    <section id="settings-section" class="container">
-        <div class="section-header"> <span>設定</span> <button class="visibility-toggle-button"
-                data-visibility-toggle-target="settingsContent">設定を表示</button>
-        </div>
-        <div id="settingsContent" class="hidden">
-            <div class="control-group">
-                <div class="controls">
-                    <label>
-                        <input type="radio" name="instrument" value="synth" checked> シンセ
-                    </label>
-                    <label>
-                        <input type="radio" name="instrument" value="sampler"> サンプラー
-                    </label>
-                </div>
+        <div class="tab-content">
+            <div id="question" class="tab-pane">
+                <section class="question-section">
+                    <button id="play-rhythm-button">出題リズムを聴く</button>
+                </section>
+                <section class="user-select-section">
+                    <h3>リズム選択</h3>
+                    <rhythm-selector-component data-urls-id="rhythm-urls" data-input-type="radio"
+                        data-rhythm-selector-type="half-1" data-show-name="false">
+                    </rhythm-selector-component>
+                    <rhythm-selector-component data-urls-id="rhythm-urls" data-input-type="radio"
+                        data-rhythm-selector-type="half-2" data-show-name="false">
+                    </rhythm-selector-component>
+                    <button id="submit-answer-button">解答を送信</button>
+                </section>
             </div>
-
-            <div class="control-group">
-                <div class="controls root-notes simple-keyboard-grid">
-                    <label class="grid-key C-key"><input type="checkbox" name="rootNote" value="C" checked> C</label>
-                    <label class="grid-key Csharp-Db-key"><input type="checkbox" name="rootNote" value="C#_Db" checked>
-                        C# /
-                        Db</label>
-                    <label class="grid-key D-key"><input type="checkbox" name="rootNote" value="D" checked> D</label>
-                    <label class="grid-key Dsharp-Eb-key"><input type="checkbox" name="rootNote" value="D#_Eb" checked>
-                        D# /
-                        Eb</label>
-                    <label class="grid-key E-key"><input type="checkbox" name="rootNote" value="E" checked> E</label>
-                    <label class="grid-key F-key"><input type="checkbox" name="rootNote" value="F" checked> F</label>
-                    <label class="grid-key Fsharp-Gb-key"><input type="checkbox" name="rootNote" value="F#_Gb" checked>
-                        F# /
-                        Gb</label>
-                    <label class="grid-key G-key"><input type="checkbox" name="rootNote" value="G" checked> G</label>
-                    <label class="grid-key Gsharp-Ab-key"><input type="checkbox" name="rootNote" value="G#_Ab" checked>
-                        G# / Ab</label>
-                    <label class="grid-key A-key"><input type="checkbox" name="rootNote" value="A" checked> A</label>
-                    <label class="grid-key Asharp-Bb-key"><input type="checkbox" name="rootNote" value="A#_Bb" checked>
-                        A# /
-                        Bb</label>
-                    <label class="grid-key B-key"><input type="checkbox" name="rootNote" value="B" checked> B</label>
-                    <label class="full-width-checkbox"><input type="checkbox" name="rootNote" value="allRootNotes"
-                            checked>
-                        全て選択</label>
-                </div>
+            <div id="answer" class="tab-pane">
+                <section class="question-rhythm-display">
+                    <h3>出題されたリズム</h3>
+                    <div class="rhythm-display-area">
+                        <img id="question-rhythm-half1-image" src="" alt="出題リズム前半" class="rhythm-image">
+                        <img id="question-rhythm-half2-image" src="" alt="出題リズム後半" class="rhythm-image">
+                    </div>
+                    <button id="play-question-audio-button">出題音源を聴く</button>
+                </section>
+                <section class="user-selected-rhythm-display">
+                    <h3>あなたが選択したリズム</h3>
+                    <div class="rhythm-display-area">
+                        <img id="user-selected-rhythm-half1-image" src="" alt="ユーザー選択リズム前半" class="rhythm-image">
+                        <img id="user-selected-rhythm-half2-image" src="" alt="ユーザー選択リズム後半" class="rhythm-image">
+                    </div>
+                    <button id="play-user-selected-audio-button">選択音源を聴く</button>
+                </section>
+                <button id="next-question-button">次の問題へ</button>
             </div>
-
-            <div class="control-group">
-                <div class="controls chord-buttons">
-                    <label>
-                        <input type="checkbox" name="chordType" value="majorTriad" checked>
-                        <span class="chord-name">Major Triad<br>長三和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="minorTriad" checked>
-                        <span class="chord-name">Minor Triad<br>短三和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="augmentedTriad" checked>
-                        <span class="chord-name">Augmented Triad<br>増三和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="diminishedTriad" checked>
-                        <span class="chord-name">Diminished Triad<br>減三和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="major7" checked>
-                        <span class="chord-name">Major 7th<br>長七の和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="minor7" checked>
-                        <span class="chord-name">Minor 7th<br>短七の和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="dominant7" checked>
-                        <span class="chord-name">Dominant 7th<br>属七の和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="augmentedMajor7" checked>
-                        <span class="chord-name">Augmented Major 7th<br>増七の和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="halfDiminished7" checked>
-                        <span class="chord-name">Half Diminished 7th<br>半減七の和音<br>減五短七の和音<br>導七の和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="diminished7" checked>
-                        <span class="chord-name">Diminished 7th<br>減七の和音</span>
-                    </label>
-                    <label>
-                        <input type="checkbox" name="chordType" value="allChordTypes" checked>
-                        <span class="chord-name">全て選択</span>
-                    </label>
-                </div>
+            <div id="settings" class="tab-pane">
+                <h3>出題リズムの選択</h3>
+                <rhythm-selector-component data-urls-id="rhythm-urls" data-input-type="checkbox"
+                    data-rhythm-selector-type="question-rhythm" data-show-name="false">
+                </rhythm-selector-component>
+                <h4>再生設定</h4> 速度設定（近日公開予定） 楽器選択（近日公開予定）
             </div>
         </div>
-    </section>
+    </div>
+    <script type="application/json" id="rhythm-urls">
+    {
+        "rhythms": [
+            {
+                "id": "n02",
+                "name": "二分音符 (Whole Note)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n02.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "2n", "velocity": 0.8 }
+                ]
+            },
+            {
+                "id": "n04-n04",
+                "name": "四分音符 x2 (Two Quarter Notes)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n04-n04.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "4n", "velocity": 0.8 },
+                    { "time": "0:1:0", "note": "C4", "duration": "4n", "velocity": 0.8 }
+                ]
+            },
+            {
+                "id": "n04-n08-n08",
+                "name": "四分音符 + 八分音符 x2 (Quarter Note + Two Eighth Notes)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n04-n08-n08.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "4n", "velocity": 0.8 },
+                    { "time": "0:1:0", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:1:2", "note": "C4", "duration": "8n", "velocity": 0.8 }
+                ]
+            },
+            {
+                "id": "n04-n08-tied-n08",
+                "name": "四分音符 + 八分音符(タイ)八分音符 (Quarter Note + Tied Eighth Notes)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n04-n08-tied-n08.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "4n", "velocity": 0.8 },
+                    { "time": "0:1:0", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:1:2", "note": "C4", "duration": "8n", "velocity": 0 }
+                ]
+            },
+            {
+                "id": "n04dotted-n08",
+                "name": "付点四分音符 + 八分音符 (Dotted Quarter Note + Eighth Note)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n04dotted-n08.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "4n.", "velocity": 0.8 },
+                    { "time": "0:1:2", "note": "C4", "duration": "8n", "velocity": 0.8 }
+                ]
+            },
+            {
+                "id": "n08-n04-n08",
+                "name": "八分音符 + 四分音符 + 八分音符 (Eighth Note + Quarter Note + Eighth Note)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n08-n04-n08.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:0:2", "note": "C4", "duration": "4n", "velocity": 0.8 },
+                    { "time": "0:2:2", "note": "C4", "duration": "8n", "velocity": 0.8 }
+                ]
+            },
+            {
+                "id": "n08-n08-n04",
+                "name": "八分音符 x2 + 四分音符 (Two Eighth Notes + Quarter Note)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n08-n08-n04.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:0:2", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:1:0", "note": "C4", "duration": "4n", "velocity": 0.8 }
+                ]
+            },
+            {
+                "id": "n08-n08-n08-n08-1beamed",
+                "name": "八分音符 x4 (連桁1) (Four Eighth Notes - Beam 1)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n08-n08-n08-n08-1beamed.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:0:2", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:1:0", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:1:2", "note": "C4", "duration": "8n", "velocity": 0.8 }
+                ]
+            },
+            {
+                "id": "n08-n08-n08-n08-2beamed",
+                "name": "八分音符 x4 (連桁2) (Four Eighth Notes - Beam 2)",
+                "imageUrl": "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/rhythm-card/meter-unit-4/2eat/n08-n08-n08-n08-2beamed.svg",
+                "notes": [
+                    { "time": "0:0:0", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:0:2", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:1:0", "note": "C4", "duration": "8n", "velocity": 0.8 },
+                    { "time": "0:1:2", "note": "C4", "duration": "8n", "velocity": 0.8 }
+                ]
+            }
+        ]
+    }
+  </script>
+    <script type="module" defer="">
+        // RhythmSelectorComponent の定義 (変更なし)
+        class RhythmSelectorComponent extends HTMLElement {
+            constructor() { super(); }
+            connectedCallback() { this.render(); this.addEventListeners(); }
+            static get observedAttributes() { return ['data-urls-id', 'data-input-type', 'data-rhythm-selectortype', 'data-show-name']; }
+            attributeChangedCallback(name, oldValue, newValue) {
+                if (oldValue !== newValue) { this.render(); this.addEventListeners(); }
+            }
+
+            render() {
+                const urlsId = this.dataset.urlsId;
+                const inputType = this.dataset.inputType;
+                const selectorType = this.dataset.rhythmSelectortype || 'default';
+                const showName = this.dataset.showName !== 'false'; // 'false'以外の値はtrueと解釈
+
+
+                const jsonScriptTag = document.getElementById(urlsId);
+
+                if (!jsonScriptTag || jsonScriptTag.type !== 'application/json') {
+                    console.error(`エラー: IDが"${urlsId}"のJSONスクリプトタグが見つからないか、タイプが不正です。`, this);
+                    this.innerHTML = `<p style="color: red;">データロードエラー: ${urlsId} が見つかりません。</p>`;
+                    return;
+                }
+
+                try {
+                    const rhythmData = JSON.parse(jsonScriptTag.textContent);
+
+                    if (!rhythmData.rhythms || !Array.isArray(rhythmData.rhythms)) {
+                        console.error(`エラー: JSONデータに'rhythms'配列が見つからないか、形式が不正です。`, this, rhythmData);
+                        this.innerHTML = `<p style="color: red;">データ形式エラー: 'rhythms'配列がありません。</p>`;
+                        return;
+                    }
+
+                    let htmlContent = '';
+                    rhythmData.rhythms.forEach(rhythm => {
+                        // inputのname属性には selectorType を含めて、各セレクター内でラジオボタンが独立して機能するようにする
+                        const uniqueId = `rhythm-${selectorType}-${rhythm.id}`;
+                        const inputName = `rhythm-selection-${selectorType}`;
+
+                        htmlContent += `
+                       <div class="rhythm-item">
+                <input type="${inputType}" id="${uniqueId}" name="${inputName}" value="${rhythm.id}" data-rhythm-name="${rhythm.name}">
+                <label for="${uniqueId}">
+                    <img src="${rhythm.imageUrl}" alt="${rhythm.name}" class="rhythm-image-thumb">
+                    ${showName ? `<span class="rhythm-name">${rhythm.name}</span>` : ''} </label>
+            </div>
+        `;
+
+
+
+                    });
+
+                    this.innerHTML = `
+                    <style>
+                        .rhythm-selector-component-container {
+                            display: flex;
+                            flex-wrap: wrap;
+                            gap: 15px;
+                            padding: 10px;
+                            border: 1px solid #ddd;
+                            border-radius: 5px;
+                            background-color: #f9f9f9;
+                        }
+
+                        .rhythm-item {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            cursor: pointer;
+                            padding: 8px;
+                            border: 1px solid #eee;
+                            border-radius: 5px;
+                            background-color: #fff;
+                            transition: all 0.2s ease-in-out;
+                            box-shadow: 1px 1px 3px rgba(0,0,0,0.05);
+                        }
+
+                        .rhythm-item:hover {
+                            background-color: #e0e0e0;
+                        }
+
+                        .rhythm-item input[type="radio"],
+                        .rhythm-item input[type="checkbox"] {
+                            display: none;
+                        }
+
+                        .rhythm-item input[type="radio"]:checked + label,
+                        .rhythm-item input[type="checkbox"]:checked + label {
+                            border: 2px solid #007bff;
+                            background-color: #e6f7ff;
+                        }
+
+                        .rhythm-item label {
+                            display: flex;
+                            flex-direction: column;
+                            align-items: center;
+                            cursor: pointer;
+                            padding: 5px;
+                            border-radius: 3px;
+                            border: 2px solid transparent;
+                            height: 100%;
+                            box-sizing: border-box;
+                        }
+
+                        .rhythm-image-thumb {
+                            width: 60px;
+                            height: auto;
+                            margin-bottom: 5px;
+                        }
+
+                        .rhythm-name {
+                            font-size: 0.9em;
+                            color: #333;
+                            text-align: center;
+                            white-space: nowrap;
+                        }
+                    </style>
+                    <div class="rhythm-selector-component-container"> ${htmlContent}
+                    </div>
+                `;
+                } catch (e) {
+                    console.error('JSONデータのパースエラー:', e, this);
+                    this.innerHTML = `<p style="color: red;">JSONパースエラー: ${e.message}</p>`;
+                }
+            }
+
+            addEventListeners() {
+                this.addEventListener('change', (event) => {
+                    const inputType = this.dataset.inputType;
+                    const selectorType = this.dataset.rhythmSelectortype || 'default';
+                    const inputName = `rhythm-selection-${selectorType}`;
+
+                    const selectedRhythms = this.getSelectedRhythms(inputType, inputName);
+                    const customEvent = new CustomEvent('rhythmSelectChange', {
+                        detail: {
+                            componentType: selectorType,
+                            selectedRhythms: selectedRhythms
+                        }
+                    });
+                    this.dispatchEvent(customEvent);
+                });
+            }
+
+            getSelectedRhythms(inputType, inputName) {
+                const selected = [];
+                const inputs = this.querySelectorAll(`input[name="${inputName}"]:checked`);
+
+                inputs.forEach(input => {
+                    selected.push({
+                        id: input.value,
+                        name: input.dataset.rhythmName
+                    });
+                });
+                return selected;
+            }
+        }
+
+        // カスタム要素を登録
+        customElements.define('rhythm-selector-component', RhythmSelectorComponent);
+
+        // Tone.jsのロード関数をインポート
+        import { loadToneJs } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/tonejs/loader.mjs';
+
+
+        /* 
+        TODO:
+        Tone.jsの再生クラス
+        問題再生用のインスタンスと、ユーザー選択リズム再生用のインスタンス
+        */
+        class Player{}
+
+
+
+
+        function genarateSoundData(rhythm1, rhythm2) {
+            /* 
+                TODO: 再生用のデータを作成 
+                ・出題用の再生データ
+                ・ユーザーが選択したリズムによる再生データ
+                を作ると思われる
+            */
+        }
+
+        function generateQuestion() {
+            // questionDataの取得
+            // そのリズムからランダムに２つのIDを選択
+            // ２つのデータを連結させて音源データを作成
+            return {
+                rhythm1: {/* 情報 */ },
+                rhythm2: {/* 情報 */ },
+                soundData: { /* 再生用のデータ */ }
+            };
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        function initializeEventListener(){
+            // 出題ボタンが押されたとき
+
+            // 解答を送信ボタンが押されたとき
+
+            // 次の問題へボタンが押されたとき
+        }
+
+
+
+
+        /**
+         * ページの初期化処理を行う関数
+         */
+        async function Initialize() {
+            console.log('DOM が完全にロードされました。Initialize 関数を実行中...');
+
+            const playRhythmButton = document.getElementById('play-rhythm-button');
+
+            try {
+                await loadToneJs();
+                console.log('Tone.jsがロードされました！');
+
+                // Web Audio APIのコンテキストをアクティブにするためのリスナー
+                document.documentElement.addEventListener('mousedown', () => {
+                    if (Tone.context.state !== 'running') {
+                        Tone.start();
+                        console.log('Tone.jsオーディオコンテキストが開始されました。');
+                    }
+                }, { once: true });
+
+                // ボタンがクリックされたら音を鳴らす例
+                if (playRhythmButton) {
+                    playRhythmButton.addEventListener('click', () => {
+                        const synth = new Tone.Synth().toDestination();
+                        synth.triggerAttackRelease('C4', '8n');
+                        console.log('C4の音が鳴りました。');
+                    });
+                }
+
+                // RhythmSelectorComponent 関連のイベントリスナーや初期化ロジックもここに追加
+                document.querySelectorAll('rhythm-selector-component').forEach(component => {
+                    component.addEventListener('rhythmSelectChange', (event) => {
+                        console.log(`RhythmSelectorComponent (${event.detail.componentType}) でリズム選択が変更されました:`, event.detail.selectedRhythms);
+
+                        // componentType に応じて異なる処理を行う例
+                        if (event.detail.componentType === 'half-1') {
+                            // 前半のリズム選択が変更された時の処理
+                        } else if (event.detail.componentType === 'half-2') {
+                            // 後半のリズム選択が変更された時の処理
+                        } else if (event.detail.componentType === 'question-rhythm') {
+                            // 出題リズムの選択が変更された時の処理
+                        }
+                    });
+                });
+
+            } catch (error) {
+                console.error('初期化中にエラーが発生しました:', error);
+            }
+        }
+
+        // DOMContentLoaded イベント時に Initialize 関数を呼び出す
+        document.addEventListener('DOMContentLoaded', Initialize);
+    </script>
 
 </body>
 

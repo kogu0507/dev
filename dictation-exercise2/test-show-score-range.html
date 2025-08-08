@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dictation Exercise</title>
+    
+    <!-- テスト用 -->
+    <link rel="stylesheet" href="style.css">
+    <script src="script.js"></script>
+
+    <!-- 本番環境用 -->
+    <!-- 
+        以下のファイルをCustom Assets Loaderで読みこむ
+        https://cdn.jsdelivr.net/gh/kogu0507/mini-apps@main/dictation-exercise/script.min.js
+        https://cdn.jsdelivr.net/gh/kogu0507/mini-apps@main/dictation-exercise/style.min.css
+    -->
+
+</head>
+<body>
+    <h1>聴音課題アプリ</h1>
+
+    <!-- 小節範囲指定の入力フォーム -->
+    <div>
+        <label for="startMeasure">開始小節:</label>
+        <input type="number" id="startMeasure" value="1" min="1">
+        <label for="endMeasure">終了小節:</label>
+        <input type="number" id="endMeasure" value="8" min="1">
+        <button id="updateScoreButton">楽譜を更新</button>
+    </div>
+
+    <!-- 楽譜表示エリア -->
+    <div id="score-container">
+        楽譜を読み込み中...
+    </div>
+
+    <script type="module">
+        // VerovioManagerとrender-optionsのsvgViewBoxをインポート
+        import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/verovio/verovio-manager.min.js';
+        import { svgViewBox } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/verovio/render-options.min.js';
+
+        // MEIファイルのURL
+        const MEI_FILE_URL = 'https://kogu0507.github.io/dev/dictation-exercise2/melody-dictation-001.mei';
+        // 楽譜を表示するDOM要素のID
+        const SCORE_CONTAINER_ID = 'score-container';
+
+        // VerovioManagerのインスタンスをグローバルに保持
+        let verovioManager;
+
+        /**
+         * 指定された小節範囲で楽譜をロードして表示する関数
+         * @param {string} measureRange - 表示する小節範囲 (例: '1-8', '5')
+         */
+        async function loadAndDisplayScore(measureRange = '') {
+            try {
+                // VerovioManagerが初期化されていることを確認
+                if (!verovioManager) {
+                    console.error('VerovioManagerが初期化されていません。');
+                    return;
+                }
+
+                console.log(`MEIファイル '${MEI_FILE_URL}' をロードし、'${SCORE_CONTAINER_ID}'に表示します。小節範囲: ${measureRange || '全範囲'}`);
+                await verovioManager.displaySvgFromUrl(MEI_FILE_URL, SCORE_CONTAINER_ID, { measureRange });
+                console.log('楽譜の表示が完了しました。');
+
+            } catch (error) {
+                console.error('楽譜の表示中にエラーが発生しました:', error);
+                // エラー表示はVerovioManagerが内部で処理します
+            }
+        }
+
+        /**
+         * アプリケーションの初期化とイベントリスナーの設定を行う非同期関数
+         */
+        async function initializeApp() {
+            console.log('VerovioManagerの初期化を開始します...');
+            verovioManager = new VerovioManager();
+
+            try {
+                await verovioManager.initialize();
+                console.log('VerovioManagerの初期化が完了しました。');
+
+                // レンダリングオプションを設定 (svgViewBoxを有効にする)
+                verovioManager.setRenderOptions(svgViewBox);
+                console.log('レンダリングオプション (svgViewBox) を設定しました。');
+
+                // 初期表示として、デフォルトの小節範囲で楽譜をロード
+                const initialStart = document.getElementById('startMeasure').value;
+                const initialEnd = document.getElementById('endMeasure').value;
+                const initialMeasureRange = `${initialStart}-${initialEnd}`;
+                await loadAndDisplayScore(initialMeasureRange);
+
+                // 更新ボタンのイベントリスナーを設定
+                const updateButton = document.getElementById('updateScoreButton');
+                updateButton.addEventListener('click', () => {
+                    const startMeasure = parseInt(document.getElementById('startMeasure').value, 10);
+                    const endMeasure = parseInt(document.getElementById('endMeasure').value, 10);
+
+                    let measureRange = '';
+                    if (!isNaN(startMeasure) && startMeasure >= 1) {
+                        if (!isNaN(endMeasure) && endMeasure >= startMeasure) {
+                            measureRange = `${startMeasure}-${endMeasure}`;
+                        } else {
+                            measureRange = String(startMeasure); // 終了小節が不正なら開始小節のみ
+                        }
+                    } else if (!isNaN(endMeasure) && endMeasure >= 1) {
+                        // 開始小節が不正で終了小節のみ指定された場合、終了小節のみを表示
+                        measureRange = String(endMeasure);
+                    }
+                    // どちらも不正な場合はmeasureRangeは空文字列のままとなり、全範囲が表示される
+
+                    loadAndDisplayScore(measureRange);
+                });
+
+            } catch (error) {
+                console.error('アプリケーションの初期化中にエラーが発生しました:', error);
+            }
+        }
+
+        // DOMが完全にロードされた後にinitializeApp関数を実行
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+</body>
+</html>

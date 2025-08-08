@@ -1,0 +1,208 @@
+/* Refactored simple-tab-component/style.css v2.1
+   ———————————————————————————————————————
+   1. ルート変数（カスタマイズしやすい）
+——————————————————————————————————————— */
+:root {
+  /* フォント・幅・スペーシング */
+  --stc-font-family: sans-serif;
+  --stc-max-width: 800px;
+  --stc-spacing: 10px;
+
+  /* 色 */
+  --stc-border-color: #ccc;
+  --stc-bg: #fff;
+  --stc-bg-alt: #f0f0f0;       /* タブ未選択時背景 */
+  --stc-bg-hover: #e0e0e0;     /* タブホバー時背景 */
+  --stc-color: #333;           /* メインテキスト */
+  --stc-color-alt: #555;       /* 補助テキスト */
+
+  /* アクセントカラー（重要要素用） */
+  --stc-accent: #007bff;
+  --stc-accent-hover: #0056b3;
+
+  /* 角丸・アニメーション */
+  --stc-radius: 4px;
+  --stc-transition: 0.2s;
+
+  /* フォーカス時アウトライン */
+  --stc-focus-outline: 2px solid var(--stc-accent);
+}
+
+/* ———————————————————————————————————————
+   2. コンテナ全体
+——————————————————————————————————————— */
+.simple-tab-component-container {
+  font-family: var(--stc-font-family);
+  max-width: var(--stc-max-width);
+  margin: calc(var(--stc-spacing) * 2) auto;
+  border: 1px solid var(--stc-border-color);
+  border-radius: var(--stc-radius);
+  background: var(--stc-bg);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* ———————————————————————————————————————
+   3. タブヘッダー（横スクロール対応）
+——————————————————————————————————————— */
+.simple-tab-component-container .tabs {
+  display: flex;
+  padding: 0 var(--stc-spacing);
+  border-bottom: 1px solid var(--stc-border-color);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+.simple-tab-component-container .tabs::-webkit-scrollbar {
+  display: none;        /* Chrome/Safari */
+}
+
+/* ———————————————————————————————————————
+   4. タブボタン
+——————————————————————————————————————— */
+.simple-tab-component-container .tab-button {
+  flex: 0 0 auto;
+  margin-right: var(--stc-spacing);
+  padding: var(--stc-spacing) calc(var(--stc-spacing) * 2);
+  background: var(--stc-bg-alt);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-top-left-radius: var(--stc-radius);
+  border-top-right-radius: var(--stc-radius);
+  color: var(--stc-color-alt);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--stc-transition), border-color var(--stc-transition);
+  outline: none;
+}
+
+/* ホバー */
+.simple-tab-component-container .tab-button:hover:not(.active) {
+  background: var(--stc-bg-hover);
+}
+
+/* フォーカス時 */
+.simple-tab-component-container .tab-button:focus-visible {
+  outline: var(--stc-focus-outline);
+}
+
+/* アクティブ */
+.simple-tab-component-container .tab-button.active {
+  background: var(--stc-bg);
+  border-color: var(--stc-border-color);
+  color: var(--stc-color);
+  font-weight: bold;
+  cursor: default;
+}
+
+/* ———————————————————————————————————————
+   5. タブコンテンツ
+——————————————————————————————————————— */
+.simple-tab-component-container .tab-content {
+  padding: var(--stc-spacing);
+  background: var(--stc-bg);
+}
+
+/* 表示切替 */
+.simple-tab-component-container .tab-pane {
+  display: none;
+}
+.simple-tab-component-container .tab-pane.active {
+  display: block;
+}
+
+/* セクション共通 */
+.simple-tab-component-container section {
+  margin-bottom: calc(var(--stc-spacing) * 1.5);
+}
+
+/* プレースホルダー風テキスト */
+.simple-tab-component-container .mde-exercise-selection-section,
+.simple-tab-component-container .mde-exercise-section,
+.simple-tab-component-container .mde-playback-info,
+.simple-tab-component-container .mde-exercise-info,
+.simple-tab-component-container .mde-answer-display {
+  color: #666;
+  font-style: italic;
+}
+
+/* スコア／プレイヤー枠 */
+.simple-tab-component-container .score-container,
+.simple-tab-component-container .mde-player-section {
+  border: 1px solid var(--stc-border-color);
+  border-radius: var(--stc-radius);
+  padding: var(--stc-spacing);
+  background: #fafafa;
+}
+
+/* ———————————————————————————————————————
+   6. プレイヤーテンプレート内要素
+——————————————————————————————————————— */
+/* 再生範囲設定 */
+.mde-play-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--stc-spacing);
+  margin-bottom: var(--stc-spacing);
+}
+.mde-play-range label,
+.mde-play-range input {
+  font-size: 0.9rem;
+}
+.mde-play-range input[type="number"] {
+  width: 4em;
+  padding: 0.2em;
+  border: 1px solid var(--stc-border-color);
+  border-radius: var(--stc-radius);
+}
+
+/* コントロールボタン群 */
+.mde-control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--stc-spacing);
+  align-items: center;
+}
+/* 再生・停止等のボタン */
+.mde-control-button {
+  padding: 0.5em 1em;
+  background: var(--stc-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--stc-radius);
+  cursor: pointer;
+  transition: background var(--stc-transition);
+}
+.mde-control-button:hover {
+  background: var(--stc-accent-hover);
+}
+
+/* 再生ステータス表示 */
+.mde-playback-status {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--stc-color);
+}
+
+/* ボリュームスライダー */
+.mde-control-buttons input[type="range"] {
+  vertical-align: middle;
+}
+
+/* ———————————————————————————————————————
+   7. レスポンシブ対応
+——————————————————————————————————————— */
+@media (max-width: 600px) {
+  .simple-tab-component-container .tabs {
+    flex-wrap: wrap;
+  }
+  .simple-tab-component-container .tab-button {
+    flex: 100%;
+    text-align: left;
+  }
+  .mde-play-range,
+  .mde-control-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}

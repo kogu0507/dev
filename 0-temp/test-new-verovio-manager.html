@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>VerovioManager 小節範囲テスト</title>
+  <style>
+    body { font-family: sans-serif; padding: 1em; }
+    #controls { margin-bottom: 1em; }
+    label { margin-right: 0.5em; }
+    select, button { margin-right: 0.5em; }
+    #scoreContainer {
+      border: 1px solid #ccc;
+      padding: 1em;
+      min-height: 200px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>VerovioManager：小節範囲指定テスト</h1>
+
+  <div id="controls">
+    <label for="rangeSelect">小節範囲：</label>
+    <select id="rangeSelect">
+      <option value="1-8">1-8小節</option>
+      <option value="1-4">1-4小節</option>
+      <option value="5-8">5-8小節</option>
+      <option value="1-2">1-2小節</option>
+      <option value="3-4">3-4小節</option>
+      <option value="5-6">5-6小節</option>
+      <option value="7-8">7-8小節</option>
+      <option value="1">1小節</option>
+      <option value="2">2小節</option>
+      <option value="3">3小節</option>
+      <option value="4">4小節</option>
+      <option value="5">5小節</option>
+      <option value="6">6小節</option>
+      <option value="7">7小節</option>
+      <option value="8">8小節</option>
+    </select>
+    <button id="btnRender">表示</button>
+  </div>
+
+  <div id="scoreContainer">ここに譜例が表示されます</div>
+
+  <script type="module">
+    import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/verovio/verovio-manager.min.js';
+    import { defaultOptions }    from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/verovio/render-options.js';
+
+    const sampleMeiUrl = 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/examples/sample.mei';
+    const containerId  = 'scoreContainer';
+
+    // VerovioManager の初期化
+    const manager = new VerovioManager();
+    await manager.initialize();
+    manager.setRenderOptions(defaultOptions);
+
+    // 「表示」ボタン押下で小節範囲を取得して描画
+    document.getElementById('btnRender').addEventListener('click', () => {
+      const range = document.getElementById('rangeSelect').value;
+      manager.displaySvgFromUrl(
+        sampleMeiUrl,
+        containerId,
+        { page: 1, measureRange: range }
+      );
+    });
+
+    // ページ読み込み後に最初の範囲で自動描画（オプション）
+    document.getElementById('btnRender').click();
+  </script>
+</body>
+</html>

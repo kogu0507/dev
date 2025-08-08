@@ -111,6 +111,11 @@
     border-radius: 5px;
     background-color: #fcfcfc;
 }
+.scale-item img {
+    max-width: 100%; /* 親要素の幅を超えないようにする */
+    height: auto;    /* 幅に合わせて高さを自動調整し、アスペクト比を維持する */
+    display: block;  /* 画像の下の余白（インライン要素の特性）をなくす */
+}
 
 .scale-card h4 {
     color: #555;

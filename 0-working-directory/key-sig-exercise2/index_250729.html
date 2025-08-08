@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>調号エクササイズ</title>
+
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Music&display=swap" rel="stylesheet">
+    <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.0.1/components/simple-tab-component/style.min.css">
+    <style>
+        /* 楽譜表示エリアの画像スタイル */
+        .key-signature-image {
+            max-width: 100%;
+            height: auto;
+            display: block;
+            margin: 20px auto;
+            /* 中央寄せと上下の余白 */
+        }
+
+        .language-setting-note {
+            font-size: 0.8em;
+            margin-top: 10px;
+        }
+
+        .music-key {
+            font-family: "Noto Music", sans-serif;
+        }
+
+        .music-key .flat-symbol {
+            font-family: "Noto Music", sans-serif;
+            font-size: 1.3em;
+            vertical-align: baseline;
+            position: relative;
+            top: -0.2em;
+        }
+
+        .music-key .sharp-symbol {
+            font-family: "Noto Music", sans-serif;
+            font-size: 1em;
+            vertical-align: baseline;
+            position: relative;
+            top: -0.4em;
+        }
+
+        /* 解答選択肢のグリッドレイアウト */
+        .key-select-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+        }
+
+        .key-select-grid>.column {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .key-select-grid label {
+            display: flex;
+            align-items: center;
+            margin-bottom: 5px;
+            cursor: pointer;
+        }
+
+        .key-select-grid input[type="radio"] {
+            margin-right: 5px;
+        }
+
+        /* 調号選択肢のグリッドレイアウト */
+        .signature-select-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            /* 4列に設定 */
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .signature-select-grid label {
+            display: flex;
+            flex-direction: column;
+            /* 画像とテキストを縦に並べる */
+            align-items: center;
+            /* 中央寄せ */
+            cursor: pointer;
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        .signature-select-grid label:hover {
+            background-color: #f0f0f0;
+        }
+
+        .signature-select-grid input[type="radio"] {
+            margin-bottom: 5px;
+        }
+
+        .signature-select-grid img {
+            max-width: 80px;
+            /* 調号画像の最大幅 */
+            height: auto;
+            margin-bottom: 5px;
+        }
+
+        .notification-message {
+            display: none;
+            /* 初期状態では非表示 */
+            margin-top: 10px;
+            padding: 10px;
+            border: 1px solid #4CAF50;
+            background-color: #e8f5e9;
+            color: #4CAF50;
+            border-radius: 5px;
+        }
+
+        /* 新しく追加する .key-signature-card のスタイル */
+        .key-signature-card {
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            padding: 15px;
+            text-align: center;
+            margin-bottom: 20px;
+            background-color: #fff;
+        }
+
+        .key-signature-card h3 {
+            margin-top: 0;
+            color: #333;
+        }
+
+        .key-signature-card img {
+            max-width: 120px;
+            height: auto;
+            margin: 10px auto;
+        }
+
+        .key-signature-card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            /* レスポンシブなグリッド */
+            gap: 20px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h2>調号エクササイズ</h2>
+    <div id="simple-tab-component" class="simple-tab-component-container" data-default-tab="key-to-name"
+        data-deep-link="true">
+        <div class="tabs" role="tablist">
+            <button class="tab-button" data-tab="key-to-name" id="tab-btn-key-to-name" role="tab"
+                aria-controls="key-to-name">調号から調名</button>
+            <button class="tab-button" data-tab="name-to-key" id="tab-btn-name-to-key" role="tab"
+                aria-controls="name-to-key">調名から調号</button>
+            <button class="tab-button" data-tab="summary" id="tab-btn-summary" role="tab"
+                aria-controls="summary">設定</button>
+            <button class="tab-button" data-tab="study" id="tab-btn-study" role="tab" aria-controls="study">学習</button>
+        </div>
+        <div class="tab-content">
+            <div id="key-to-name" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-key-to-name">
+                <h3>調号を見て調名を答えましょう。</h3>
+                <div id="question-status-key-to-name"></div>
+                <img id="key-signature-image" src="" alt="表示される調号の画像" class="key-signature-image">
+
+                <hr>
+
+                <p>あなたの答え：</p>
+                <div class="tables-wrapper">
+                    <div>
+                        <p>長調：</p>
+                        <div class="key-select-grid" id="major-key-select-grid"></div>
+                    </div>
+
+                    <div style="margin-top: 3em;">
+                        <p>短調：</p>
+                        <div class="key-select-grid" id="minor-key-select-grid"></div>
+                    </div>
+                </div>
+
+                <hr>
+
+                <button id="submit-answer-key-to-name-btn">解答を送信</button>
+                <div id="submit-notification-key-to-name" class="notification-message">
+                    送信完了！
+                </div>
+
+                <hr>
+                <div id="answer-feedback-key-to-name"></div>
+                <p>正解：<br>
+                    日）<span id="display-correct-answer-jp-key-to-name"></span><br>
+                    英）<span id="display-correct-answer-en-key-to-name"></span><br>
+                    独）<span id="display-correct-answer-de-key-to-name"></span>
+                </p>
+                <button id="generate-new-question-key-to-name-btn">新しい問題を生成</button>
+                <div id="new-question-notification-key-to-name" class="notification-message">
+                    新しい問題が生成されました！
+                </div>
+            </div>
+
+            <div id="name-to-key" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-name-to-key">
+                <h3>調名を見て調号を答えましょう。</h3>
+                <div id="question-status-name-to-key"></div>
+                <p>出題される調名：<span id="display-question-key-name"></span></p>
+
+                <hr>
+
+                <p>あなたの答え：</p>
+                <div class="signature-select-grid" id="key-signature-select-grid">
+                </div>
+
+                <hr>
+
+                <button id="submit-answer-name-to-key-btn">解答を送信</button>
+                <div id="submit-notification-name-to-key" class="notification-message">
+                    送信完了！
+                </div>
+
+                <hr>
+                <div id="answer-feedback-name-to-key"></div>
+                <p>正解：<br>
+                    <img id="correct-key-signature-image" src="" alt="正解の調号画像" class="key-signature-image"
+                        style="max-width: 100px;">
+                </p>
+                <button id="generate-new-question-name-to-key-btn">新しい問題を生成</button>
+                <div id="new-question-notification-name-to-key" class="notification-message">
+                    新しい問題が生成されました！
+                </div>
+            </div>
+
+            <div id="summary" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-summary">
+                <h3>設定</h3>
+                <p>音名の言語</p>
+                <div id="language-selector">
+                    <label><input type="radio" name="lang" value="ja" checked> 日本語</label>
+                    <label><input type="radio" name="lang" value="en"> English</label>
+                    <label><input type="radio" name="lang" value="de"> Deutsch</label>
+                </div>
+            </div>
+
+            <div id="study" class="tab-pane" role="tabpanel" aria-labelledby="tab-btn-study">
+                <h3>調号一覧と覚え方</h3>
+                <p>ここでは、主要な調号とそれに対応する調名（長調・短調）を一覧で確認できます。</p>
+
+                <div class="key-signature-card-grid">
+                    <div class="key-signature-card" data-sharps="0" data-flats="0" data-major-jp="ハ長調"
+                        data-major-en="C Major" data-major-de="C-Dur" data-minor-jp="イ短調" data-minor-en="A Minor"
+                        data-minor-de="a-Moll">
+                        <h3>ハ長調／イ短調</h3>
+                        <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/keysig/keysig_0.svg"
+                            alt="ハ長調／イ短調の調号">
+                    </div>
+                    <div class="key-signature-card" data-sharps="1" data-flats="0" data-major-jp="ト長調"
+                        data-major-en="G Major" data-major-de="G-Dur" data-minor-jp="ホ短調" data-minor-en="E Minor"
+                        data-minor-de="e-Moll">
+                        <h3>ト長調／ホ短調</h3>
+                        <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/keysig/keysig_1s.svg"
+                            alt="ト長調／ホ短調の調号">
+                    </div>
+                    <div class="key-signature-card" data-sharps="2" data-flats="0" data-major-jp="ニ長調"
+                        data-major-en="D Major" data-major-de="D-Dur" data-minor-jp="ロ短調" data-minor-en="B Minor"
+                        data-minor-de="h-Moll">
+                        <h3>ニ長調／ロ短調</h3>
+                        <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/keysig/keysig_2s.svg"
+                            alt="ニ長調／ロ短調の調号">
+                    </div>
+                    <div class="key-signature-card" data-sharps="0" data-flats="1" data-major-jp="ヘ長調"
+                        data-major-en="F Major" data-major-de="F-Dur" data-minor-jp="ニ短調" data-minor-en="D Minor"
+                        data-minor-de="d-Moll">
+                        <h3>ヘ長調／ニ短調</h3>
+                        <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/keysig/keysig_1f.svg"
+                            alt="ヘ長調／ニ短調の調号">
+                    </div>
+                    <div class="key-signature-card" data-sharps="0" data-flats="2" data-major-jp="変ロ長調"
+                        data-major-en="B♭ Major" data-major-de="B-Dur" data-minor-jp="ト短調" data-minor-en="G Minor"
+                        data-minor-de="g-Moll">
+                        <h3>変ロ長調／ト短調</h3>
+                        <img src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/assets/svg/music-notation/keysig/keysig_2f.svg"
+                            alt="変ロ長調／ト短調の調号">
+                    </div>
+                </div>
+
+                <h3>調号の覚え方ヒント</h3>
+                <ul>
+                    <li>シャープ系の調号は、最後のシャープから半音上がった音が長調の主音になります。（長調のVIIを、短調のIIを指定している）</li>
+                    <li>フラット系の調号は、最後のフラットから4度下がった音、または最後のフラットの2つ前のフラットの音が長調の主音になります（フラットが1つの場合はF Major）。</li>
+                    <li>各長調の短3度下の音が、その長調と関係調である短調の主音になります。</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- <script type="module" src="./script.js"></script> -->
+    <script defer>
+        /* 
+        開発中はここにコードをまとめる 
+        ・各コンポーネント
+        ・script.jsのコード
+        */
+
+
+        /**
+         * @fileoverview このファイルは、調号学習アプリケーションの主要なJavaScriptクラスと関数を定義します。
+         * 各クラスは特定の機能領域（アプリケーション管理、データロジック、UIコンポーネントなど）を担当し、
+         * アプリケーション全体の構造化と保守性の向上を目指します。
+         */
+
+        // I. メインアプリケーションの管理
+        //----------------------------------------------------------------------
+        /**
+         * アプリケーションのエントリーポイントとなるクラス。
+         * 各種モジュールの初期化、イベントリスナーの設定、タブ切り替え処理などを統括します。
+         */
+        class App {
+            /**
+             * Appクラスのコンストラクタ。
+             * アプリケーションの初期化を行い、DOM要素の取得やデータ読み込みを準備します。
+             */
+            constructor() {
+                // DOM要素や初期データのプロパティをここに定義
+            }
+
+            /**
+             * アプリケーションの全てのコンポーネントを初期化し、イベントリスナーを設定します。
+             */
+            init() {
+                // 初期化ロジック
+            }
+
+            /**
+             * HTMLから調号データを読み込み、内部データとして保持します。
+             * @returns {Promise<Object[]>} 調号データの配列を解決するPromise。
+             */
+            async loadKeySignatureData() {
+                // データ読み込みロジック
+            }
+
+            /**
+             * 全体のイベントリスナー（タブ切り替え、言語設定など）を設定します。
+             */
+            setupEventListeners() {
+                // イベントリスナー設定ロジック
+            }
+
+            /**
+             * 指定されたIDのタブに切り替えます。
+             * @param {string} tabId - 切り替えるタブのDOM要素ID。
+             */
+            switchTab(tabId) {
+                // タブ切り替えロジック
+            }
+
+            /**
+             * アプリケーションの表示言語を切り替えます。
+             * @param {string} lang - 設定する言語コード（例: 'en', 'ja'）。
+             */
+            updateDisplayLanguage(lang) {
+                // 言語切り替えロジック
+            }
+        }
+
+        // II. データ管理とロジック
+        //----------------------------------------------------------------------
+        /**
+         * 調号データの一元管理と、問題生成ロジックを担当するクラス。
+         */
+        class KeySignatureManager {
+            /**
+             * KeySignatureManagerクラスのコンストラクタ。
+             * 調号データを初期化します。
+             * @param {Object[]} data - 初期化に用いる調号データの配列。
+             */
+            constructor(data) {
+                // データ初期化ロジック
+            }
+
+            /**
+             * 全てのシャープ/フラットの数を配列で返します。
+             * 例: `[0, 1, 2, ..., -1, -2, ...]`
+             * @returns {number[]} シャープ/フラットの数の配列。
+             */
+            getSharpsFlatCounts() {
+                // ロジック
+            }
+
+            /**
+             * 指定されたシャープ/フラット数に対応する調号データを返します。
+             * @param {number} sharps - シャープの数。
+             * @param {number} flats - フラットの数。
+             * @returns {Object|undefined} 対応する調号データ、または見つからない場合はundefined。
+             */
+            getKeyDataBySharpsFlats(sharps, flats) {
+                // ロジック
+            }
+
+            /**
+             * ランダムな調号データを返します（「調号から調名」問題用）。
+             * @returns {Object} ランダムに選択された調号データ。
+             */
+            getRandomKeySignature() {
+                // ロジック
+            }
+
+            /**
+             * ランダムな調名データを返します（「調名から調号」問題用）。
+             * @returns {Object} ランダムに選択された調名データ。
+             */
+            getRandomKeyName() {
+                // ロジック
+            }
+
+            /**
+             * 「調号から調名」問題の正誤を判定します。
+             * @param {Object} questionKey - 出題された調号データ。
+             * @param {string} userMajorAnswer - ユーザーが選択した長調の答え。
+             * @param {string} userMinorAnswer - ユーザーが選択した短調の答え。
+             * @returns {boolean} 正解であればtrue、そうでなければfalse。
+             */
+            checkAnswerKeyToName(questionKey, userMajorAnswer, userMinorAnswer) {
+                // ロジック
+            }
+
+            /**
+             * 「調名から調号」問題の正誤を判定します。
+             * @param {string} questionKeyName - 出題された調名。
+             * @param {number} userSelectedSharps - ユーザーが選択したシャープの数。
+             * @param {number} userSelectedFlats - ユーザーが選択したフラットの数。
+             * @returns {boolean} 正解であればtrue、そうでなければfalse。
+             */
+            checkAnswerNameToKey(questionKeyName, userSelectedSharps, userSelectedFlats) {
+                // ロジック
+            }
+
+            /**
+             * 指定された調号データから、指定された言語と長短（長調/短調）の調名を返します。
+             * @param {Object} keyData - 調号データ。
+             * @param {'major'|'minor'} type - 取得する調のタイプ（'major'または'minor'）。
+             * @param {string} lang - 取得する言語コード（例: 'en', 'ja'）。
+             * @returns {string} 指定された言語とタイプの調名。
+             */
+            getKeyNameInLanguage(keyData, type, lang) {
+                // ロジック
+            }
+        }
+
+        // III. UIコンポーネント
+        //----------------------------------------------------------------------
+        /**
+         * 「調号から調名」タブのUI表示とユーザーインタラクションを管理するクラス。
+         */
+        class KeyToNameQuizUI {
+            /**
+             * KeyToNameQuizUIクラスのコンストラクタ。
+             * 関連するDOM要素を初期化します。
+             * @param {Object} elements - UI操作に必要なDOM要素の参照を持つオブジェクト。
+             */
+            constructor(elements) {
+                // DOM要素の初期化
+            }
+
+            /**
+             * 調号画像と質問の状態を更新して表示します。
+             * @param {Object} keyData - 表示する調号データ。
+             */
+            displayQuestion(keyData) {
+                // UI更新ロジック
+            }
+
+            /**
+             * 長調の選択肢（ラジオボタン）を生成して表示します。
+             * @param {string[]} majorKeys - 長調名の配列。
+             * @param {string} currentLang - 現在の表示言語。
+             */
+            renderMajorKeyOptions(majorKeys, currentLang) {
+                // 長調選択肢のレンダリングロジック
+            }
+
+            /**
+             * 短調の選択肢（ラジオボタン）を生成して表示します。
+             * @param {string[]} minorKeys - 短調名の配列。
+             * @param {string} currentLang - 現在の表示言語。
+             */
+            renderMinorKeyOptions(minorKeys, currentLang) {
+                // 短調選択肢のレンダリングロジック
+            }
+
+            /**
+             * ユーザーが選択した長調と短調の答えを取得します。
+             * @returns {{major: string, minor: string}} ユーザーの選択。
+             */
+            getUserSelection() {
+                // ユーザー選択取得ロジック
+            }
+
+            /**
+             * 正誤フィードバックと正解を表示します。
+             * @param {boolean} isCorrect - ユーザーの答えが正解だったか。
+             * @param {Object} correctAnswer - 正しい答えの調号データ。
+             */
+            showFeedback(isCorrect, correctAnswer) {
+                // フィードバック表示ロジック
+            }
+
+            /**
+             * ユーザーの選択をクリアします。
+             */
+            clearSelections() {
+                // 選択クリアロジック
+            }
+
+            /**
+             * 送信完了や問題生成の通知を表示します。
+             * @param {'submit'|'generate'} type - 表示する通知のタイプ。
+             */
+            showNotification(type) {
+                // 通知表示ロジック
+            }
+        }
+
+        /**
+         * 「調名から調号」タブのUI表示とユーザーインタラクションを管理するクラス。
+         */
+        class NameToKeyQuizUI {
+            /**
+             * NameToKeyQuizUIクラスのコンストラクタ。
+             * 関連するDOM要素を初期化します。
+             * @param {Object} elements - UI操作に必要なDOM要素の参照を持つオブジェクト。
+             */
+            constructor(elements) {
+                // DOM要素の初期化
+            }
+
+            /**
+             * 出題する調名を表示します。
+             * @param {string} keyName - 表示する調名。
+             * @param {string} currentLang - 現在の表示言語。
+             */
+            displayQuestionKeyName(keyName, currentLang) {
+                // UI更新ロジック
+            }
+
+            /**
+             * 全ての調号の選択肢（画像付きラジオボタン）を生成して表示します。
+             * @param {Object[]} allKeyData - 全ての調号データの配列。
+             */
+            renderKeySignatureOptions(allKeyData) {
+                // 調号選択肢のレンダリングロジック
+            }
+
+            /**
+             * ユーザーが選択した調号のシャープ/フラット数を取得します。
+             * @returns {{sharps: number, flats: number}} ユーザーの選択。
+             */
+            getUserSelection() {
+                // ユーザー選択取得ロジック
+            }
+
+            /**
+             * 正誤フィードバックと正解の調号画像を表示します。
+             * @param {boolean} isCorrect - ユーザーの答えが正解だったか。
+             * @param {string} correctImagePath - 正しい答えの調号画像のパス。
+             */
+            showFeedback(isCorrect, correctImagePath) {
+                // フィードバック表示ロジック
+            }
+
+            /**
+             * ユーザーの選択をクリアします。
+             */
+            clearSelections() {
+                // 選択クリアロジック
+            }
+
+            /**
+             * 送信完了や問題生成の通知を表示します。
+             * @param {'submit'|'generate'} type - 表示する通知のタイプ。
+             */
+            showNotification(type) {
+                // 通知表示ロジック
+            }
+        }
+
+        /**
+         * 「学習」タブの調号一覧表示を管理するクラス。
+         */
+        class StudyViewUI {
+            /**
+             * StudyViewUIクラスのコンストラクタ。
+             * 関連するDOM要素を初期化します。
+             * @param {Object} elements - UI操作に必要なDOM要素の参照を持つオブジェクト。
+             */
+            constructor(elements) {
+                // DOM要素の初期化
+            }
+
+            /**
+             * 全ての調号カードを動的に、または既存のカードのテキストを更新して表示します。
+             * @param {Object[]} allKeyData - 全ての調号データの配列。
+             * @param {string} currentLang - 現在の表示言語。
+             */
+            renderKeySignatureCards(allKeyData, currentLang) {
+                // カードレンダリングロジック
+            }
+
+            /**
+             * 各カード内の調名テキストを現在の言語設定に合わせて更新します。
+             * @param {Object[]} keyData - 更新する調号データの配列。
+             * @param {string} currentLang - 現在の表示言語。
+             */
+            updateCardTexts(keyData, currentLang) {
+                // テキスト更新ロジック
+            }
+        }
+
+        /**
+         * 「設定」タブの言語選択などのUIを管理するクラス。
+         */
+        class SettingsUI {
+            /**
+             * SettingsUIクラスのコンストラクタ。
+             * 関連するDOM要素を初期化します。
+             * @param {Object} elements - UI操作に必要なDOM要素の参照を持つオブジェクト。
+             */
+            constructor(elements) {
+                // DOM要素の初期化
+            }
+
+            /**
+             * 現在選択されている言語を取得します。
+             * @returns {string} 現在選択されている言語コード。
+             */
+            getPreferredLanguage() {
+                // 言語取得ロジック
+            }
+
+            /**
+             * 言語選択ラジオボタンの状態を更新します。
+             * @param {string} lang - 設定する言語コード。
+             */
+            setPreferredLanguage(lang) {
+                // 言語設定ロジック
+            }
+
+            /**
+             * 言語変更時のコールバックを設定します。
+             * @param {function(string): void} callback - 言語変更時に呼び出される関数。引数として新しい言語コードが渡されます。
+             */
+            onLanguageChange(callback) {
+                // コールバック設定ロジック
+            }
+        }
+
+        // IV. ヘルパー関数 / ユーティリティ
+        //----------------------------------------------------------------------
+        /**
+         * 指定したDOM要素を非表示にします。
+         * @param {HTMLElement} element - 非表示にするDOM要素。
+         */
+        function hideElement(element) {
+            // 非表示ロジック
+        }
+
+        /**
+         * 指定したDOM要素を表示にします。
+         * @param {HTMLElement} element - 表示にするDOM要素。
+         */
+        function showElement(element) {
+            // 表示ロジック
+        }
+
+        /**
+         * 要素をフェードインさせます。
+         * @param {HTMLElement} element - フェードインさせるDOM要素。
+         * @param {number} duration - フェードインの期間（ミリ秒）。
+         */
+        function fadeIn(element, duration) {
+            // フェードインロジック
+        }
+
+        /**
+         * 要素をフェードアウトさせます。
+         * @param {HTMLElement} element - フェードアウトさせるDOM要素。
+         * @param {number} duration - フェードアウトの期間（ミリ秒）。
+         */
+        function fadeOut(element, duration) {
+            // フェードアウトロジック
+        }
+
+        /**
+         * 配列をシャッフルします。
+         * @param {Array<any>} array - シャッフルする配列。
+         * @returns {Array<any>} シャッフルされた新しい配列。
+         */
+        function shuffleArray(array) {
+            // シャッフルロジック
+        }
+
+        /**
+         * シャープ/フラットの数から、`#x`や`b x`のような表示用の文字列を生成します。
+         * 例: `#1`, `b2`, `0`
+         * @param {number} sharps - シャープの数。
+         * @param {number} flats - フラットの数。
+         * @returns {string} 表示用のシャープ/フラット文字列。
+         */
+        function getSharpsFlatsString(sharps, flats) {
+            // 文字列生成ロジック
+        }
+
+
+
+
+
+
+
+
+        // script.js （完成したら移動する）
+        document.addEventListener('DOMContentLoaded', initialize);
+
+        /**
+         * アプリケーション全体の初期化処理を実行します。
+         */
+        function initialize() {
+            // 1. DOM要素の取得
+            const elements = getDOMElements();
+
+            // 2. 調号データの読み込みと準備
+            const keySignatureData = loadAndProcessKeySignatureData(elements);
+
+            // 3. 各コンポーネントの初期化
+            setupComponents(elements, keySignatureData);
+
+            // 4. イベントリスナーの設定
+            setupGlobalEventListeners(elements);
+        }
+
+        /**
+         * アプリケーションで利用する主要なDOM要素を取得します。
+         * @returns {Object} 各DOM要素の参照を持つオブジェクト。
+         */
+        function getDOMElements() {
+            // 例:
+            return {
+                keySignatureCards: document.querySelectorAll('#study .key-signature-card'),
+                // 他のDOM要素もここに追加
+                tabButtons: document.querySelectorAll('.tab-button'),
+                languageSelect: document.querySelector('#language-select')
+            };
+        }
+
+        /**
+         * HTMLから調号データを読み込み、整形します。
+         * @param {Object} elements - 必要なDOM要素の参照を持つオブジェクト。
+         * @returns {Object[]} 整形された調号データの配列。
+         */
+        function loadAndProcessKeySignatureData(elements) {
+            const data = Array.from(elements.keySignatureCards).map(cardEl => {
+                const imgElement = cardEl.querySelector('img');
+                const imagePath = imgElement ? imgElement.src : '';
+                return {
+                    sharps: parseInt(cardEl.dataset.sharps),
+                    flats: parseInt(cardEl.dataset.flats),
+                    majorJp: cardEl.dataset.majorJp,
+                    majorEn: cardEl.dataset.majorEn,
+                    majorDe: cardEl.dataset.majorDe,
+                    minorJp: cardEl.dataset.minorJp,
+                    minorEn: cardEl.dataset.minorEn,
+                    minorDe: cardEl.dataset.minorDe,
+                    imagePath: imagePath // <img> の src から取得したパスを使用
+                };
+            });
+            console.log(data); // 開発中の確認用
+            return data;
+        }
+
+        /**
+         * アプリケーションの各コンポーネント（UIクラスなど）を初期化します。
+         * @param {Object} elements - 必要なDOM要素の参照を持つオブジェクト。
+         * @param {Object[]} keySignatureData - 調号データの配列。
+         */
+        function setupComponents(elements, keySignatureData) {
+            // 例:
+            const keySignatureManager = new KeySignatureManager(keySignatureData);
+            // const keyToNameQuizUI = new KeyToNameQuizUI({...});
+            // const studyViewUI = new StudyViewUI({...});
+            // 他のクラスインスタンス化と初期化
+        }
+
+        /**
+         * グローバルなイベントリスナーを設定します。
+         * @param {Object} elements - 必要なDOM要素の参照を持つオブジェクト。
+         */
+        function setupGlobalEventListeners(elements) {
+            // 例:
+            // elements.tabButtons.forEach(button => { /* タブ切り替えリスナー */ });
+            // elements.languageSelect.addEventListener('change', () => { /* 言語切り替えリスナー */ });
+        }
+
+    </script>
+</body>
+
+</html>

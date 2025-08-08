@@ -1,0 +1,103 @@
+<!-- ワードプレスのカスタムHTMLで使用できるようにする -->
+
+<section id="common-settings-section">
+    <style>
+        /* 共通のスタイル */
+    </style>
+    <script type="module" defer>
+        /* VerovioManager */
+        import { optimize as SVGO_optimize } from 'https://unpkg.com/svgo@3.2.0/dist/svgo.browser.js';
+        /* 共通のスクリプト */
+    </script>
+</section>
+
+<section id="data-section">
+    <section id="mei-templates">
+        <script type="application/mei+xml" class="mei-template" data-staff-type="single-staff" data-clef-type="G"
+            id="singleStaffGMei">
+        </script>
+        <script type="application/mei+xml" class="mei-template" data-staff-type="single-staff" data-clef-type="F"
+            id="singleStaffFMei">
+        </script>
+        <script type="application/mei+xml" class="mei-template" data-staff-type="grand-staff" id="grandStaffMei">
+
+        </script>
+    </section>
+    <section id="render-options-presets">
+        <script type="application/json" class="render-options-preset" data-option-type="" id=""></script>
+    </section>
+</section>
+
+
+<section id="render-options-section">
+    <style>
+        /* このセクションのCSS */
+    </style>
+    <script defer>
+        /* このセクションのJS */
+        (function () {
+            // このセクションのJSコード
+        })();
+    </script>
+    <h2>レンダーオプション設定</h2>
+    <p>プリセットの説明など</p>
+    <select><!-- プリセット選択--></select>
+    <p><!-- プリセットの値を表示 --></p>
+    <button>プリセットの内容をクリップボードにコピー</button>
+    <button>プリセットの内容をテキストエリアにペースト</button>
+    <textarea>JSONを入力</textarea>
+</section>
+
+<section id="input-mei-section">
+    <style>
+        /* このセクションのCSS */
+    </style>
+    <script defer>
+        /* このセクションのJS */
+        (function () {
+            // このセクションのJSコード
+        })();
+    </script>
+    <h2>MEI入力</h2>
+    <p>このセクションの説明など</p>
+    <h3>テンプレート選択</h3>
+    <p>テンプレートの説明など</p>
+    <select><!-- テンプレート選択--></select>
+    <button>テンプレートをクリップボードにコピー</button>
+    <button>テンプレートをテキストエリアにペースト</button>
+    <h3>MEIを編集</h3>
+    <textarea class="text-editor" data-text-type="mei">MEIを入力</textarea>
+</section>
+
+<section id="convert-mei-to-svg-section">
+    <style>
+        /* このセクションのCSS */
+    </style>
+    <script defer>
+        /* このセクションのJS */
+        (function () {
+            // このセクションのJSコード
+        })();
+    </script>
+    <button>入力されたMEIからSVGを生成</button>
+    <div class="svg-display" data-display-type="svg"></div>
+    <div class="text-display" data-display-type="text">整形済みSVGテキスト</textarea>
+        <button>クリップボードへコピー</button>
+        <button>ダウンロード</button>
+        <div class="text-display" data-display-type="text">ミニファイされたテキスト</textarea>
+            <button>クリップボードへコピー</button>
+            <button>ダウンロード</button>
+</section>
+
+<section id="convert-mei-to-mid-section">
+    <style>
+        /* このセクションのCSS */
+    </style>
+    <script defer>
+        /* このセクションのJS */
+        (function () {
+            // このセクションのJSコード
+        })();
+    </script>
+
+</section>

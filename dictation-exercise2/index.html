@@ -1,60 +1,1059 @@
-<!--
-
-
--->
 <!DOCTYPE html>
 <html lang="ja">
 
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dictation Exercise</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="data:;base64,iVBORw0KGgo=" />
 
-    <!-- テスト用 -->
-    <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
-    </body>
+  <title>Mock Dictation Exam</title>
 
-    <!-- 本番環境用 -->
-    <!-- 
-        以下のファイルをCustom Assets Loaderで読みこむ
-        https://cdn.jsdelivr.net/gh/kogu0507/mini-apps@main/dictation-exercise/script.min.js
-        https://cdn.jsdelivr.net/gh/kogu0507/mini-apps@main/dictation-exercise/style.min.css
-    -->
+  <link rel="stylesheet" href="./style.css" />
+  <style>
+    /* style.cssに以降しました */
+    /* Refactored simple-tab-component/style.css v2.1
+   ———————————————————————————————————————
+   1. ルート変数（カスタマイズしやすい）
+——————————————————————————————————————— */
+:root {
+  /* フォント・幅・スペーシング */
+  --stc-font-family: sans-serif;
+  --stc-max-width: 800px;
+  --stc-spacing: 10px;
+
+  /* 色 */
+  --stc-border-color: #ccc;
+  --stc-bg: #fff;
+  --stc-bg-alt: #f0f0f0;       /* タブ未選択時背景 */
+  --stc-bg-hover: #e0e0e0;     /* タブホバー時背景 */
+  --stc-color: #333;           /* メインテキスト */
+  --stc-color-alt: #555;       /* 補助テキスト */
+
+  /* アクセントカラー（重要要素用） */
+  --stc-accent: #007bff;
+  --stc-accent-hover: #0056b3;
+
+  /* 角丸・アニメーション */
+  --stc-radius: 4px;
+  --stc-transition: 0.2s;
+
+  /* フォーカス時アウトライン */
+  --stc-focus-outline: 2px solid var(--stc-accent);
+}
+
+/* ———————————————————————————————————————
+   2. コンテナ全体
+——————————————————————————————————————— */
+.simple-tab-component-container {
+  font-family: var(--stc-font-family);
+  max-width: var(--stc-max-width);
+  margin: calc(var(--stc-spacing) * 2) auto;
+  border: 1px solid var(--stc-border-color);
+  border-radius: var(--stc-radius);
+  background: var(--stc-bg);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+/* ———————————————————————————————————————
+   3. タブヘッダー（横スクロール対応）
+——————————————————————————————————————— */
+.simple-tab-component-container .tabs {
+  display: flex;
+  padding: 0 var(--stc-spacing);
+  border-bottom: 1px solid var(--stc-border-color);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none; /* Firefox */
+}
+.simple-tab-component-container .tabs::-webkit-scrollbar {
+  display: none;        /* Chrome/Safari */
+}
+
+/* ———————————————————————————————————————
+   4. タブボタン
+——————————————————————————————————————— */
+.simple-tab-component-container .tab-button {
+  flex: 0 0 auto;
+  margin-right: var(--stc-spacing);
+  padding: var(--stc-spacing) calc(var(--stc-spacing) * 2);
+  background: var(--stc-bg-alt);
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-top-left-radius: var(--stc-radius);
+  border-top-right-radius: var(--stc-radius);
+  color: var(--stc-color-alt);
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background var(--stc-transition), border-color var(--stc-transition);
+  outline: none;
+}
+
+/* ホバー */
+.simple-tab-component-container .tab-button:hover:not(.active) {
+  background: var(--stc-bg-hover);
+}
+
+/* フォーカス時 */
+.simple-tab-component-container .tab-button:focus-visible {
+  outline: var(--stc-focus-outline);
+}
+
+/* アクティブ */
+.simple-tab-component-container .tab-button.active {
+  background: var(--stc-bg);
+  border-color: var(--stc-border-color);
+  color: var(--stc-color);
+  font-weight: bold;
+  cursor: default;
+}
+
+/* ———————————————————————————————————————
+   5. タブコンテンツ
+——————————————————————————————————————— */
+.simple-tab-component-container .tab-content {
+  padding: var(--stc-spacing);
+  background: var(--stc-bg);
+}
+
+/* 表示切替 */
+.simple-tab-component-container .tab-pane {
+  display: none;
+}
+.simple-tab-component-container .tab-pane.active {
+  display: block;
+}
+
+/* セクション共通 */
+.simple-tab-component-container section {
+  margin-bottom: calc(var(--stc-spacing) * 1.5);
+}
+
+/* プレースホルダー風テキスト */
+.simple-tab-component-container .mde-exercise-selection-section,
+.simple-tab-component-container .mde-exercise-section,
+.simple-tab-component-container .mde-playback-info,
+.simple-tab-component-container .mde-exercise-info,
+.simple-tab-component-container .mde-answer-display {
+  color: #666;
+  font-style: italic;
+}
+
+/* スコア／プレイヤー枠 */
+.simple-tab-component-container .score-container,
+.simple-tab-component-container .mde-player-section {
+  border: 1px solid var(--stc-border-color);
+  border-radius: var(--stc-radius);
+  padding: var(--stc-spacing);
+  background: #fafafa;
+}
+
+/* ———————————————————————————————————————
+   6. プレイヤーテンプレート内要素
+——————————————————————————————————————— */
+/* 再生範囲設定 */
+.mde-play-range {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--stc-spacing);
+  margin-bottom: var(--stc-spacing);
+}
+.mde-play-range label,
+.mde-play-range input {
+  font-size: 0.9rem;
+}
+.mde-play-range input[type="number"] {
+  width: 4em;
+  padding: 0.2em;
+  border: 1px solid var(--stc-border-color);
+  border-radius: var(--stc-radius);
+}
+
+/* コントロールボタン群 */
+.mde-control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--stc-spacing);
+  align-items: center;
+}
+/* 再生・停止等のボタン */
+.mde-control-button {
+  padding: 0.5em 1em;
+  background: var(--stc-accent);
+  color: #fff;
+  border: none;
+  border-radius: var(--stc-radius);
+  cursor: pointer;
+  transition: background var(--stc-transition);
+}
+.mde-control-button:hover {
+  background: var(--stc-accent-hover);
+}
+
+/* 再生ステータス表示 */
+.mde-playback-status {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--stc-color);
+}
+
+/* ボリュームスライダー */
+.mde-control-buttons input[type="range"] {
+  vertical-align: middle;
+}
+
+/* ———————————————————————————————————————
+   7. レスポンシブ対応
+——————————————————————————————————————— */
+@media (max-width: 600px) {
+  .simple-tab-component-container .tabs {
+    flex-wrap: wrap;
+  }
+  .simple-tab-component-container .tab-button {
+    flex: 100%;
+    text-align: left;
+  }
+  .mde-play-range,
+  .mde-control-buttons {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+  </style>
+
+
+
+  <!-- simple-tab-component（既存コンポーネント） -->
+  <link rel="stylesheet"
+    href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/components/simple-tab-component/style.min.css" />
+  <script
+    src="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/components/simple-tab-component/script.min.js"></script>
 
 </head>
 
 <body>
-    <section id="data-section">
-        <script id="meiData" type="application/mei+Xml">
-            <!-- MEIファイルがはいる -->
-        </script>
-    </section>
+  <h1 style="display:none;">（WordPressでh1は本体側で出す前提なら隠す）</h1>
+  <h2>Mock Dictation Exam</h2>
 
-    <!-- セクション -->
-    <section id=""></section>
+  <!-- ====== Exercises JSON ======
+       ここを書き換えれば課題を増やせます -->
+  <script id="mde-json-data" type="application/json">
+[
+  {
+    "id": "001",
+    "meiURL": "./melody-dictation-001.mei",
+    "exerciseInfo": "ハ長調 4/4拍子 8小節",
+    "tonicChordSpec": { "notes": ["C4","E4","G4"] },
+    "playbackDef": [
+      { "range": "1-8", "interval": 20 },
+      { "range": "1-4", "interval": 20 },
+      { "range": "1-4", "interval": 20 },
+      { "range": "1-8", "interval": 20 },
+      { "range": "5-8", "interval": 20 },
+      { "range": "5-8", "interval": 20 },
+      { "range": "1-8", "interval": 120 }
+    ],
+    "endBellSpec": { "notes": ["C5","G4","E4","C4"] }
+  },
+  {
+    "id": "002",
+    "meiURL": "./melody-dictation-002.mei",
+    "exerciseInfo": "ハ長調 4/4拍子 8小節",
+    "tonicChordSpec": { "notes": ["C4","E4","G4"] },
+    "playbackDef": [
+      { "range": "1-2", "interval": 3 }
+      
+    ],
+    "endBellSpec": { "notes": ["C5","G4","E4","C4"] }
+  }
+]
+  </script>
 
-    <!-- セクション -->
-    <section id=""></section>
 
-    <script type="module">
-        /* モジュール化してjsDelivrで読み込む */
+  <!-- 
+[
+  {
+    "id": "001",
+    "meiURL": "./melody-dictation-001.mei",
+    "exerciseInfo": "ハ長調 4/4拍子 8小節",
+    "tonicChordSpec": { "notes": ["C4","E4","G4"] },
+    "playbackDef": [
+      { "range": "1-8", "interval": 20 },
+      { "range": "1-4", "interval": 20 },
+      { "range": "1-4", "interval": 20 },
+      { "range": "1-8", "interval": 20 },
+      { "range": "5-8", "interval": 20 },
+      { "range": "5-8", "interval": 20 },
+      { "range": "1-8", "interval": 120 }
+    ],
+    "endBellSpec": { "notes": ["C5","G4","E4","C4"] }
+  }
+]
+  
+  
+  -->
 
-        // TODO: jsDelivrのバージョン情報が決まったらアドレス補完すべし
-        import { loadToneJs } from 'jsDelivr...module@バージョン/tonejs/loader.min.mjs';
-        import { loadVerovio } from 'jsDelivr...module@バージョン/verovio/loader.min.mjs';
-        import { loadToneJsMidi } from 'jsDelivr...module@バージョン/tonejs/tonejs-midi-loader.min.mjs';
+  <!-- ====== (参考用) JSON Schemaを埋めておく（実行時には未使用） ====== -->
+  <script id="mde-json-schema" type="application/json">
+        {
+        "$schema": "http://json-schema.org/draft-07/schema#",
+        "$id": "https://example.com/mde-exercise.schema.json",
+        "title": "Melody Dictation Exercises",
+        "type": "array",
+        "items": {
+            "type": "object",
+            "required": ["id", "meiURL", "exerciseInfo", "playbackDef"],
+            "properties": {
+            "id": {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_-]+$"
+            },
+            "meiURL": { "type": "string" },
+            "exerciseInfo": { "type": "string" },
+            "playbackDef": {
+                "type": "array",
+                "minItems": 1,
+                "items": {
+                "type": "object",
+                "required": ["range", "interval"],
+                "properties": {
+                    "range": {
+                    "type": "string",
+                    "pattern": "^\\d+(-\\d+)?(,\\d+(-\\d+)?)*$"
+                    },
+                    "interval": {
+                    "type": "number",
+                    "minimum": 0
+                    }
+                },
+                "additionalProperties": false
+                }
+            },
+            "tonicChordSpec": { "$ref": "#/$defs/ChordSpec" },
+            "endBellSpec": { "$ref": "#/$defs/ChordSpec" },
+            "notes": { "type": "string" }
+            },
+            "additionalProperties": false
+        },
+        "$defs": {
+            "ChordSpec": {
+            "type": ["object", "null"],
+            "properties": {
+                "notes": {
+                "type": "array",
+                "items": { "type": "string", "pattern": "^[A-Ga-g][#b]?\\d$" },
+                "minItems": 1
+                },
+                "durationSec": {
+                "type": "number",
+                "minimum": 0
+                },
+                "velocity": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 1
+                }
+            },
+            "required": ["notes"],
+            "additionalProperties": false
+            }
+        }
+        }
 
-        let verovioToolkit, Midi, synth, scorePlayer;
+  </script>
+
+  <!-- ====== タブUI ====== -->
+  <div class="simple-tab-component-container" data-default-tab="exercise-selection" data-deep-link="true">
+    <div class="tabs">
+      <button class="tab-button" data-tab="exercise-selection">課題選択</button>
+      <button class="tab-button" data-tab="exercise">課題</button>
+      <button class="tab-button" data-tab="answer">解答</button>
+      <button class="tab-button" data-tab="settings">設定</button>
+    </div>
+
+    <div class="tab-content">
+      <!-- 課題選択タブ -->
+      <div id="exercise-selection" class="tab-pane">
+        <h3 style="display:none;">課題選択</h3>
+        <section class="mde-exercise-selection-section">
+          JSONから課題を読込中...
+        </section>
+      </div>
+
+      <!-- 課題タブ -->
+      <div id="exercise" class="tab-pane">
+        <h3 style="display:none;">課題</h3>
+
+        <section class="mde-exercise-section">
+          <div class="mde-exercise-info">課題情報を読込中...</div>
+          <div class="mde-playback-info">プレイバック情報を読込中...</div>
+        </section>
+
+        <section class="score-container" id="exercise-score-container">
+          <!-- 今回は課題側に楽譜を出さない仕様でもOK。必要なら表示 -->
+        </section>
+
+        <section class="mde-player-section" id="exercise-player-section">
+          プレイヤー読込中...
+        </section>
+      </div>
+
+      <!-- 解答タブ -->
+      <div id="answer" class="tab-pane">
+        <h3 style="display:none;">解答</h3>
+
+        <section class="mde-answer-display">
+          <div class="score-container" id="answer-score-container">解答楽譜を読込中...</div>
+        </section>
+
+        <section class="mde-player-section" id="answer-player-section">
+          プレイヤー読込中...
+        </section>
+      </div>
+
+      <!-- 設定タブ -->
+      <div id="settings" class="tab-pane">
+        <h3 style="display:none;">設定</h3>
+        <section class="mde-player-setting-section">
+          <p>（将来用設定UIをここに）</p>
+        </section>
+        <section class="mde-playlist-setting-section">
+          <p>（playbackDef編集UIを作るならここに）</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== プレイヤーテンプレート ====== -->
+  <template id="mde-player-template">
+    <!-- data-role でJSが要素を取得しやすくする -->
+    <div class="mde-play-range" data-player-mode="practice">
+      <label>開始小節:
+        <input type="number" data-role="start-measure" value="1" min="1" />
+      </label>
+      <label>終了小節:
+        <input type="number" data-role="end-measure" value="8" min="1" />
+      </label>
+      <button class="mde-control-button" data-role="play-range">指定範囲再生</button>
+    </div>
+
+    <div class="mde-control-buttons">
+      <!-- ✅ ステータス表示領域（ユーザー向け＆デバッグ向け） -->
+      <div class="mde-playback-status" data-role="status" aria-live="polite">
+        🎧 再生ステータスがここに表示されます
+      </div>
+
+      <button class="mde-control-button" data-role="start-playlist">プレイリスト再生</button>
+      <button class="mde-control-button" data-role="stop">停止</button>
+      <button class="mde-control-button" data-role="mute">ミュート</button>
+      <label style="display:flex; align-items:center; gap:4px;">
+        Vol:
+        <input type="range" data-role="volume" min="0" max="100" value="50" />
+      </label>
+    </div>
+  </template>
+
+
+  <!-- =========================================================
+       メインスクリプト
+       ========================================================= -->
+  <script type="module">
+    // ──────────────────────────────────────────────
+    // モジュール読み込み
+    // ──────────────────────────────────────────────
+    import { VerovioManager } from "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/verovio/verovio-manager.min.js";
+    import { loadToneJs } from "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/tonejs/loader.min.mjs";
+    import { loadToneJsMidi } from "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.7.0/tonejs/tonejs-midi-loader.min.mjs";
+    import Ajv from "https://cdn.skypack.dev/ajv";
+
+    // ──────────────────────────────────────────────
+    // 定数
+    // ──────────────────────────────────────────────
+    const DEFAULT_CHORD_DURATION = 4;  // sec
+    const FIXED_VELOCITY = 0.8; // 0～1
+    const renderOptions = {
+      svgViewBox: true,
+      adjustPageHeight: true,
+      pageWidth: 2100,
+      breaks: "encoded",
+      spacingStaff: 5,
+      spacingSystem: 15,
+      footer: "none",
+      pageMarginTop: 0,
+      pageMarginRight: 10,
+      pageMarginBottom: 0,
+      pageMarginLeft: 10,
+      minLastJustification: 0
+    };
+
+    // ──────────────────────────────────────────────
+    // ユーティリティ
+    // ──────────────────────────────────────────────
+    const delay = ms => new Promise(res => setTimeout(res, ms));
+    function dbFromSliderValue(v) {
+      // 0-100 -> -60dB to 0dB
+      const minDb = -60;
+      return minDb + (v / 100) * Math.abs(minDb);
+    }
+
+    // ──────────────────────────────────────────────
+    // 致命的 JSON エラーを画面表示
+    // ──────────────────────────────────────────────
+    function showFatalJsonError(messages) {
+      document.body.innerHTML = `
+      <div class="mde-error">
+        <h2>JSON バリデーションエラー</h2>
+        <ul>
+          ${messages.map(m => `<li>${m}</li>`).join("")}
+        </ul>
+      </div>`;
+    }
+
+    // ──────────────────────────────────────────────
+    // 再生ステータス更新
+    // ──────────────────────────────────────────────
+    const playbackMessages = {
+      playScore: (range) => `🎼 １）通奏：${rangeToText(range)} 再生中`,
+      waitInterval: (sec) => `⏱ ２）インターバル：次の再生まで ${sec} 秒 待機中`,
+      bell: "🔔 終了ベル再生中...",
+      playlistEnd: "✅ プレイリスト再生完了",
+      stop: "⏹ 停止しました"
+    };
+
+
+    /**
+     * 指定されたステータスメッセージを表示する
+     * @param {string} message 表示する内容
+     * @param {HTMLElement} el 表示先の要素（null可）
+     */
+    function updatePlaybackStatus(message, el) {
+      if (el) el.textContent = message;
+      console.log("[status]", message);
+    }
+
+    /**
+     * [1, 8] -> "1-8小節" のように変換
+     */
+    function rangeToText(range) {
+      if (!Array.isArray(range) || range.length !== 2) return "";
+      return `${range[0]}-${range[1]}小節`;
+    }
 
 
 
-        document.addEventListener('DOMContentLoaded', () => {
-            Promise.all([loadVerovio(), loadToneJs(), loadToneJsMidi()])
-                .then(() => console.log('[init] 事前ロード完了'))
-                .catch(e => console.error('[init] 事前ロード失敗:', e));
+
+
+
+    // ──────────────────────────────────────────────
+    // MDEPlayer クラス：再生ロジックを一元管理
+    // ──────────────────────────────────────────────
+    class MDEPlayer {
+      constructor(exercise, renderOptions) {
+        this.exercise = exercise;
+        this.renderOptions = renderOptions;
+        this.verovioManager = null;
+        this.Tone = null;
+        this.Midi = null;
+        this.synth = null;
+        this.playlistState = { timerId: null, index: 0, running: false };
+        this.chordAbortController = null;
+      }
+
+      // Verovio & Tone.js 初期化
+      async init() {
+        this.verovioManager = new VerovioManager();
+        await this.verovioManager.initialize();
+        this.verovioManager.setRenderOptions(this.renderOptions);
+
+        await loadToneJs();
+        this.Tone = window.Tone;
+        this.Midi = await loadToneJsMidi();
+      }
+
+      // 楽譜表示（measureRange 省略で全体表示）
+      async loadAndDisplayScore(containerId, measureRange = "") {
+        try {
+          const container = document.getElementById(containerId);
+          if (!container) throw new Error(`container '${containerId}' not found`);
+          await this.verovioManager.displaySvgFromUrl(
+            this.exercise.meiURL,
+            containerId,
+            { measureRange }
+          );
+        } catch (err) {
+          console.error("display error:", err);
+          const c = document.getElementById(containerId);
+          if (c) c.innerHTML = `<div class="mde-error">楽譜エラー: ${err.message}</div>`;
+        }
+      }
+
+      // 範囲指定 MIDI 再生
+      async playScore(range, statusEl) {
+        return new Promise(async (resolve, reject) => {
+          try {
+            if (this.Tone.context.state !== "running") {
+              await this.Tone.start();
+            }
+            if (!this.synth) {
+              this.synth = new this.Tone.PolySynth(this.Tone.Synth, {
+                oscillator: { type: "triangle" },
+                envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+              }).toDestination();
+            }
+
+            this.Tone.Transport.stop();
+            this.Tone.Transport.cancel();
+
+            if (statusEl) updatePlaybackStatus(playbackMessages.playScore(range), statusEl);
+
+            const midiArrBuf = await this.verovioManager.getMidiFromUrl(
+              this.exercise.meiURL,
+              { measureRange: range }
+            );
+            if (!midiArrBuf) {
+              if (statusEl) updatePlaybackStatus("⚠️ MIDIデータ取得失敗", statusEl);
+              return reject(new Error("MIDI data null"));
+            }
+
+            const midi = new this.Midi(midiArrBuf);
+            let maxEnd = 0;
+            midi.tracks.forEach(track =>
+              track.notes.forEach(note => {
+                this.Tone.Transport.scheduleOnce(time => {
+                  this.synth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+                }, note.time);
+                maxEnd = Math.max(maxEnd, note.time + note.duration);
+              })
+            );
+
+            this.Tone.Transport.scheduleOnce(() => {
+              if (statusEl) updatePlaybackStatus(`✅ 再生完了: ${rangeToText(range)}`, statusEl);
+              resolve(maxEnd);
+            }, maxEnd);
+
+            this.Tone.Transport.start();
+          } catch (e) {
+            if (statusEl) updatePlaybackStatus(`❌ 再生エラー: ${e.message}`, statusEl);
+            reject(e);
+          }
         });
-    </script>
+      }
+
+      // コード再生（トニック／ベル）──キャンセル対応
+      async playChord(chordSpec) {
+        if (!chordSpec?.notes?.length) return;
+
+        if (this.chordAbortController) {
+          this.chordAbortController.abort();
+        }
+        this.chordAbortController = new AbortController();
+        const { signal } = this.chordAbortController;
+
+        const durationSec = chordSpec.durationSec ?? DEFAULT_CHORD_DURATION;
+        if (this.Tone.context.state !== "running") {
+          await this.Tone.start();
+        }
+        if (!this.synth) {
+          this.synth = new this.Tone.PolySynth(this.Tone.Synth, {
+            oscillator: { type: "triangle" },
+            envelope: { attack: 0.005, decay: 0.1, sustain: 0.3, release: 1 }
+          }).toDestination();
+        }
+
+        const now = this.Tone.now();
+        this.synth.triggerAttackRelease(chordSpec.notes, durationSec, now, FIXED_VELOCITY);
+
+        try {
+          await new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(resolve, durationSec * 1000);
+            signal.addEventListener("abort", () => {
+              clearTimeout(timeoutId);
+              reject(new Error("chord-aborted"));
+            });
+          });
+        } catch (err) {
+          if (err.message === "chord-aborted") {
+            this.synth.releaseAll();
+          } else {
+            console.error("playChord error:", err);
+          }
+        } finally {
+          this.chordAbortController = null;
+        }
+      }
+
+      // プレイリスト再生
+      async playPlaylist(statusEl) {
+        const playlist = this.exercise.playbackDef;
+        if (!playlist?.length) {
+          updatePlaybackStatus("⚠️ プレイリストがありません", statusEl);
+          return;
+        }
+
+        this.stopAll(statusEl);
+        this.playlistState.index = 0;
+        this.playlistState.running = true;
+
+        if (this.exercise.tonicChordSpec) {
+          updatePlaybackStatus("🎵 トニックコード再生中...", statusEl);
+          await this.playChord(this.exercise.tonicChordSpec);
+        }
+
+        while (this.playlistState.running && this.playlistState.index < playlist.length) {
+          const entry = playlist[this.playlistState.index];
+
+          updatePlaybackStatus(playbackMessages.playScore(entry.range), statusEl);
+          try {
+            await this.playScore(entry.range, statusEl);
+
+            if (!this.playlistState.running) break;
+
+            if (entry.interval && entry.interval > 0) {
+              updatePlaybackStatus(playbackMessages.waitInterval(entry.interval), statusEl);
+              await delay(entry.interval * 1000);
+            }
+          } catch (e) {
+            console.warn("プレイリスト再生中に中断されました:", e);
+            break;
+          }
+
+          this.playlistState.index++;
+        }
+
+        if (this.playlistState.running && this.exercise.endBellSpec) {
+          updatePlaybackStatus(playbackMessages.bell, statusEl);
+          await this.playChord(this.exercise.endBellSpec);
+        }
+
+        updatePlaybackStatus(playbackMessages.playlistEnd, statusEl);
+        this.playlistState.running = false;
+      }
+
+      // 停止処理
+      stopAll(statusEl) {
+        if (this.chordAbortController) {
+          this.chordAbortController.abort();
+          this.chordAbortController = null;
+        }
+        this.playlistState.running = false;
+        this.playlistState.index = 0;
+        if (this.playlistState.timerId) {
+          clearTimeout(this.playlistState.timerId);
+          this.playlistState.timerId = null;
+        }
+        if (this.Tone?.Transport) {
+          this.Tone.Transport.stop();
+          this.Tone.Transport.cancel();
+        }
+        if (statusEl) updatePlaybackStatus(playbackMessages.stop, statusEl);
+      }
+    }
+
+
+    // ──────────────────────────────────────────────
+    // UI 初期化：ボタンを player メソッドに接続
+    // ──────────────────────────────────────────────
+    function setupPlayerUI(sectionEl) {
+      const startInput = sectionEl.querySelector('[data-role="start-measure"]');
+      const endInput = sectionEl.querySelector('[data-role="end-measure"]');
+      const playRangeBtn = sectionEl.querySelector('[data-role="play-range"]');
+      const startPlaylistBtn = sectionEl.querySelector('[data-role="start-playlist"]');
+      const stopBtn = sectionEl.querySelector('[data-role="stop"]');
+      const muteBtn = sectionEl.querySelector('[data-role="mute"]');
+      const volumeSlider = sectionEl.querySelector('[data-role="volume"]');
+      const statusEl = sectionEl.querySelector('[data-role="status"]');
+
+      // 範囲再生
+      playRangeBtn?.addEventListener("click", async () => {
+        let s = parseInt(startInput.value, 10),
+          e = parseInt(endInput.value, 10);
+        if (isNaN(s) && isNaN(e)) {
+          alert("有効な小節を入力してください");
+          return;
+        }
+        const range = (!isNaN(s) && !isNaN(e) && e >= s)
+          ? `${s}-${e}`
+          : !isNaN(s)
+            ? `${s}`
+            : `${e}`;
+        await player.playScore(range, statusEl);
+      });
+
+      // プレイリスト再生
+      startPlaylistBtn?.addEventListener("click", () => {
+        player.playPlaylist(statusEl);
+      });
+
+      // 停止
+      stopBtn?.addEventListener("click", () => {
+        player.stopAll(statusEl);
+      });
+
+      // ミュート
+      muteBtn?.addEventListener("click", () => {
+        player.Tone.Destination.mute = !player.Tone.Destination.mute;
+        muteBtn.textContent = player.Tone.Destination.mute ? "ミュート解除" : "ミュート";
+      });
+
+      // 音量
+      volumeSlider?.addEventListener("input", ev => {
+        player.Tone.Destination.volume.value = dbFromSliderValue(Number(ev.target.value));
+      });
+    }
+
+
+
+    function exerciseSelectionUI(exercises) {
+      const container = document.querySelector(".mde-exercise-selection-section");
+      if (!container) return;
+
+      container.innerHTML = "<h4>課題一覧</h4>";
+      exercises.forEach((ex, i) => {
+        const btn = document.createElement("button");
+        btn.textContent = `課題 ${i + 1}: ${ex.exerciseInfo}`;
+        btn.classList.add("mde-select-button");
+        btn.addEventListener("click", async () => {
+          console.log(`選択された課題: ${ex.id}`);
+
+          // プレイヤー停止（念のため）
+          if (window.player?.stopAll) {
+            player.stopAll();
+          }
+
+          // プレイヤー再生成
+          window.player = new MDEPlayer(ex, renderOptions);
+          await player.init();
+
+          // UI 更新
+          document.querySelector(".mde-exercise-info").textContent = ex.exerciseInfo;
+          displayExerciseInfo(document.querySelector(".mde-playback-info"), ex);
+          await player.loadAndDisplayScore("answer-score-container");
+
+          // プレイヤーUI複製
+          const tmpl = document.getElementById("mde-player-template");
+          ["exercise-player-section", "answer-player-section"].forEach(id => {
+            const sec = document.getElementById(id);
+            if (sec) {
+              sec.textContent = "";
+              sec.appendChild(tmpl.content.cloneNode(true));
+              setupPlayerUI(sec);
+            }
+          });
+
+          // 課題タブへ自動切り替え
+          document.querySelector('[data-tab="exercise"]')?.click();
+        });
+
+        container.appendChild(btn);
+      });
+    }
+
+    // ──────────────────────────────────────────────
+    // 初期化：JSON検証＋player生成＋UI構築
+    // ──────────────────────────────────────────────
+    async function initializeApp() {
+      console.log("initializeApp: start");
+
+      // JSON + Schema 読み込み
+      const rawJson = document.getElementById("mde-json-data").textContent.trim();
+      const rawSchema = document.getElementById("mde-json-schema").textContent.trim();
+      let exercises, schema;
+      try {
+        exercises = JSON.parse(rawJson);
+        schema = JSON.parse(rawSchema);
+      } catch (e) {
+        showFatalJsonError([`JSON/Schema parse error: ${e.message}`]);
+        return;
+      }
+
+      // バリデーション
+      const ajv = new Ajv();
+      const validate = ajv.compile(schema);
+      if (!validate(exercises)) {
+        const msgs = validate.errors.map(err => `${err.instancePath || err.schemaPath} ${err.message}`);
+        showFatalJsonError(msgs);
+        return;
+      }
+
+      // JSON バリデーション通過後に追加
+      exerciseSelectionUI(exercises);  // ←追加！
+
+      // 課題データ取り出し
+      const exercise = exercises[0];
+
+      // player インスタンス生成・初期化
+      window.player = new MDEPlayer(exercise, renderOptions);
+      await player.init();
+
+      // UI 情報表示
+      document.querySelector(".mde-exercise-info").textContent = exercise.exerciseInfo;
+      const infoEl = document.querySelector(".mde-playback-info");
+      displayExerciseInfo(infoEl, exercise); // ここが変更点
+
+      // 解答楽譜を全体表示
+      await player.loadAndDisplayScore("answer-score-container");
+
+      // プレイヤーUIを複製＆セットアップ
+      const tmpl = document.getElementById("mde-player-template");
+      ["exercise-player-section", "answer-player-section"].forEach(id => {
+        const sec = document.getElementById(id);
+        if (sec) {
+          sec.textContent = "";
+          sec.appendChild(tmpl.content.cloneNode(true));
+          setupPlayerUI(sec);
+        }
+      });
+
+      console.log("initializeApp: complete");
+    }
+
+    document.addEventListener("DOMContentLoaded", initializeApp);
+
+    // ──────────────────────────────────────────────
+    // 他ファイルに移行する関数群
+    // ──────────────────────────────────────────────
+    function displayExerciseInfo(infoEl, exercise) {
+      if (infoEl) {
+        let html = `<h4>プレイバック情報</h4>
+        <table><thead><tr><th>#</th><th>範囲</th><th>インターバル(秒)</th></tr></thead><tbody>`;
+        exercise.playbackDef.forEach((item, i) => {
+          html += `<tr><td>${i + 1}</td><td>${item.range}</td><td>${item.interval}</td></tr>`;
+        });
+        infoEl.innerHTML = html + "</tbody></table>";
+      }
+    }
+  </script>
+
+
 </body>
 
 </html>
+
+
+
+<!-- 
+以下が最新の「Mock Dictation Exam」ページ用の**更新済み引き継ぎ資料**です。
+今日行った「課題選択UIの実装」と「タブ切り替え挙動」の知見をすべて反映済みです。
+
+---
+
+## ✅ 引き継ぎ資料（更新版）
+
+### 0. 現状スナップショット
+
+* **表示**：解答楽譜には `measureRange` 無指定で `<sb />`（段区切り）を反映。`renderOptions` により2段目の幅も安定。
+* **再生機能**：
+
+  * トニックコード → プレイリスト再生（range + interval）→ 終了ベル。
+  * `Tone.js` による再生。音量調整、ミュート、停止可。
+* **JSON仕様**：完全にSchema化済み（Ajvによる検証）。
+* **課題選択**：複数課題が「課題選択」タブにボタンとして表示され、選択でプレイヤーとUIを再構築。
+
+---
+
+### 1. 完了済みリスト（リグレッション確認用）
+
+| ✅ | 内容                                    |
+| - | ------------------------------------- |
+| ✅ | JSON仕様策定（ChordSpec, playbackDef, etc） |
+| ✅ | JSON Schema作成＋Ajv検証導入                 |
+| ✅ | `<sb />`を活かした解答表示（全小節表示）              |
+| ✅ | `renderOptions` による2段目レイアウト修正         |
+| ✅ | プレイヤーの `stopAll()` による再生中断の堅牢化        |
+| ✅ | プレイヤーUIの2タブ分複製生成                      |
+| ✅ | **課題選択機能の実装（今日の作業）**                  |
+| ✅ | 課題選択後、自動で「課題」タブに遷移（`click()`で切替）      |
+
+---
+
+### 2. 未解決／保留事項（課題メモ）
+
+| ❓  | 内容                                 |
+| -- | ---------------------------------- |
+| 🟡 | プレイヤーUI：タブごとの複製 vs 単一インスタンス運用      |
+| 🟡 | 音量カーブ：現在は -60〜0dBの線形変換。指数カーブ要検討    |
+| 🟡 | WP埋込手順の文書化（JSON埋め込み・CDN読込・更新方法）    |
+| 🟡 | MIDIやMEIのキャッシュ戦略（Service Workerなど） |
+| 🔵 | アクセシビリティ／多言語対応は後回し                 |
+| 🔵 | GA/解析導入も後回し（今はなし）                  |
+
+---
+
+### 3. 次の作業タスクリスト
+
+#### ✅ MUST（最優先）
+
+|  # | タスク             | 内容                   | 完了条件               |
+| -: | --------------- | -------------------- | ------------------ |
+|  1 | UIとロジックの責務分離    | プレイヤーの再生ロジックをモジュール化  | `MDEPlayer` の責務明確化 |
+|  2 | WP組み込み手順メモ作成    | JSON設置とCDN呼び出し手順まとめ  | Markdownで引継ぎ可能に    |
+|  3 | ✅ **課題選択機能の実装** | ボタンで切り替え可能にし、タブ遷移も対応 | **完了！（本日）**        |
+
+#### 🟡 SHOULD（品質向上）
+
+|  # | タスク         | 内容                       | 完了条件               |
+| -: | ----------- | ------------------------ | ------------------ |
+|  4 | プレイヤーUIの単一化 | 複製せず使いまわす構造へリファクタ        | プレイヤー状態を維持可能に      |
+|  5 | エラー表示強化     | fetch/Tone/MIDI 失敗時に明示表示 | 想定ケースでユーザー向けに表示される |
+|  6 | JSON編集UI    | playbackDef編集UIの導入（任意）   | 最低限GUIで動く          |
+|  7 | デバッグログ表示    | 現在のrange/Transportなど表示   | テスト・検証時に有用         |
+
+#### 🔵 NICE TO HAVE
+
+|  # | タスク      | 内容               |
+| -: | -------- | ---------------- |
+|  8 | キャッシュ戦略  | SWなどでMEI/MIDI高速化 |
+|  9 | アクセシビリティ | ARIA, キーボード対応    |
+| 10 | GA/解析導入  | 利用データの取得準備       |
+| 11 | 国際化      | 英語UI対応下地         |
+
+---
+
+### 4. 次回開始時チェックリスト（15分で復帰するため）
+
+1. `main script` の最新版を開く（HTML内script）
+2. `renderOptions` が乱れていないか確認
+3. JSON差し替え → バリデーション通過か即チェックされる
+4. 再生の流れ：トニック→playlist→終了ベル
+5. 停止・ミュート・ボリューム反応を確認
+6. **「課題選択」タブから別課題に切り替え、正常動作するか**
+
+---
+
+### 5. コードメモ（選択時のタブ移動）
+
+```js
+document.querySelector('[data-tab="exercise"]')?.click();
+```
+
+* `SimpleTabComponent` は `.tab-button` にイベント委譲しており、`.click()` はそのまま `activateTab()` を呼び出すため、**今の構成なら問題なし**。
+* 将来的に明示的に `activateTab()` を使いたい場合は `SimpleTabComponent` のインスタンスを取得して `activateTab(buttonEl)` を使う方がベター。
+
+---
+
+### 6. モジュール対応表（現状）
+
+| ファイル                     | 役割                        | 備考                 |
+| ------------------------ | ------------------------- | ------------------ |
+| `index.html`             | UI＋ロジック記述（WordPressに埋め込み） | JSONデータもここに含む      |
+| `verovio-manager.min.js` | Verovio高レベルAPI            | renderOptionsの扱い重要 |
+| `tonejs/*`               | Tone.js ローダー系             | CDNから取得／version固定  |
+| `simple-tab-component`   | タブUI管理                    | ディープリンク対応済み        |
+
+---
+
+### 7. 将来の拡張アイディア（Parking Lot）
+
+* MEI自動生成 or 問題バンク的に整備
+* 採点付き練習ページ（別ページ）
+* 複合range指定 `"1-2,4,6-7"` の再生対応
+* UIカスタム：配色・スマホ最適化
+* 鍵盤ビューや、音高表示の補助
+
+---
+
+必要に応じて、この内容をMarkdownなどでエクスポートできます。
+このままプロジェクト内 `README` に組み込みましょうか？（あるいは `docs/README-dictation.md` など分離してもOKです）
+
+ -->

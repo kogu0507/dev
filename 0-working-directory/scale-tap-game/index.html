@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <title>順番タップゲーム – スケール版（多言語＋難易度＋履歴）</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+
+        /* 言語・難易度セレクター */
+        #languageSelector,
+        #difficulty {
+            margin: 10px;
+            font-size: 16px;
+        }
+
+        /* スケール種別セレクター */
+        #scaleTypeSelector {
+            margin: 10px;
+            font-size: 16px;
+        }
+
+        #quizQuestionText {
+            font-size: 18px;
+            margin: 8px 0;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 80px);
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .card {
+            position: relative;
+            width: 80px;
+            height: 80px;
+        }
+
+        .note-label {
+            display: block;
+            line-height: 80px;
+            font-size: 24px;
+            background: #eee;
+            border: 2px solid #999;
+            border-radius: 8px;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .card.clicked .note-label {
+            background: #d0eaff;
+        }
+
+        .tap-order {
+            position: absolute;
+            bottom: 4px;
+            right: 6px;
+            font-size: 14px;
+            color: #444;
+        }
+
+        .controls button {
+            margin: 5px;
+            padding: 8px 16px;
+            font-size: 16px;
+        }
+
+        #hintDisplay {
+            font-size: 16px;
+            color: #006;
+            margin: 10px 0;
+        }
+
+        .result {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        #scoreDisplay {
+            font-size: 20px;
+            margin: 15px 0;
+            color: #005;
+        }
+
+        #answerSection {
+            margin-top: 20px;
+        }
+
+        #answerSection h2 {
+            margin-bottom: 5px;
+        }
+
+        #answerSection p {
+            font-size: 18px;
+            color: #333;
+            margin: 5px 0;
+        }
+
+        #wrongListSection {
+            margin-top: 30px;
+            text-align: left;
+            display: inline-block;
+        }
+
+        #wrongListSection h3 {
+            margin-bottom: 8px;
+            font-size: 20px;
+        }
+
+        #wrongList {
+            list-style: none;
+            padding: 0;
+        }
+
+        #wrongList li {
+            margin-bottom: 12px;
+            border: 1px solid #c00;
+            padding: 8px;
+            border-radius: 4px;
+        }
+
+        #wrongList li strong {
+            color: #c00;
+        }
+
+        #wrongList li em {
+            font-style: normal;
+            color: #555;
+        }
+
+        #problems {
+            display: none;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>順番タップゲーム – スケール版</h1>
+
+    <!-- 多言語セレクター -->
+    <select id="languageSelector">
+        <option value="jp">日本音名</option>
+        <option value="en">英語音名</option>
+        <option value="de">ドイツ音名</option>
+        <option value="sol">階名</option>
+    </select>
+
+    <!-- 難易度セレクター -->
+    <label for="difficulty">難易度：</label>
+    <select id="difficulty">
+        <option value="easy">易しい</option>
+        <option value="normal" selected>普通</option>
+        <option value="hard">難しい</option>
+    </select>
+
+    <!-- スケール種別セレクター -->
+    <div id="scaleTypeSelector">
+        <label><input type="checkbox" name="scaleType" value="major" checked> 長音階</label>
+        <label><input type="checkbox" name="scaleType" value="naturalMinor" checked> 自然短音階</label>
+        <label><input type="checkbox" name="scaleType" value="harmonicMinor" checked> 和声短音階</label>
+        <label><input type="checkbox" name="scaleType" value="melodicMinor" checked> 旋律短音階（上行）</label>
+    </div>
+
+    <!-- クイズエリア -->
+    <p id="quizQuestionText"></p>
+    <div class="card-grid" id="quizCardGrid"></div>
+
+    <!-- 操作ボタン -->
+    <div class="controls">
+        <button id="submitBtn">解答を送信</button>
+        <button id="clearBtn">全ての選択を解除</button>
+        <button id="skipBtn">次の問題へ</button>
+        <button id="hintBtn">ヒント</button>
+    </div>
+
+    <!-- ヒント・結果・スコア -->
+    <div id="hintDisplay"></div>
+    <div class="result" id="resultDisplay"></div>
+    <div id="scoreDisplay">正解数: 0／問題数: 0</div>
+
+    <!-- 解答・解説 -->
+    <div id="answerSection">
+        <h2 id="questionName"></h2>
+        <p id="modelAnswerText"></p>
+        <p id="explanationText"></p>
+    </div>
+
+    <!-- 間違い履歴 -->
+    <div id="wrongListSection">
+        <h3>間違えたスケール</h3>
+        <ul id="wrongList"></ul>
+    </div>
+
+    <!-- 問題データ -->
+    <div id="problems">
+        <div class="problem" data-name="C Major Scale" data-scale-type="major">
+            <ul class="questionTexts">
+                <li data-difficulty="easy">C D E F G A Bの順に選択してハ長調の音階を覚えましょう。</li>
+                <li data-difficulty="normal">次の音群を並び替えてできる長音階を主音から順番に選択しなさい。</li>
+                <li data-difficulty="hard">次の音群を並び替えてできる音階を主音から順番に選択しなさい。ただし、自然短音階は用いないものとする。</li>
+            </ul>
+            <p class="questionNotes">C D E F G A B</p>
+            <ul class="hints">
+                <li>変化記号がない音階は2種類しかないよね</li>
+                <li>音階のサンプルとしてよくでてくるよ</li>
+                <li>調号で指定された音のみでできる音階は長音階と自然短音階だよ</li>
+            </ul>
+            <p class="explanation">
+                音階のサンプルとしてよく用いられるハ長調とイ短調の音階は確実に暗記しよう。「変化記号がない音階はハ長調かイ短調（自然短音階）」という覚え方は正しいですが、イ短調の和声短音階と旋律短音階には臨時記号が付いています。調号なしの印象が強いとパッと見た時に気付きにくいことがあるので気をつけよう。
+            </p>
+        </div>
+
+        <div class="problem" data-name="A Natural Minor" data-scale-type="naturalMinor">
+            <ul class="questionTexts">
+                <li data-difficulty="easy">A B C D E F Gの順に選択してイ短調を確認しましょう。</li>
+                <li data-difficulty="normal">次の音群を並び替えて自然短音階を作りなさい。</li>
+                <li data-difficulty="hard">イ短調の構成音を完全に列挙しなさい。</li>
+            </ul>
+            <p class="questionNotes">A B C D E F G</p>
+            <ul class="hints">
+                <li>変化記号がない音階は2種類。</li>
+                <li>ハ長調との対比で覚えやすい。</li>
+            </ul>
+            <p class="explanation">
+                自然短音階は導音（第7音）に半音上行の変化を持たない素朴な形です。暗記の際はハ長調との違いを意識すると良いでしょう。
+            </p>
+        </div>
+
+        <div class="problem" data-name="A Harmonic Minor" data-scale-type="harmonicMinor">
+            <ul class="questionTexts">
+                <li data-difficulty="easy">A B C D E F G# の順に選択して和声短音階を確認しましょう。</li>
+                <li data-difficulty="normal">次の音群を並び替えて和声短音階を完成させなさい。</li>
+                <li data-difficulty="hard">和声短音階の構成音を列挙し、特徴を説明しなさい。</li>
+            </ul>
+            <p class="questionNotes">A B C D E F G#</p>
+            <ul class="hints">
+                <li>第7音のみ半音高くなっている。</li>
+                <li>劇的な雰囲気をもつ音階。</li>
+            </ul>
+            <p class="explanation">
+                和声短音階は第7音を半音上げることで導音感を強めた形です。クラシックやジャズでしばしば用いられます。
+            </p>
+        </div>
+
+        <div class="problem" data-name="A Melodic Minor Ascending" data-scale-type="melodicMinor">
+            <ul class="questionTexts">
+                <li data-difficulty="easy">A B C D E F# G# の順に選択して旋律短音階（上行形）を確認しましょう。</li>
+                <li data-difficulty="normal">次の音群を並び替えて旋律短音階（上行）を作りなさい。</li>
+                <li data-difficulty="hard">旋律短音階の上行形と下行形の違いを説明しなさい。</li>
+            </ul>
+            <p class="questionNotes">A B C D E F# G#</p>
+            <ul class="hints">
+                <li>上行時には第6音・第7音が半音上がる。</li>
+                <li>下行時は自然短音階に戻る。</li>
+            </ul>
+            <p class="explanation">
+                旋律短音階は上行形で第6・7音を半音上げ、下行形では自然短音階に戻ります。歌詞の自然な旋律に合わせた形です。
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ————————————————————————————————
+        // 多言語対応ノート名マッピング
+        // ————————————————————————————————
+        const noteNames = {
+            'C': { jp: 'ハ', en: 'C', de: 'C', sol: 'ド' },
+            'D': { jp: '二', en: 'D', de: 'D', sol: 'レ' },
+            'E': { jp: 'ホ', en: 'E', de: 'E', sol: 'ミ' },
+            'F': { jp: 'へ', en: 'F', de: 'F', sol: 'ファ' },
+            'G': { jp: 'ト', en: 'G', de: 'G', sol: 'ソ' },
+            'A': { jp: 'イ', en: 'A', de: 'A', sol: 'ラ' },
+            'B': { jp: 'ロ', en: 'B', de: 'H', sol: 'シ' },
+            'C#': { jp: '嬰ハ', en: 'C#', de: 'Cis', sol: 'ド#' },
+            'D#': { jp: '嬰ニ', en: 'D#', de: 'Dis', sol: 'レ#' },
+            'E#': { jp: '嬰ホ', en: 'E#', de: 'Eis', sol: 'ミ#' },
+            'F#': { jp: '嬰へ', en: 'F#', de: 'Fis', sol: 'ファ#' },
+            'G#': { jp: '嬰ト', en: 'G#', de: 'Gis', sol: 'ソ#' },
+            'A#': { jp: '嬰イ', en: 'A#', de: 'Ais', sol: 'ラ#' },
+            'B#': { jp: '嬰ロ', en: 'B#', de: 'His', sol: 'シ#' },
+            'Cb': { jp: '変ハ', en: 'Cb', de: 'Ces', sol: 'ドb' },
+            'Db': { jp: '変ニ', en: 'Db', de: 'Des', sol: 'レb' },
+            'Eb': { jp: '変ホ', en: 'Eb', de: 'Es', sol: 'ミb' },
+            'Fb': { jp: '変ホ', en: 'Fb', de: 'Fes', sol: 'ファb' },
+            'Gb': { jp: '変へ', en: 'Gb', de: 'Ges', sol: 'ソb' },
+            'Ab': { jp: '変イ', en: 'Ab', de: 'As', sol: 'ラb' },
+            'Bb': { jp: '変ロ', en: 'Bb', de: 'B', sol: 'シb' },
+            'Fx': { jp: '重嬰へ', en: 'Fx', de: 'Fisis', sol: 'ファx' },
+            'Gx': { jp: '重嬰ト', en: 'Gx', de: 'Gisis', sol: 'ソx' }
+        };
+
+        // ————————————————————————————————
+        // DOM 取得
+        // ————————————————————————————————
+        const languageSelector = document.getElementById('languageSelector');
+        const difficultySelect = document.getElementById('difficulty');
+        const quizText = document.getElementById('quizQuestionText');
+        const quizGrid = document.getElementById('quizCardGrid');
+        const submitBtn = document.getElementById('submitBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const skipBtn = document.getElementById('skipBtn');
+        const hintBtn = document.getElementById('hintBtn');
+        const hintDisplay = document.getElementById('hintDisplay');
+        const resultDisplay = document.getElementById('resultDisplay');
+        const scoreDisplay = document.getElementById('scoreDisplay');
+        const qName = document.getElementById('questionName');
+        const modelAns = document.getElementById('modelAnswerText');
+        const explanationText = document.getElementById('explanationText');
+        const wrongList = document.getElementById('wrongList');
+        const problems = Array.from(document.querySelectorAll('#problems .problem'));
+        const roman = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII'];
+
+        let currentProblem, correctOrder, displayOrder, userOrder = [], tappedSet = new Set();
+        let total = 0, correctCount = 0;
+        const wrongRecords = {};
+
+        // ————————————————————————————————
+        // ユーティリティ
+        // ————————————————————————————————
+        function shuffle(a) { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1));[b[i], b[j]] = [b[j], b[i]]; } return b; }
+        function setLanguage(lang) { document.querySelectorAll('.note-label').forEach(el => { el.textContent = el.getAttribute(`data-${lang}`); }); }
+        languageSelector.addEventListener('change', () => setLanguage(languageSelector.value));
+        function pickQuestionText(el) { const lvl = difficultySelect.value; const arr = Array.from(el.querySelectorAll(`.questionTexts li[data-difficulty="${lvl}"]`)).map(li => li.textContent); return arr[Math.floor(Math.random() * arr.length)]; }
+        function getSelectedScaleTypes() { return Array.from(document.querySelectorAll('#scaleTypeSelector input[name="scaleType"]:checked')).map(cb => cb.value); }
+
+        // ————————————————————————————————
+        // 問題読み込み
+        // ————————————————————————————————
+        function loadProblem() {
+            // reset UI
+            quizGrid.innerHTML = ''; hintDisplay.textContent = ''; resultDisplay.textContent = '';
+            qName.textContent = ''; modelAns.textContent = ''; explanationText.textContent = '';
+            userOrder = []; tappedSet = new Set();
+
+            // フィルタ → ランダム選択
+            const selectedTypes = getSelectedScaleTypes();
+            const candidates = problems.filter(p => selectedTypes.includes(p.dataset.scaleType));
+            if (candidates.length === 0) { alert('出題可能なスケールがありません。'); return; }
+            currentProblem = candidates[Math.floor(Math.random() * candidates.length)];
+
+            // 問題文セット
+            quizText.textContent = pickQuestionText(currentProblem);
+
+            // ノート配列取得
+            const noteEl = currentProblem.querySelector('.questionNotes');
+            const notes = noteEl.textContent.split(' ');
+            correctOrder = notes.map((_, i) => i);
+            displayOrder = shuffle(correctOrder);
+
+            // カード生成
+            displayOrder.forEach(i => {
+                const note = notes[i];
+                const lbl = noteNames[note] || { jp: note, en: note, de: note, sol: note };
+                const card = document.createElement('div');
+                card.className = 'card'; card.dataset.idx = i;
+                const span = document.createElement('span');
+                span.className = 'note-label';
+                ['jp', 'en', 'de', 'sol'].forEach(lang => span.setAttribute(`data-${lang}`, lbl[lang]));
+                span.textContent = lbl[languageSelector.value];
+                card.appendChild(span);
+                card.addEventListener('click', () => {
+                    if (tappedSet.has(i)) return;
+                    tappedSet.add(i); userOrder.push(i); card.classList.add('clicked');
+                    const mark = document.createElement('div');
+                    mark.className = 'tap-order';
+                    mark.textContent = roman[userOrder.length - 1];
+                    card.appendChild(mark);
+                });
+                quizGrid.appendChild(card);
+            });
+
+            // 判定用データセット
+            submitBtn.dataset.name = currentProblem.dataset.name;
+            submitBtn.dataset.notesArr = JSON.stringify(notes);
+            submitBtn.dataset.expl = currentProblem.querySelector('.explanation').textContent;
+            const hints = Array.from(currentProblem.querySelectorAll('.hints li')).map(li => li.textContent);
+            submitBtn.dataset.hints = JSON.stringify(hints);
+        }
+
+        // ————————————————————————————————
+        // クリア
+        // ————————————————————————————————
+        function clearSelection() {
+            userOrder = []; tappedSet.clear(); resultDisplay.textContent = '';
+            document.querySelectorAll('.card').forEach(c => { c.classList.remove('clicked'); c.querySelectorAll('.tap-order').forEach(m => m.remove()); });
+        }
+
+        // ————————————————————————————————
+        // 解答チェック
+        // ————————————————————————————————
+        function checkAnswer() {
+            correctOrder.forEach((ci, i) => {
+                const c = document.querySelector(`.card[data-idx="${ci}"]`);
+                setTimeout(() => {
+                    c.querySelector('.note-label').style.backgroundColor = '#a0ffa0';
+                    setTimeout(() => c.querySelector('.note-label').style.backgroundColor = '', 300);
+                }, i * 200);
+            });
+            const ok = (userOrder.length === correctOrder.length) && userOrder.every((v, i) => v === correctOrder[i]);
+            total++; if (ok) correctCount++;
+            scoreDisplay.textContent = `正解数: ${correctCount}／問題数: ${total}`;
+            qName.textContent = submitBtn.dataset.name;
+            modelAns.innerHTML = `<strong>模範解答:</strong> ${JSON.parse(submitBtn.dataset.notesArr).join(' → ')}`;
+            explanationText.textContent = submitBtn.dataset.expl;
+            resultDisplay.textContent = ok ? '◯ 正解です！' : '☓ 間違いです';
+            resultDisplay.style.color = ok ? 'green' : 'red';
+            if (!ok) {
+                const name = submitBtn.dataset.name;
+                if (!wrongRecords[name]) wrongRecords[name] = { count: 0, attempts: [], notesArr: JSON.parse(submitBtn.dataset.notesArr), expl: submitBtn.dataset.expl };
+                wrongRecords[name].count++;
+                wrongRecords[name].attempts.push([...userOrder]);
+                renderWrongRecords();
+            }
+        }
+
+        // ————————————————————————————————
+        // 間違い履歴表示
+        // ————————————————————————————————
+        function renderWrongRecords() {
+            wrongList.innerHTML = '';
+            Object.entries(wrongRecords).forEach(([name, rec]) => {
+                const li = document.createElement('li');
+                let html = `<strong>${name}（${rec.count}回）</strong><br>`;
+                html += `<em>模範:</em> ${rec.notesArr.join(' → ')}<br>`;
+                html += `<em>解説:</em> ${rec.expl}<br>`;
+                rec.attempts.forEach((arr, i) => {
+                    html += `<em>${i + 1}:</em> ${arr.map(idx => rec.notesArr[idx]).join(' → ')}<br>`;
+                });
+                li.innerHTML = html; wrongList.appendChild(li);
+            });
+        }
+
+        // ————————————————————————————————
+        // ヒント
+        // ————————————————————————————————
+        function showHint() {
+            const hints = JSON.parse(submitBtn.dataset.hints);
+            hintDisplay.textContent = hints[Math.floor(Math.random() * hints.length)];
+        }
+
+        // ————————————————————————————————
+        // イベント登録 & 初期化
+        // ————————————————————————————————
+        submitBtn.addEventListener('click', checkAnswer);
+        clearBtn.addEventListener('click', clearSelection);
+        skipBtn.addEventListener('click', loadProblem);
+        hintBtn.addEventListener('click', showHint);
+        difficultySelect.addEventListener('change', loadProblem);
+        document.querySelectorAll('#scaleTypeSelector input[name="scaleType"]').forEach(cb => cb.addEventListener('change', loadProblem));
+        loadProblem();
+    </script>
+</body>
+
+</html>

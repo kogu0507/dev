@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <title>OrderTapGame サンプル</title>
+  <style>
+    /* ----- 全体レイアウト ----- */
+    body {
+      font-family: sans-serif;
+      margin: 40px;
+      background-color: #f9f9f9;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+    #game {
+      max-width: 600px;
+      margin: auto;
+      background: #fff;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    /* ----- 質問エリア ----- */
+    .otg-question {
+      font-size: 18px;
+      margin-bottom: 12px;
+    }
+    /* ----- カードグリッド ----- */
+    .otg-card-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+    .otg-card {
+      position: relative;
+    }
+    .note-label {
+      display: block;
+      width: 100%;
+      height: 80px;
+      line-height: 80px;
+      text-align: center;
+      font-size: 24px;
+      background: #eee;
+      border: 2px solid #ccc;
+      border-radius: 8px;
+      transition: background 0.3s, border-color 0.3s;
+      cursor: pointer;
+      user-select: none;
+    }
+    .otg-card.selected .note-label {
+      background: #d0eaff;
+      border-color: #80bfff;
+    }
+    .tap-order {
+      position: absolute;
+      bottom: 4px;
+      right: 6px;
+      font-size: 14px;
+      color: #444;
+    }
+    /* ----- 操作ボタン ----- */
+    .otg-controls {
+      text-align: center;
+      margin-bottom: 16px;
+    }
+    .otg-controls button {
+      margin: 4px;
+      padding: 8px 16px;
+      font-size: 16px;
+      border: none;
+      border-radius: 4px;
+      background: #007bcc;
+      color: #fff;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .otg-controls button:hover {
+      background: #005fa3;
+    }
+    /* ----- ヒント/結果/スコア ----- */
+    .otg-hint-display {
+      font-size: 16px;
+      color: #006;
+      min-height: 24px;
+      margin-bottom: 8px;
+    }
+    .otg-result {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+    .otg-score {
+      font-size: 18px;
+      color: #005;
+      margin-bottom: 12px;
+    }
+    /* ----- 解答・解説 ----- */
+    #answerSection {
+      border-top: 1px solid #ddd;
+      padding-top: 12px;
+      margin-top: 12px;
+    }
+    #answerSection h2 {
+      font-size: 20px;
+      margin-bottom: 6px;
+    }
+    #answerSection p {
+      font-size: 16px;
+      margin: 4px 0;
+    }
+    /* ----- 間違い履歴 ----- */
+    #wrongListSection {
+      margin-top: 20px;
+      text-align: left;
+    }
+    #wrongListSection h3 {
+      font-size: 18px;
+      margin-bottom: 6px;
+    }
+    #wrongList li {
+      margin-bottom: 8px;
+      padding: 8px;
+      border: 1px solid #c00;
+      border-radius: 4px;
+      background: #fff0f0;
+    }
+    #wrongList li strong {
+      color: #c00;
+    }
+    #wrongList li em {
+      font-style: normal;
+      color: #555;
+    }
+  </style>
+</head>
+<body>
+  <h1>OrderTapGame モジュール サンプル</h1>
+  <div id="game"></div>
+
+  <script type="module">
+    import OrderTapGame from './order-tap-game.js';
+
+    // サンプル問題データ
+    const problems = [
+      {
+        questionText: '次の音群から考えられる音階を答えなさい。',
+        items: [
+          { labels: { jp:'ド', en:'C', de:'C', sol:'Do' }, metadata:{ orderKey: 1 } },
+          { labels: { jp:'レ', en:'D', de:'D', sol:'Re' }, metadata:{ orderKey: 2 } },
+          { labels: { jp:'ミ', en:'E', de:'E', sol:'Mi' }, metadata:{ orderKey: 3 } },
+          { labels: { jp:'ファ', en:'F', de:'F', sol:'Fa' }, metadata:{ orderKey: 4 } },
+          { labels: { jp:'ソ', en:'G', de:'G', sol:'So' }, metadata:{ orderKey: 5 } },
+          { labels: { jp:'ラ', en:'A', de:'A', sol:'La' }, metadata:{ orderKey: 6 } },
+          { labels: { jp:'シ', en:'B', de:'H', sol:'Ti' }, metadata:{ orderKey: 7 } }
+        ],
+        hints: ['変化記号がないよ','よく音階のサンプルとして用いられるよ'],
+        explanation: '変化記号がないので長音階（C Major）が正解です。'
+      },
+      {
+        questionText: '半音を確認してみよう。',
+        items: [
+          { labels: { jp:'ソ', en:'G', de:'G', sol:'So' }, metadata:{ orderKey: 1 } },
+          { labels: { jp:'ラ', en:'A', de:'A', sol:'La' }, metadata:{ orderKey: 2 } },
+          { labels: { jp:'シ', en:'B', de:'H', sol:'Ti' }, metadata:{ orderKey: 3 } },
+          { labels: { jp:'ド', en:'C', de:'C', sol:'Do' }, metadata:{ orderKey: 4 } },
+          { labels: { jp:'レ', en:'D', de:'D', sol:'Re' }, metadata:{ orderKey: 5 } },
+          { labels: { jp:'ミ', en:'E', de:'E', sol:'Mi' }, metadata:{ orderKey: 6 } },
+          { labels: { jp:'ファ♯', en:'F#', de:'Fis', sol:'Fi' }, metadata:{ orderKey: 7 } }
+        ],
+        hints: ['ファの前にシャープがあるよ','ドから始まらない'],
+        explanation: 'ファ♯があるためG Majorが正解です。'
+      }
+    ];
+
+    const game = new OrderTapGame('#game', {
+      problems,
+      language: 'jp',
+      sortBy: 'metadata.orderKey',
+      onAnswer: result => console.log('回答結果', result),
+      onHint: hint => console.log('ヒント:', hint),
+      onSkip: () => console.log('次へ'),
+      onClear: () => console.log('クリア')
+    });
+  </script>
+</body>
+</html>
