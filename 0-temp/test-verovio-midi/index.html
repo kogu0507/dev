@@ -101,7 +101,8 @@
 
             // VerovioManagerでMIDIバイナリデータを取得
             // midi.includeTempo: true を設定してテンポ情報を含める
-            const midiArray = await manager.getMidiFromUrl(meiUrl, { midi: { includeTempo: true } });
+            //const midiArray = await manager.getMidiFromUrl(meiUrl, { midi: { includeTempo: true } });
+            const midiArray = await manager.getMidiFromUrl(meiUrl);
             console.log("MIDI生成完了。Tone.jsで解析を開始します。");
 
             try {
