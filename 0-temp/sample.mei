@@ -14,6 +14,7 @@
             <mdiv>
                 <score>
                     <scoreDef keysig="1s" key.mode="major" meter.count="4" meter.unit="4" midi.bpm="80">
+
                         <staffGrp>
                             <staffDef n="1" clef.shape="G" clef.line="2" lines="5"/>
                         </staffGrp>
