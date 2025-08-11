@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MIDI Player Test</title>
+</head>
+<body>
+    <h1>MIDI Player テスト</h1>
+    <p>このページでは、`midi-player.js`モジュールを使って、MIDIデータの再生をテストします。</p>
+    <button id="startButton">テスト開始</button>
+
+    <hr>
+
+    <h2>MIDIデータ情報</h2>
+    <p><strong>BPM:</strong> <span id="bpmInfo">...</span></p>
+    <p><strong>拍子記号:</strong> <span id="timeSignatureInfo">...</span></p>
+
+    <hr>
+
+    <h2>小節範囲を指定して再生</h2>
+    <select id="playRangeSelect" disabled>
+        <option value="1,1">1小節目を再生</option>
+        <option value="2,2">2小節目を再生</option>
+        <option value="3,3">3小節目を再生</option>
+        <option value="4,4">4小節目を再生</option>
+        <option disabled>---</option>
+        <option value="1,2">1-2小節目を再生</option>
+        <option value="3,4">3-4小節目を再生</option>
+        <option disabled>---</option>
+        <option value="1,4">1-4小節目を再生</option>
+    </select>
+    <button id="playButton" disabled>再生</button>
+    <button id="stopButton" disabled>停止</button>
+
+    <pre id="log"></pre>
+
+    <script type="module">
+        import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/verovio/verovio-manager.js';
+        import { loadToneJs } from '../core/loader.js';
+        import { processMidiData } from '../processor/core-processor.js';
+        import { initTempo } from '../core/tempo.js';
+        import { setupMidiPlayer, playMidiRange, stopMidiPlayback, setOnPlayStart, setOnPlayEnd } from '../player/midi-player.js';
+
+        const verovioManager = new VerovioManager();
+        const meiUrl = "https://kogu0507.github.io/dev/0-temp/sample2.mei";
+
+        const startButton = document.getElementById('startButton');
+        const playButton = document.getElementById('playButton');
+        const stopButton = document.getElementById('stopButton');
+        const playRangeSelect = document.getElementById('playRangeSelect');
+        const logElement = document.getElementById('log');
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+            console.log(message);
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        setOnPlayStart(() => {
+            log('MIDI再生が開始されました。');
+            playButton.disabled = true;
+            stopButton.disabled = false;
+        });
+
+        setOnPlayEnd(() => {
+            log('MIDI再生が終了しました。');
+            playButton.disabled = false;
+            stopButton.disabled = true;
+        });
+
+        startButton.addEventListener('click', async () => {
+            log('テストを開始します...');
+            startButton.disabled = true;
+
+            try {
+                log('モジュールの初期化とMIDIデータの取得...');
+                await loadToneJs();
+                await verovioManager.initialize();
+                const midiData = await verovioManager.getMidiFromUrl(meiUrl);
+                const result = await processMidiData(midiData);
+
+                // MIDI情報からテンポを設定
+                const bpm = result.midi.header.tempos[0]?.bpm || 120; // デフォルトを120に設定
+                initTempo(bpm);
+
+                // プレイヤーを初期化
+                await setupMidiPlayer(result.midi, result.timeSignature);
+
+                // UIに情報を表示
+                document.getElementById('bpmInfo').textContent = `${bpm} BPM`;
+                const timeSigText = result.timeSignature?.beatsPerMeasure ?
+                    `${result.timeSignature.beatsPerMeasure}/${result.timeSignature.subdivision}` : 'N/A';
+                document.getElementById('timeSignatureInfo').textContent = timeSigText;
+
+                log('初期化が完了しました。再生ボタンが有効になりました。');
+                playRangeSelect.disabled = false;
+                playButton.disabled = false;
+
+            } catch (error) {
+                console.error(error);
+                log(`エラーが発生しました: ${error.message}`);
+            } finally {
+                startButton.disabled = false;
+            }
+        });
+
+        playButton.addEventListener('click', () => {
+            const selectedValue = playRangeSelect.value;
+            const [startMeasure, endMeasure] = selectedValue.split(',').map(Number);
+            playMidiRange(startMeasure, endMeasure);
+        });
+
+        stopButton.addEventListener('click', () => {
+            stopMidiPlayback();
+        });
+    </script>
+</body>
+</html>

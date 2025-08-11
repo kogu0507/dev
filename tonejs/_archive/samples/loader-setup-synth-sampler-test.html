@@ -1,0 +1,169 @@
+<!-- tonejs\samples\loader-setup-synth-sampler-test.html -->
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tone.js ローダーとセットアップ テスト (シンセ＆サンプラー利用)</title>
+    <style>
+        /* 最小限のCSS: 中央寄せと基本的な要素の表示 */
+        body {
+            display: flex;
+            flex-direction: column; /* ボタンを縦に並べるため */
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            font-family: sans-serif;
+            background-color: #f0f0f0;
+        }
+        .container {
+            text-align: center;
+            padding: 20px;
+            border: 1px solid #ccc;
+            background-color: #fff;
+            margin-bottom: 20px; /* メッセージとの間にスペース */
+        }
+        .button-group {
+            display: flex;
+            gap: 10px; /* ボタン間のスペース */
+            margin-top: 20px; /* タイトルとの間にスペース */
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #e0e0e0;
+            cursor: not-allowed;
+        }
+        .message {
+            margin-top: 15px;
+            padding: 10px;
+            border: 1px solid #add8e6;
+            background-color: #e0f2fe;
+            color: #0284c7;
+            display: none;
+        }
+        .error-message {
+            border: 1px solid #f00;
+            background-color: #ffe0e0;
+            color: #f00;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tone.js サウンドテスト</h1>
+        <div class="button-group">
+            <button id="playSynthButton">
+                シンセを鳴らす
+            </button>
+            <button id="playSamplerButton">
+                サンプラーを鳴らす
+            </button>
+        </div>
+        <div id="message" class="message"></div>
+    </div>
+
+    <script type="module">
+        // core/loader.js と core/setup.js をインポート
+        import { loadToneJs } from '../core/loader.js';
+        import { initToneAudio } from '../core/setup.js'; // playTestSound は削除
+
+        // core/synth.js から createDefaultSynth と playSynthTestSound 関数をインポート
+        import { createDefaultSynth, playSynthTestSound } from '../core/synth.js';
+        // core/sampler.js から createSalamanderSampler と playSamplerTestSound 関数をインポート
+        import { createSalamanderSampler, playSamplerTestSound } from '../core/sampler.js';
+
+        // HTML要素の取得
+        const playSynthButton = document.getElementById('playSynthButton');
+        const playSamplerButton = document.getElementById('playSamplerButton');
+        const messageDiv = document.getElementById('message');
+
+        // シンセサイザーとサンプラーのインスタンスを保持する変数
+        let mySynth = null;
+        let mySampler = null;
+        let isAudioContextInitialized = false; // オーディオコンテキストが初期化されたかどうかのフラグ
+
+        // メッセージ表示関数
+        function showMessage(msg, isError = false) {
+            messageDiv.textContent = msg;
+            messageDiv.style.display = 'block';
+            if (isError) {
+                messageDiv.classList.add('error-message');
+            } else {
+                messageDiv.classList.remove('error-message');
+            }
+        }
+
+        // 全てのボタンの状態を更新する関数
+        function setButtonsDisabled(disabled) {
+            playSynthButton.disabled = disabled;
+            playSamplerButton.disabled = disabled;
+        }
+
+        // オーディオコンテキストとシンセ/サンプラーの初期化ロジック
+        async function initializeAudioSystem() {
+            if (isAudioContextInitialized) {
+                return; // 既に初期化済みなら何もしない
+            }
+
+            setButtonsDisabled(true); // 全てのボタンを無効化
+            showMessage('Tone.jsをロード中...');
+            
+            try {
+                await loadToneJs(); // Tone.jsをロード
+                
+                showMessage('オーディオコンテキストを初期化中...');
+                await initToneAudio(); // オーディオコンテキストを開始
+                isAudioContextInitialized = true; // フラグを立てる
+
+                // シンセサイザーインスタンスを作成
+                mySynth = createDefaultSynth();
+                
+                // サンプラーインスタンスを作成（Promiseを待つ）
+                showMessage('サンプラーのサンプルをロード中... (少し時間がかかります)');
+                mySampler = await createSalamanderSampler(); // サンプラーのロードを待つ
+                
+                showMessage('オーディオシステムが準備できました！');
+
+            } catch (error) {
+                console.error("[loader-setup-test.html] オーディオシステムの初期化中にエラーが発生しました:", error);
+                showMessage(`エラー: ${error.message}`, true);
+                isAudioContextInitialized = false; // エラー時はフラグをリセット
+                // エラーが発生した場合、mySynthやmySamplerはnullのままになる
+            } finally {
+                setButtonsDisabled(false); // 全てのボタンを再度有効化
+            }
+        }
+
+        // シンセを鳴らすボタンクリックイベントリスナー
+        playSynthButton.addEventListener('click', async () => {
+            // まずオーディオシステムを初期化（初回クリック時のみ実行）
+            await initializeAudioSystem(); 
+
+            if (mySynth) {
+                playSynthTestSound(mySynth); // シンセで音を鳴らす
+                showMessage('シンセでC4の音が鳴りました！');
+            } else {
+                showMessage('シンセサイザーが準備できていません。', true);
+            }
+        });
+
+        // サンプラーを鳴らすボタンクリックイベントリスナー
+        playSamplerButton.addEventListener('click', async () => {
+            // まずオーディオシステムを初期化（初回クリック時のみ実行）
+            await initializeAudioSystem(); 
+
+            if (mySampler) {
+                playSamplerTestSound(mySampler); // サンプラーで音を鳴らす
+                showMessage('サンプラーでC4の音が鳴りました！');
+            } else {
+                showMessage('サンプラーが準備できていません。', true);
+            }
+        });
+    </script>
+</body>
+</html>

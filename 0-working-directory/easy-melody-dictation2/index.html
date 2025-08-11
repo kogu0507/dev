@@ -1,0 +1,669 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Easy Melody Dictation</title>
+    <style>
+        .button-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        /* 無効化されたタブボタンのスタイル */
+        .tab-button.is-disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <h1><!-- 最終的にはワードプレスに移行するので不要 --></h1>
+    </header>
+
+    <main>
+        <section id="data">
+            <script id="ezmelo-json-data" type="application/json">
+                [
+                    {
+                        "id": "001",
+                        "meiURL": "./melody-dictation-001.mei",
+                        "exerciseInfo": "旋律聴音 ハ長調 4/4拍子 4小節",
+                        "tonicChordSpec": { "notes": ["C4","E4","G4"] },
+                        "playbackDef": [
+                            { "range": "1-2", "interval": 5 },
+                            { "range": "2-3", "interval": 10 }
+                        ],
+                        "endBellSpec": { "bellId": "endBell1" }
+                    },
+                    {
+                        "id": "002",
+                        "meiURL": "./melody-dictation-002.mei",
+                        "exerciseInfo": "旋律聴音 ハ長調 4/4拍子 8小節",
+                        "tonicChordSpec": { "notes": ["C4","E4","G4"] },
+                        "playbackDef": [
+                            { "range": "5-6", "interval": 3 }
+                        ],
+                        "endBellSpec": { "bellId": "endBell1" }
+                    }
+                ]
+            </script>
+        </section>
+
+        <!-- カスタムHTML 1 -->
+        <section id="tab-ui">
+            <link rel="stylesheet"
+                href="https://cdn.jsdelivr.net/gh/kogu0507/module@main/components/simple-tab-component/style.min.css" />
+            <script
+                src="https://cdn.jsdelivr.net/gh/kogu0507/module@main/components/simple-tab-component/script.min.js"></script>
+
+            <div class="simple-tab-component-container" data-default-tab="exercise-selection" data-deep-link="true">
+                <div class="tabs">
+                    <button class="tab-button" data-tab="exercise-selection">課題選択</button>
+                    <button class="tab-button" data-tab="exercise">課題</button>
+                    <button class="tab-button" data-tab="answer">解答</button>
+                    <button class="tab-button" data-tab="settings">設定</button>
+                </div>
+
+                <div class="tab-content">
+                    <div id="exercise-selection" class="tab-pane">
+                        <h3 style="display:none;">課題選択</h3>
+                        <section class="ezmelo-exercise-selection-section">
+                            JSONから課題を読込中...
+                        </section>
+                    </div>
+
+                    <div id="exercise" class="tab-pane">
+                        <h3 style="display:none;">課題</h3>
+
+                        <section class="ezmelo-exercise-section">
+                            <h4>課題情報</h4>
+                            <div class="ezmelo-exercise-info" id="ezmelo-exercise-info">課題情報を読込中...</div>
+                            <div class="ezmelo-playback-info" id="ezmelo-playback-info">プレイバック情報を読込中...</div>
+                        </section>
+
+
+                        <h4>プレイヤー</h4>
+                        <section class="ezmelo-player-section" id="exercise-player-section"
+                            data-template-id="ezmelo-player-template">
+                            プレイヤー読込中...
+                        </section>
+
+                        <h4>簡易キーボード</h4>
+                        <section class="ezmelo-keyboard-section" id="exercise-keyboard-section"
+                            data-template-id="ezmelo-keyboard-template">
+                            キーボード読込中...
+                        </section>
+
+                    </div>
+
+                    <div id="answer" class="tab-pane">
+                        <h3 style="display:none;">解答</h3>
+                        <h4>解答画像</h4>
+                        <section class="ezmelo-answer-display">
+                            <div class="score-container" id="answer-score-container">
+                                解答楽譜を読込中...
+                            </div>
+                        </section>
+
+                        <h4>プレイヤー</h4>
+                        <section class="ezmelo-player-section" id="answer-player-section"
+                            data-template-id="ezmelo-player-template">
+                            プレイヤー読込中...
+                        </section>
+
+                        <h4>簡易キーボード</h4>
+                        <section class="ezmelo-keyboard-section" id="answer-keyboard-section"
+                            data-template-id="ezmelo-keyboard-template">
+                            キーボード読込中...
+                        </section>
+                    </div>
+
+                    <div id="settings" class="tab-pane">
+                        <h3 style="display:none;">設定</h3>
+                        <section class="ezmelo-player-setting-section">
+                            <p>（将来用設定UIをここに）</p>
+                        </section>
+                        <section class="ezmelo-playlist-setting-section">
+                            <p>（playbackDef編集UIを作るならここに）</p>
+                        </section>
+                    </div>
+                </div>
+            </div>
+
+            <section id="template-section">
+                <template id="ezmelo-player-template">
+                    <div class="ezmelo-control-buttons">
+                        <div class="ezmelo-playback-status" data-role="status" aria-live="polite">
+                            🎧 再生ステータスがここに表示されます
+                        </div>
+                        <div class="button-group">
+                            <button class="ezmelo-control-button" data-role="start-playlist">試験再生</button>
+                            <button class="ezmelo-control-button" data-role="stop">停止</button>
+                            <button class="ezmelo-control-button" data-role="mute">ミュート</button>
+                        </div>
+                        <div class="ezmelo-play-range" data-player-mode="practice">
+                            <select id="play-range-select">
+                                <option value="1-1" data-start-measure="1" data-end-measure="1">1小節目</option>
+                                <option value="1-1" data-start-measure="2" data-end-measure="2">2小節目</option>
+                                <option value="1-1" data-start-measure="3" data-end-measure="3">3小節目</option>
+                                <option value="1-1" data-start-measure="4" data-end-measure="4">4小節目</option>
+                                <option>---</option>
+                                <option value="1-2" data-start-measure="1" data-end-measure="2">1-2小節</option>
+                                <option value="3-4" data-start-measure="3" data-end-measure="4">3-4小節</option>
+                                <option>---</option>
+                                <option value="1-4" data-start-measure="1" data-end-measure="4">1-4小節</option>
+                            </select>
+                            <button class="ezmelo-control-button" data-role="play-range">指定範囲再生</button>
+                        </div>
+                        <label style="display:flex; align-items:center; gap:4px;">
+                            Vol:
+                            <input type="range" data-role="volume" min="0" max="100" value="50" />
+                        </label>
+                    </div>
+
+
+
+                </template>
+
+                <template id="ezmelo-keyboard-template">
+                    <link rel="stylesheet"
+                        href="https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/components/simple-synth-mini/style.min.css">
+                    <style>
+
+                    </style>
+
+
+
+                    <section class="ssm-demo-section">
+                        <div class="ssm-simple-synth-mini" data-volume-slider="true" data-octaves="2"
+                            data-start-note="C4" data-sound-enabled="true" data-instrument="sine"
+                            data-show-note-labels="false">
+                            <div class="ssm-keyboard-wrapper">
+                            </div>
+                        </div>
+                    </section>
+                    <script type="module" defer>
+                        // TOOD: 開発中はmodule@mainでよいか
+                        import { SimpleSynthMini } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@main/components/simple-synth-mini/script.min.js';
+
+                        // querySelectorAll を使用して、すべてのキーボード要素を取得
+                        const synthElements = document.querySelectorAll('.ssm-simple-synth-mini');
+
+                        synthElements.forEach(synthElement => {
+                            if (synthElement) {
+                                if (!synthElement.id) {
+                                    synthElement.id = `ssm-${Math.random().toString(36).slice(2)}`;
+                                }
+                                new SimpleSynthMini(synthElement);
+                            }
+                        });
+                    </script>
+                </template>
+            </section>
+        </section>
+    </main>
+
+    <script defer>
+        // 完成したらインポートする。開発中はここでつくる
+        class UIManager {
+            constructor(verovioManager, ids) {
+                this.verovioManager = verovioManager;
+                this.ids = ids;
+                this.elements = {};
+            }
+
+            async initialize() {
+                try {
+                    // Verovioのレンダリングオプションを設定
+                    const verOptions = {
+                        svgViewBox: true,
+                        adjustPageHeight: true,
+                        pageWidth: 2100,
+                        breaks: "encoded",
+                        spacingStaff: 5,
+                        spacingSystem: 15,
+                        footer: "none",
+                        pageMarginTop: 0,
+                        pageMarginRight: 10,
+                        pageMarginBottom: 0,
+                        pageMarginLeft: 10,
+                        minLastJustification: 0,
+                    };
+                    if (this.verovioManager) {
+                        this.verovioManager.setRenderOptions(verOptions);
+                        console.log("[ezmelo] verovio: render options set");
+                    } else {
+                        console.warn("[ezmelo] verovio: VerovioManager not initialized.");
+                    }
+
+                    // テンプレートを先にロードする
+                    this.loadTemplate();
+                    // テンプレートによって追加された要素も含めて取得
+                    this.getElementsFromIds();
+                    this.getElementsFromDataRoles();
+                    this.initializeEventListeners();
+                    console.log('UIの初期化が完了しました。');
+                } catch (error) {
+                    console.error('UIの初期化中にエラーが発生しました:', error);
+                }
+            }
+
+
+            /**
+            * data-template-id 属性を持つ要素にテンプレートを挿入
+            */
+            loadTemplate() {
+                const sectionsToPopulate = document.querySelectorAll('[data-template-id]');
+                sectionsToPopulate.forEach(section => {
+                    const templateId = section.dataset.templateId;
+                    const template = document.getElementById(templateId);
+                    if (template) {
+                        const clonedContent = template.content.cloneNode(true);
+                        section.innerHTML = '';
+                        section.appendChild(clonedContent);
+                    } else {
+                        console.warn(`テンプレートID "${templateId}" が見つかりません。`);
+                    }
+                });
+
+                document.dispatchEvent(new CustomEvent('templatesLoaded'));
+            }
+
+
+            /**
+            * this.ids に定義されたIDを使ってDOM要素を取得し、this.elements に格納する
+            */
+            getElementsFromIds() {
+                for (const key in this.ids) {
+                    const elementId = this.ids[key];
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        this.elements[key] = element;
+                    } else {
+                        console.warn(`警告: ID "${elementId}" を持つ要素が見つかりません。キーは "${key}" です。`);
+                    }
+                }
+            }
+
+
+            /**
+            * data-role 属性を持つ要素を取得し、this.elements に格納する
+            */
+            getElementsFromDataRoles() {
+                const players = [this.elements.exercisePlayerSection, this.elements.answerPlayerSection];
+                players.forEach((player, index) => {
+                    if (!player) return;
+
+                    const playerType = index === 0 ? 'exercise' : 'answer';
+
+                    // 再生ボタン
+                    const playButton = player.querySelector('[data-role="start-playlist"]');
+                    if (playButton) this.elements[`${playerType}PlayButton`] = playButton;
+
+                    // 停止ボタン
+                    const stopButton = player.querySelector('[data-role="stop"]');
+                    if (stopButton) this.elements[`${playerType}StopButton`] = stopButton;
+
+                    // ミュートボタン
+                    const muteButton = player.querySelector('[data-role="mute"]');
+                    if (muteButton) this.elements[`${playerType}MuteButton`] = muteButton;
+
+                    // プレイバックステータス
+                    const statusDisplay = player.querySelector('[data-role="status"]');
+                    if (statusDisplay) this.elements[`${playerType}StatusDisplay`] = statusDisplay;
+                });
+
+                // タブボタンもここで取得可能
+                const tabButtons = document.querySelectorAll('.tab-button');
+                if (tabButtons) {
+                    this.elements.tabButtons = tabButtons;
+                }
+            }
+
+
+            initializeEventListeners() {
+                // UI要素へのイベントリスナー設定
+                const players = ['exercise', 'answer'];
+                players.forEach(playerType => {
+                    if (this.elements[`${playerType}PlayButton`]) {
+                        this.elements[`${playerType}PlayButton`].addEventListener('click', () => {
+                            document.dispatchEvent(new CustomEvent('playButtonClicked', { detail: playerType }));
+                        });
+                    }
+                    if (this.elements[`${playerType}StopButton`]) {
+                        this.elements[`${playerType}StopButton`].addEventListener('click', () => {
+                            document.dispatchEvent(new CustomEvent('stopButtonClicked', { detail: playerType }));
+                        });
+                    }
+                });
+
+                // タブボタンのイベントリスナーもここに統一
+                if (this.elements.tabButtons) {
+                    this.elements.tabButtons.forEach(button => {
+                        button.addEventListener('click', (event) => {
+                            const tabId = event.target.dataset.tab;
+                            document.dispatchEvent(new CustomEvent('tabChanged', { detail: tabId }));
+                        });
+                    });
+                }
+
+
+            }
+
+            // プレイヤーの状態を更新するメソッド
+            updatePlayerState(playerType, isPlaying) {
+                const playButton = this.elements[`${playerType}PlayButton`];
+                const stopButton = this.elements[`${playerType}StopButton`];
+                if (playButton && stopButton) {
+                    playButton.disabled = isPlaying;
+                    stopButton.disabled = !isPlaying;
+                }
+            }
+
+            // プレイヤーのステータス表示を更新するメソッド
+            updatePlayerStatus(playerType, message) {
+                const statusDisplay = this.elements[`${playerType}StatusDisplay`];
+                if (statusDisplay) {
+                    statusDisplay.textContent = message;
+                }
+            }
+
+            /**
+            * 指定されたコンテナにMEIファイルをロードしてSVGを描画
+            * @param {string} meiUrl - MEIファイルのURL
+            * @param {string} containerId - SVGを描画するコンテナのID
+            */
+            async loadAndDisplayScore(meiUrl, containerId) {
+                if (!this.verovioManager) {
+                    console.error("[ezmelo] verovio: VerovioManagerが初期化されていません。");
+                    return;
+                }
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = '楽譜を読み込み中...';
+                    try {
+                        await this.verovioManager.displaySvgFromUrl(meiUrl, containerId);
+                    } catch (error) {
+                        console.error(`[ezmelo] verovio: 楽譜の読み込みに失敗しました。`, error);
+                        container.innerHTML = '楽譜の読み込みに失敗しました。';
+                    }
+                } else {
+                    console.error(`[ezmelo] verovio: 指定されたコンテナID "${containerId}" が見つかりません。`);
+                }
+            }
+
+            /**
+                 * 指定されたボタンを有効または無効にする
+                 * @param {string} buttonName - this.elementsのキー名 (例: 'playButton')
+                 * @param {boolean} enable - trueで有効、falseで無効
+                 */
+            toggleButtonState(buttonName, enable) {
+                const button = this.elements[buttonName];
+                if (button) {
+                    button.disabled = !enable;
+                    // ... その他のスタイル変更など ...
+                }
+            }
+
+
+            // playButtonとstopButtonの状態をまとめて更新するメソッド
+            updatePlayButtonState(isPlaying) {
+                // 再生中は再生ボタンを無効化、停止ボタンを有効化
+                this.toggleButtonState('playButton', !isPlaying);
+                this.toggleButtonState('stopButton', isPlaying);
+            }
+
+            formatExerciseInfo(info) {
+                return `<h4>${info}</h4>`;
+            }
+
+            formatPlaybackInfo(defs) {
+                if (!defs?.length) {
+                    return '<span class="no-playback-data-text">プレイバック情報: なし</span>';
+                }
+                const rows = defs.map((d, i) => `
+                <tr><td>${i + 1}</td><td>${d.range}</td><td>${d.interval}</td></tr>
+            `).join("");
+                return `
+                <table class="playback-table">
+                <thead><tr><th>#</th><th>再生範囲</th><th>インターバル（秒）</th></tr></thead>
+                <tbody>${rows}</tbody>
+                </table>
+            `.trim();
+            }
+        }
+
+
+        class EasyMelodyDictationApp {
+            constructor(uiManager, verovioManager, tonejsManager) {
+                this.uiManager = uiManager;
+                this.verovioManager = verovioManager;
+                this.tonejsManager = tonejsManager;
+                this.currentExercise = null;
+            }
+
+            async initialize() {
+                try {
+                    console.log('VerovioManagerの初期化を開始します...');
+                    await this.verovioManager.initialize();
+                    console.log('初期化が完了しました。');
+
+                    await this.uiManager.initialize();
+                    this.initializeEventListeners();
+                    this.loadExercises();
+                    this.renderExerciseButtons();
+                } catch (error) {
+                    console.error('アプリケーションの初期化中にエラーが発生しました:', error);
+                }
+            }
+
+
+
+            /**
+             * アプリケーションロジックのイベントリスナーを設定する
+             */
+            initializeEventListeners() {
+                // 再生ボタンが押されたら、どのプレイヤーからでも共通のplayメソッドを呼び出す
+                document.addEventListener('playButtonClicked', async (event) => {
+                    const playerType = event.detail;
+                    this.play(playerType);
+                });
+
+                // 停止ボタンが押されたら、どのプレイヤーからでも共通のstopメソッドを呼び出す
+                document.addEventListener('stopButtonClicked', (event) => {
+                    this.stop(event.detail);
+                });
+
+                document.addEventListener('tabChanged', async (event) => {
+                    const tabId = event.detail;
+                    if (tabId === this.uiManager.ids.tabPaneAnswer && this.currentExercise) {
+                        // 解答タブに切り替わったら楽譜を描画
+                        this.uiManager.loadAndDisplayScore(this.currentExercise.meiURL, this.uiManager.ids.answerScoreContainer);
+                    }
+                });
+            }
+
+            loadExercises() {
+                const jsonEl = document.getElementById(this.uiManager.ids.jsonData);
+                if (jsonEl) {
+                    this.exercises = JSON.parse(jsonEl.textContent.trim());
+                    console.log("[ezmelo] exercises loaded:", this.exercises);
+                } else {
+                    console.error("課題データが見つかりません。");
+                    this.exercises = [];
+                }
+            }
+
+            renderExerciseButtons() {
+                const selSec = document.querySelector(".ezmelo-exercise-selection-section");
+                if (!selSec) return;
+                selSec.innerHTML = "";
+                if (this.exercises.length === 0) {
+                    selSec.textContent = "課題がありません。";
+                    return;
+                }
+                this.exercises.forEach(ex => {
+                    const btn = document.createElement("button");
+                    btn.textContent = `${ex.id}：${ex.exerciseInfo}`;
+                    btn.addEventListener("click", () => this.onSelectExercise(ex));
+                    selSec.appendChild(btn);
+                });
+            }
+
+            async onSelectExercise(exercise) {
+                this.currentExercise = exercise;
+                console.log("[ezmelo] selected exercise:", exercise);
+
+                // UIに課題情報を表示
+                const infoHtml = this.uiManager.formatExerciseInfo(exercise.exerciseInfo);
+                const playbackHtml = this.uiManager.formatPlaybackInfo(exercise.playbackDef);
+                const exerciseInfoEl = document.getElementById(this.uiManager.ids.exerciseInfo);
+                const playbackInfoEl = document.getElementById(this.uiManager.ids.playbackInfo);
+
+                if (exerciseInfoEl) exerciseInfoEl.innerHTML = infoHtml;
+                if (playbackInfoEl) playbackInfoEl.innerHTML = playbackHtml;
+
+                // 課題画面に楽譜を描画
+                this.uiManager.updatePlayerStatus('exercise', '楽譜とMIDIデータを準備中...');
+                await Promise.all([
+                    // 楽譜の表示
+                    //this.uiManager.loadAndDisplayScore(exercise.meiURL, 'exercise-score-container'),
+                    // MIDIデータのロード
+                    this.loadMidiForPlayback(exercise)
+                ]);
+                this.uiManager.updatePlayerStatus('exercise', '✓ 準備完了');
+            }
+
+
+
+            // 再生用のMIDIデータを読み込む専用メソッド
+            async loadMidiForPlayback(exercise) {
+                const midiData = await this.verovioManager.getMidiFromMei(exercise.meiURL);
+                await this.tonejsManager.loadFromVerovio(midiData);
+            }
+
+            async play(playerType) {
+                if (!this.currentExercise) return;
+
+                if (!this.tonejsManager.isSetup) {
+                    await this.tonejsManager.setup({
+                        onPlayStart: () => this.handlePlaybackStart(),
+                        onPlayEnd: () => this.handlePlaybackEnd()
+                    });
+                    this.tonejsManager.isSetup = true; // セットアップ済みフラグ
+                }
+
+                this.uiManager.updatePlayerState(playerType, true);
+                this.uiManager.updatePlayerStatus(playerType, '再生準備中...');
+
+                try {
+                    const playbackDef = this.currentExercise.playbackDef;
+                    if (playbackDef && playbackDef.length > 0) {
+                        console.log('[ezmelo] プレイバック定義に基づいて再生を開始します');
+                        const fullMidiData = await this.verovioManager.getMidiFromMei(this.currentExercise.meiURL);
+                        await this.tonejsManager.loadFromVerovio(fullMidiData);
+
+                        for (const def of playbackDef) {
+                            const [startMeasure, endMeasure] = def.range.split('-').map(Number);
+                            this.uiManager.updatePlayerStatus(playerType, `▶ ${startMeasure}-${endMeasure}小節目を再生中...`);
+                            await this.tonejsManager.playRange(startMeasure, endMeasure);
+                            await new Promise(resolve => setTimeout(resolve, def.interval * 1000));
+                        }
+                    } else {
+                        console.log('[ezmelo] 全再生を開始します');
+                        this.uiManager.updatePlayerStatus(playerType, '▶ 全体を再生中...');
+                        const fullMidiData = await this.verovioManager.getMidiFromMei(this.currentExercise.meiURL);
+                        await this.tonejsManager.loadFromVerovio(fullMidiData);
+                        await this.tonejsManager.play();
+                    }
+                } catch (error) {
+                    console.error('再生中にエラーが発生しました:', error);
+                    this.uiManager.updatePlayerStatus(playerType, '再生エラー');
+                    this.uiManager.updatePlayerState(playerType, false);
+                }
+            }
+
+
+            stop(playerType) {
+                console.log('[ezmelo] 再生を停止します');
+                this.tonejsManager.stop();
+                this.uiManager.updatePlayerStatus(playerType, '■ 停止');
+                this.uiManager.updatePlayerState(playerType, false);
+            }
+
+            // 再生開始時のUI更新ロジックを分離
+            handlePlaybackStart() {
+                console.log('handlePlaybackStart called');
+                this.uiManager.updatePlayerStatus('exercise', '▶ 再生中...');
+                this.uiManager.updatePlayerState('exercise', true);
+                this.uiManager.updatePlayerStatus('answer', '▶ 再生中...');
+                this.uiManager.updatePlayerState('answer', true);
+            }
+
+            // 再生終了時のUI更新ロジックを分離
+            handlePlaybackEnd() {
+                console.log('handlePlaybackEnd called');
+                this.uiManager.updatePlayerStatus('exercise', '■ 停止');
+                this.uiManager.updatePlayerState('exercise', false);
+                this.uiManager.updatePlayerStatus('answer', '■ 停止');
+                this.uiManager.updatePlayerState('answer', false);
+            }
+
+
+        }
+    </script>
+
+    <script type="module" defer>
+        import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@main/verovio/verovio-manager.min.js';
+        import { TonejsManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@main/tonejs/manager/tonejs-manager.js';
+        // import { UIManager } from...
+        // import { EasyMelodyDictationApp } from...
+
+        const ids = {
+            // 課題情報
+            exerciseInfo: 'ezmelo-exercise-info',
+            playbackInfo: 'ezmelo-playback-info',
+
+            // プレイヤー関連
+            exercisePlayerSection: 'exercise-player-section',
+            answerPlayerSection: 'answer-player-section',
+            // 楽譜表示コンテナ
+            answerScoreContainer: 'answer-score-container',
+
+            // JSONデータ
+            jsonData: 'ezmelo-json-data',
+
+            // テンプレート
+            playerTemplate: 'ezmelo-player-template',
+            keyboardTemplate: 'ezmelo-keyboard-template',
+
+            // タブパネル
+            tabPaneExerciseSelection: 'exercise-selection',
+            tabPaneExercise: 'exercise',
+            tabPaneAnswer: 'answer',
+            tabPaneSettings: 'settings',
+
+            // 簡易キーボード
+            exerciseKeyboardSection: 'exercise-keyboard-section',
+            answerKeyboardSection: 'answer-keyboard-section'
+        };
+
+        const verovioManager = new VerovioManager();
+        const tonejsManager = new TonejsManager();
+        const uiManager = new UIManager(verovioManager, ids);
+        const easyMelodyDictationApp = new EasyMelodyDictationApp(uiManager, verovioManager, tonejsManager);
+
+
+        document.addEventListener("DOMContentLoaded", () => {
+            easyMelodyDictationApp.initialize();
+        });
+    </script>
+
+</body>
+
+</html>

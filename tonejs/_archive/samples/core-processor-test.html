@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core Processor Test</title>
+</head>
+
+<body>
+    <h1>コアプロセッサー テスト</h1>
+    <p>このページでは、`core-processor.js`がVerovioから生成されたMIDIデータを正しく解析できるかテストします。</p>
+    <button id="startButton">テスト開始</button>
+    <pre id="log"></pre>
+
+    <script type="module">
+        // VerovioManagerのインポート（提案されたCDN URLを使用）
+        import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/verovio/verovio-manager.js';
+
+        // プロジェクト内のモジュールのインポート
+        import { loadToneJs } from '../core/loader.js';
+        import { initToneAudio } from '../core/setup.js';
+        import { createDefaultSynth } from '../core/synth.js';
+        import { processMidiData } from '../processor/core-processor.js';
+
+
+        // VerovioManagerのインスタンスとテスト用のMEI URL
+        const verovioManager = new VerovioManager();
+        
+        const meiUrl = "https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/examples/sample.mei";
+
+        const startButton = document.getElementById('startButton');
+        const logElement = document.getElementById('log');
+
+        let synth;
+
+        // Tone.js をグローバルから利用
+        await loadToneJs();
+
+
+        /**
+         * ログメッセージを画面に表示するヘルパー関数
+         * @param {string} message
+         */
+        function log(message) {
+            console.log(message);
+            logElement.textContent += message + '\n';
+        }
+
+        startButton.addEventListener('click', async () => {
+            log('テストを開始します...');
+            startButton.disabled = true;
+
+            try {
+                // 1. AudioContextの初期化とSynthの作成
+                await initToneAudio();
+                synth = createDefaultSynth();
+                log('Tone.js AudioContext 初期化完了。');
+
+                // 2. VerovioManagerの初期化とMIDIデータの取得
+                await verovioManager.initialize();
+                log('VerovioManager 初期化完了。');
+
+                const midiData = await verovioManager.getMidiFromUrl(meiUrl);
+                log('VerovioからMIDIデータを取得しました。');
+
+                // 3. MIDIデータをcore-processorで解析
+                const midiObject = await processMidiData(midiData);
+                log('core-processorでMIDIデータを解析しました。');
+
+                if (midiObject.tracks && midiObject.tracks.length > 0) {
+                    const firstTrack = midiObject.tracks[0];
+                    log(`MIDIデータにトラックが${midiObject.tracks.length}個見つかりました。`);
+                    log(`最初のトラックの音符数: ${firstTrack.notes.length}`);
+
+                    // 4. 解析されたデータを使って音を鳴らすテスト
+                    const notes = firstTrack.notes;
+                    if (notes.length > 0) {
+                        log('解析された音符データを使って再生テストを開始します...');
+
+                        const part = new Tone.Part((time, note) => {
+                            synth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+                        }, notes).start(0);
+
+                        Tone.Transport.start();
+                        log('再生開始！');
+
+                        // 再生終了を待つ
+                        const lastNoteTime = notes[notes.length - 1].time + Tone.Time(notes[notes.length - 1].duration).toSeconds();
+                        await Tone.Transport.scheduleOnce(() => {
+                            log('再生が終了しました。');
+                            Tone.Transport.stop();
+                        }, lastNoteTime + 1);
+
+                    } else {
+                        log('解析されたトラックに音符がありませんでした。');
+                    }
+                } else {
+                    log('MIDIデータに有効なトラックが見つかりませんでした。');
+                }
+
+            } catch (error) {
+                console.error(error);
+                log(`エラーが発生しました: ${error.message}`);
+            } finally {
+                startButton.disabled = false;
+            }
+        });
+    </script>
+</body>
+
+</html>

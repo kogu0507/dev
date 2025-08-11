@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playlist Timer Test</title>
+</head>
+<body>
+    <h1>プレイリストタイマー テスト</h1>
+    <p>
+        このページでは、`playlist-timer.js`モジュールを使って、MIDI再生とインターバルのシーケンスをテストします。
+    </p>
+
+    <button id="startButton">プレイリスト再生開始</button>
+    <button id="stopButton" disabled>停止</button>
+
+    <hr>
+    
+    <h2>現在の状態</h2>
+    <div id="status">...</div>
+
+    <hr>
+
+    <pre id="log"></pre>
+
+<script type="module">
+    import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/verovio/verovio-manager.js';
+    import { loadToneJs } from '../core/loader.js';
+    import { initToneAudio } from '../core/setup.js';
+    import { processMidiData } from '../processor/core-processor.js';
+    import { initTempo } from '../core/tempo.js';
+    import { setupMidiPlayer, playMidiRange, stopMidiPlayback } from '../player/midi-player.js';
+    import { setPlaylist, setOnPlayItem, setOnInterval, setOnPlaylistEnd, startPlaylist, stopPlaylist, playItemCompleted } from '../core/playlist-timer.js';
+
+    const verovioManager = new VerovioManager();
+    const meiUrl = "https://kogu0507.github.io/dev/0-temp/sample1.mei";
+    
+    const startButton = document.getElementById('startButton');
+    const stopButton = document.getElementById('stopButton');
+    const statusElement = document.getElementById('status');
+    const logElement = document.getElementById('log');
+    
+    let midiData = null;
+    let timeSignature = null;
+    let playerInitialized = false;
+
+    function log(message) {
+        const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+        console.log(message);
+        logElement.textContent += `[${timestamp}] ${message}\n`;
+        logElement.scrollTop = logElement.scrollHeight;
+    }
+
+    // --- 1. ページロード時に必要なモジュールとMIDIデータのみをロード ---
+    window.addEventListener('DOMContentLoaded', async () => {
+        log('Initializing modules and loading MIDI data...');
+        startButton.disabled = true;
+
+        try {
+            await loadToneJs();
+            await verovioManager.initialize();
+            const midiFile = await verovioManager.getMidiFromUrl(meiUrl);
+            const processed = await processMidiData(midiFile);
+            
+            midiData = processed.midi;
+            timeSignature = processed.timeSignature;
+            
+            log('Initial data loaded. Click "再生開始" to prepare the audio player.');
+            startButton.disabled = false; // ここでボタンを有効化する
+        } catch (error) {
+            console.error(error);
+            log(`Error during initialization: ${error.message}`);
+            startButton.textContent = '初期化エラー';
+        }
+    });
+
+    // --- 2. プレイリストの定義 ---
+    const playlist = [
+        { type: 'play', barStart: 1, barEnd: 4, label: '通奏' },
+        { type: 'interval', duration: 3 },
+        { type: 'play', barStart: 1, barEnd: 2, label: '前半' },
+        { type: 'interval', duration: 3 },
+        { type: 'play', barStart: 3, barEnd: 4, label: '後半' },
+    ];
+    setPlaylist(playlist);
+    
+    // --- 3. プレイリストタイマーのコールバック設定 ---
+    setOnPlayItem((item, index) => {
+        log(`[Playlist] Starting item ${index+1}: Play from bar ${item.barStart} to ${item.barEnd} (${item.label})`);
+        statusElement.textContent = `Playing: ${item.label} (Bars ${item.barStart}-${item.barEnd})`;
+        
+        playMidiRange(item.barStart, item.barEnd, () => {
+            log(`[Playlist] Play item ${index+1} finished. Moving to next.`);
+            playItemCompleted();
+        });
+    });
+
+    setOnInterval((item, index) => {
+        log(`[Playlist] Starting item ${index+1}: Interval for ${item.duration} seconds`);
+        statusElement.textContent = `Interval: ${item.duration}s...`;
+    });
+
+    setOnPlaylistEnd(() => {
+        log('[Playlist] All items completed.');
+        statusElement.textContent = 'Finished!';
+        startButton.disabled = false;
+        stopButton.disabled = true;
+    });
+
+    // --- 4. ボタンイベントリスナー ---
+    startButton.addEventListener('click', async () => {
+        startButton.disabled = true;
+        stopButton.disabled = false;
+
+        if (!playerInitialized) {
+            log('User gesture detected. Initializing audio player...');
+            await initToneAudio(); 
+            initTempo(midiData.header.tempos[0]?.bpm || 120);
+            await setupMidiPlayer(midiData, timeSignature);
+            playerInitialized = true;
+            log('Audio player is ready!');
+        }
+
+        log('Playlist playback started!');
+        startPlaylist();
+    });
+
+    stopButton.addEventListener('click', () => {
+        stopPlaylist();
+        stopMidiPlayback();
+        startButton.disabled = false;
+        stopButton.disabled = true;
+        statusElement.textContent = 'Stopped.';
+    });
+</script>
+
+
+
+
+<!-- ▼▼▼ 診断ハーネス（1つ追加するだけ） ▼▼▼ -->
+<script type="module">
+/**
+ * 診断ハーネス
+ * - 既存ページに後付けで、エラーハンドラ・状態ログ・例外注入・連打テスト等を提供
+ * - 既存の start/stop ボタンはそのまま利用（干渉しない）
+ * - 「ハーネスでコールバックを差し替え」チェックをONにした時だけ、プレイリストのコールバックを上書き
+ *   → 例外注入や二重呼びテストなどが可能
+ */
+
+// ---- 依存（相対パスはあなたの構成に合わせて調整してください） ----
+import { setOnStateChange, setOnPlayItem, setOnInterval, playItemCompleted } from '../core/playlist-timer.js';
+import { playMidiRange, stopMidiPlayback } from '../player/midi-player.js';
+
+// ---- ロガー（既存の #log を利用。既存 log 関数とは独立） ----
+const logEl = document.getElementById('log');
+function logLine(message) {
+  const ts = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+  console.log(message);
+  if (logEl) {
+    logEl.textContent += `[HARNESS ${ts}] ${message}\n`;
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+}
+
+// ---- グローバル例外フック（UI破綻の芽を可視化） ----
+window.addEventListener('error', (e) => {
+  logLine(`[window.onerror] ${e.message} @ ${e.filename}:${e.lineno}:${e.colno}`);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  logLine(`[unhandledrejection] ${e.reason?.message || e.reason}`);
+});
+
+// ---- ちいさなデバッグパネルを注入 ----
+const panel = document.createElement('div');
+panel.style.position = 'fixed';
+panel.style.right = '12px';
+panel.style.bottom = '12px';
+panel.style.zIndex = '99999';
+panel.style.background = 'rgba(0,0,0,0.75)';
+panel.style.color = '#fff';
+panel.style.font = '12px/1.4 system-ui, sans-serif';
+panel.style.padding = '10px';
+panel.style.borderRadius = '8px';
+panel.style.width = '300px';
+panel.style.boxShadow = '0 4px 20px rgba(0,0,0,0.35)';
+panel.innerHTML = `
+  <div style="font-weight:700; margin-bottom:6px;">診断ハーネス</div>
+  <label style="display:block; margin:.25em 0;">
+    <input type="checkbox" id="harness-enable" />
+    ハーネスでコールバックを差し替え（実験モード）
+  </label>
+  <label style="display:block; margin:.25em 0 .5em;">
+    <input type="checkbox" id="harness-throw-play" />
+    次の「play」コールバックで例外を投げる
+  </label>
+  <label style="display:block; margin:.25em 0 .5em;">
+    <input type="checkbox" id="harness-throw-interval" />
+    次の「interval」コールバックで例外を投げる
+  </label>
+  <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:.5em;">
+    <button id="btn-double-start" style="flex:1;">開始 2連打</button>
+    <button id="btn-stop-x5" style="flex:1;">停止×5連打</button>
+    <button id="btn-double-complete" style="flex:1;">完了2回通知</button>
+    <button id="btn-throw-now" style="flex:1;">今すぐ throw</button>
+  </div>
+  <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:.5em;">
+    <button id="btn-scenario" style="flex:1;">シナリオ再生</button>
+    <button id="btn-close" style="flex:1;">閉じる</button>
+  </div>
+  <div style="opacity:.7; margin-top:.5em;">状態: <span id="harness-state">-</span> / idx=<span id="harness-idx">-</span></div>
+`;
+document.body.appendChild(panel);
+
+// ---- パネル内の要素参照 ----
+const chkEnable        = panel.querySelector('#harness-enable');
+const chkThrowPlay     = panel.querySelector('#harness-throw-play');
+const chkThrowInterval = panel.querySelector('#harness-throw-interval');
+const btnDoubleStart   = panel.querySelector('#btn-double-start');
+const btnStopX5        = panel.querySelector('#btn-stop-x5');
+const btnDoubleComplete= panel.querySelector('#btn-double-complete');
+const btnThrowNow      = panel.querySelector('#btn-throw-now');
+const btnScenario      = panel.querySelector('#btn-scenario');
+const btnClose         = panel.querySelector('#btn-close');
+const stateText        = panel.querySelector('#harness-state');
+const idxText          = panel.querySelector('#harness-idx');
+
+// ---- 既存ページのボタン参照（IDは既存HTMLそのまま） ----
+const startBtn = document.getElementById('startButton');
+const stopBtn  = document.getElementById('stopButton');
+const statusEl = document.getElementById('status');
+
+// ---- 状態変化ログ（playlist-timer.js のパッチで追加済 setOnStateChange を利用） ----
+setOnStateChange((state, index) => {
+  stateText.textContent = state;
+  idxText.textContent = String(index);
+  logLine(`[state] ${state} (idx=${index})`);
+});
+
+// --------------------------------------------------------------------
+// 実験モードON時だけ、プレイリスト・コールバックを差し替える
+// （差し替え内容：既存と同等の動作 + 例外注入のオプション）
+// --------------------------------------------------------------------
+let overrideInstalled = false;
+
+function installOverrideCallbacks() {
+  if (overrideInstalled) return;
+  overrideInstalled = true;
+
+  // 「play」コールバック：必要なら例外注入 → 範囲再生 → onDone で playItemCompleted()
+  setOnPlayItem((item, index) => {
+    logLine(`[Harness] onPlayItem idx=${index}: bars ${item.barStart}-${item.barEnd} label="${item.label}"`);
+    // 例外注入（playlist-timer 側の try/catch 挙動を検証する）
+    if (chkThrowPlay.checked) {
+      chkThrowPlay.checked = false; // 一回でオフ
+      throw new Error('[Harness] injected error in onPlayItem');
+    }
+    // UI更新（既存と同様の軽い表示）
+    if (statusEl) {
+      statusEl.textContent = `Playing (Harness): ${item.label} (Bars ${item.barStart}-${item.barEnd})`;
+    }
+    // 範囲再生：完了時にタイマーへ通知
+    playMidiRange(item.barStart, item.barEnd, () => {
+      logLine('[Harness] play onDone → playItemCompleted()');
+      playItemCompleted();
+    });
+  });
+
+  // 「interval」コールバック：必要なら例外注入 → 表示だけ（タイマー進行は playlist-timer 本体が担当）
+  setOnInterval((item, index) => {
+    logLine(`[Harness] onInterval idx=${index}: ${item.duration}s`);
+    if (chkThrowInterval.checked) {
+      chkThrowInterval.checked = false; // 一回でオフ
+      throw new Error('[Harness] injected error in onInterval');
+    }
+    if (statusEl) {
+      statusEl.textContent = `Interval (Harness): ${item.duration}s...`;
+    }
+  });
+
+  logLine('[Harness] プレイリスト・コールバックをハーネス用に差し替えました。');
+}
+
+function uninstallOverrideCallbacks() {
+  if (!overrideInstalled) return;
+  // 差し替え解除＝元のコールバックに戻すことになるが、
+  // 既存の <script type="module"> が最初に setOnPlayItem/Interval を設定済み。
+  // ここで「元に戻す」には、その既存ロジックを再登録する必要がある。
+  // → 簡易運用：ON/OFFを頻繁に切り替えない前提で、OFF時は「差し替えを行わない」だけにする。
+  //   （既に差し替え済みのセッションではページをリロードして原状復帰）
+  logLine('[Harness] 既に差し替え済みです。OFFに戻すにはページをリロードしてください。');
+}
+
+chkEnable.addEventListener('change', () => {
+  if (chkEnable.checked) {
+    installOverrideCallbacks();
+  } else {
+    uninstallOverrideCallbacks();
+  }
+});
+
+// --------------------------------------------------------------------
+// テストボタン郡
+// --------------------------------------------------------------------
+
+// 開始 2連打：二重開始ガードの挙動を確認（警告ログのみで壊れないこと）
+btnDoubleStart.addEventListener('click', () => {
+  if (!startBtn) return;
+  logLine('[Harness] start x2');
+  startBtn.click();
+  setTimeout(() => startBtn.click(), 50);
+});
+
+// 停止×5連打： stop の多重実行ガード・UI同期を確認
+btnStopX5.addEventListener('click', () => {
+  if (!stopBtn) return;
+  logLine('[Harness] stop x5');
+  for (let i = 0; i < 5; i++) {
+    setTimeout(() => stopBtn.click(), i * 30);
+  }
+});
+
+// 完了2回通知： playItemCompleted の二重発火ガードを確認
+btnDoubleComplete.addEventListener('click', () => {
+  logLine('[Harness] playItemCompleted x2');
+  playItemCompleted();
+  setTimeout(() => playItemCompleted(), 30);
+});
+
+// 今すぐ throw：グローバル例外フックの動作確認（アプリは落ちずにログされる）
+btnThrowNow.addEventListener('click', () => {
+  logLine('[Harness] throwing now');
+  // setTimeout を挟むと "unhandledrejection" / "error" 挙動も観察しやすい
+  setTimeout(() => { throw new Error('[Harness] manual throw'); }, 0);
+});
+
+// シナリオ再生：開始→短時間で停止→すぐ開始、の順で乱打。Watchdog/状態遷移の健全性を確認
+btnScenario.addEventListener('click', async () => {
+  if (!startBtn || !stopBtn) return;
+  logLine('[Harness] scenario: start → 700ms で stop → 500ms 後に再 start');
+
+  startBtn.click();
+  await sleep(700);
+  stopBtn.click();
+  await sleep(500);
+  startBtn.click();
+});
+
+// パネルを閉じる
+btnClose.addEventListener('click', () => {
+  panel.remove();
+  logLine('[Harness] パネルを閉じました。リロードで再表示されます。');
+});
+
+// ヘルパ
+function sleep(ms){ return new Promise(r => setTimeout(r, ms)); }
+
+// 初期メッセージ
+logLine('[Harness] 診断ハーネスが読み込まれました。必要に応じて「差し替え」スイッチをONにしてください。');
+</script>
+<!-- ▲▲▲ 診断ハーネス（ここまで） ▲▲▲ -->
+
+</body>
+</html>

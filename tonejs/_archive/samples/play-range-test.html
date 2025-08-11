@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Play Range & Core Processor Test</title>
+</head>
+
+<body>
+    <h1>プレイレンジとコアプロセッサーの連携テスト</h1>
+    <p>このページでは、Verovioから取得したMIDIデータからテンポと拍子記号を抽出し、それを使って小節と秒数の変換が正しく行われるかテストします。</p>
+    <button id="startButton">テスト開始</button>
+
+    <hr>
+
+    <h2>楽譜表示</h2>
+    <div id="scoreSvgContainer"></div>
+
+    <hr>
+
+    <h2>MIDIデータ情報</h2>
+    <p><strong>BPM:</strong> <span id="bpmInfo">...</span></p>
+    <p><strong>拍子記号:</strong> <span id="timeSignatureInfo">...</span></p>
+
+    <hr>
+
+    <h2>時間変換テスト</h2>
+    <p>MEIデータの3小節目の開始位置の秒数を計算します。<br>
+        (使用する拍子記号: <span id="bpmFromCore">...</span>)</p>
+    <button id="convertButton" disabled>3小節目の秒数を計算</button>
+    <p><strong>変換結果:</strong> <span id="resultInfo">...</span></p>
+
+    <hr>
+
+    <h2>小節範囲を指定して再生</h2>
+    <p>再生したい小節範囲を選択してください。</p>
+    <select id="playRangeSelect" disabled>
+        <option value="1,1">1小節目を再生</option>
+        <option value="2,2">2小節目を再生</option>
+        <option value="3,3">3小節目を再生</option>
+        <option value="4,4">4小節目を再生</option>
+        <option disabled>---</option>
+        <option value="1,2">1-2小節目を再生</option>
+        <option value="3,4">3-4小節目を再生</option>
+        <option disabled>---</option>
+        <option value="1,4">1-4小節目を再生</option>
+    </select>
+    <button id="playButton" disabled>再生</button>
+    <button id="stopButton" disabled>停止</button>
+
+    <pre id="log"></pre>
+
+    <script type="module">
+        import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.9.0/verovio/verovio-manager.js';
+        import { loadToneJs } from '../core/loader.js';
+        import { initToneAudio } from '../core/setup.js';
+        import { processMidiData } from '../processor/core-processor.js';
+        import { measureAndBeatToSecondsFromOne, getPlayRangeInSecondsFromOne } from '../core/play-range.js';
+        import { createDefaultSynth, playSynthTestSound } from '../core/synth.js';
+
+        const verovioManager = new VerovioManager();
+        const meiUrl = "https://kogu0507.github.io/dev/0-temp/sample1.mei";
+
+        const startButton = document.getElementById('startButton');
+        const convertButton = document.getElementById('convertButton');
+        const playButton = document.getElementById('playButton');
+        const stopButton = document.getElementById('stopButton');
+        const playRangeSelect = document.getElementById('playRangeSelect');
+        const logElement = document.getElementById('log');
+
+        let timeSignatureFromCore = null;
+        let midi = null;
+        let synth = null;
+
+        // 再生状態を管理する一元化された関数
+        const resetPlayerState = () => {
+            Tone.Transport.stop();
+            Tone.Transport.cancel(0);
+            Tone.Transport.loop = false;
+            Tone.Transport.position = 0; // 次回のために頭出し（好み）
+            playButton.disabled = false;
+            stopButton.disabled = true;
+        };
+
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString('ja-JP', { hour12: false });
+            console.log(message);
+            logElement.textContent += `[${timestamp}] ${message}\n`;
+            logElement.scrollTop = logElement.scrollHeight;
+        }
+
+        startButton.addEventListener('click', async () => {
+            log('テストを開始します...');
+            startButton.disabled = true;
+
+            try {
+                log('モジュールとオーディオを初期化しています...');
+                await loadToneJs();
+                await initToneAudio();
+
+                synth = createDefaultSynth();
+                playSynthTestSound(synth);
+
+                await verovioManager.initialize();
+                log('初期化が完了しました。');
+
+                log('Verovioから楽譜（SVG）とMIDIデータを取得しています...');
+                await verovioManager.displaySvgFromUrl(meiUrl, 'scoreSvgContainer');
+                const midiData = await verovioManager.getMidiFromUrl(meiUrl);
+                log('SVGとMIDIデータの取得が完了しました。');
+
+                log('core-processorでMIDIデータを解析します...');
+                const result = await processMidiData(midiData);
+                midi = result.midi;
+                timeSignatureFromCore = result.timeSignature;
+                log('MIDIデータの解析が完了しました。');
+
+                const bpm = midi.header.tempos[0]?.bpm || 'N/A';
+                const timeSigText = timeSignatureFromCore?.beatsPerMeasure ?
+                    `${timeSignatureFromCore.beatsPerMeasure}/${timeSignatureFromCore.subdivision}` : 'N/A';
+
+                document.getElementById('bpmInfo').textContent = `${bpm} BPM`;
+                document.getElementById('timeSignatureInfo').textContent = timeSigText;
+                document.getElementById('bpmFromCore').textContent = timeSignatureFromCore?.beatsPerMeasure || 'N/A';
+
+                log(`MIDI情報 -> BPM: ${bpm}, 拍子記号: ${timeSigText}`);
+                convertButton.disabled = false;
+                playRangeSelect.disabled = false;
+                playButton.disabled = false;
+
+            } catch (error) {
+                console.error(error);
+                log(`エラーが発生しました: ${error.message}`);
+            } finally {
+                startButton.disabled = false;
+            }
+        });
+
+        convertButton.addEventListener('click', () => {
+            if (!timeSignatureFromCore || !timeSignatureFromCore.beatsPerMeasure) {
+                log('エラー: 拍子記号情報が未取得です。テストを開始してから計算してください。');
+                return;
+            }
+
+            const measure = 3;
+            const beat = 0;
+            const seconds = measureAndBeatToSecondsFromOne(measure, beat, timeSignatureFromCore.beatsPerMeasure);
+
+            log(`計算中: ${measure}小節目の開始位置を計算します...`);
+            document.getElementById('resultInfo').textContent = `${seconds.toFixed(2)} 秒`;
+            log(`計算結果: ${seconds.toFixed(2)} 秒`);
+
+            const { startSeconds, durationSeconds } = getPlayRangeInSecondsFromOne(2, 4, timeSignatureFromCore.beatsPerMeasure);
+            log(`おまけ：2小節目から4小節目までの再生範囲。開始: ${startSeconds.toFixed(2)} 秒, 再生時間: ${durationSeconds.toFixed(2)} 秒`);
+        });
+
+        playButton.addEventListener('click', async () => {
+            await initToneAudio();
+
+            if (!midi) {
+                log('エラー: MIDIデータがロードされていません。');
+                return;
+            }
+
+            // 再生開始前に、状態をリセット
+            resetPlayerState();
+
+            const selectedValue = playRangeSelect.value;
+            const [startMeasure, endMeasure] = selectedValue.split(',').map(Number);
+
+            log(`${startMeasure}小節目から${endMeasure}小節目までの再生を準備しています...`);
+
+
+            const { startSeconds, durationSeconds } = getPlayRangeInSecondsFromOne(startMeasure, endMeasure, timeSignatureFromCore.beatsPerMeasure);
+            log(`デバッグ情報: startMeasure=${startMeasure}, endMeasure=${endMeasure}`);
+            log(`デバッグ情報: startSeconds=${startSeconds}, durationSeconds=${durationSeconds}`);
+            log(`デバッグ情報: 再生終了イベントを ${durationSeconds} 秒後に予約します。`);
+
+            const endSeconds = startSeconds + durationSeconds;
+
+            log(`再生範囲: 開始 ${startSeconds.toFixed(2)} 秒, 長さ ${durationSeconds.toFixed(2)} 秒`);
+
+            midi.tracks.forEach(track => {
+                track.notes.forEach(note => {
+                    if (note.time >= startSeconds && note.time < endSeconds) {
+                        Tone.Transport.schedule((time) => {
+                            synth.triggerAttackRelease(note.name, note.duration, time, note.velocity);
+                        }, note.time);
+                    }
+                });
+            });
+
+
+            // NG: 相対指定 -> `+${durationSeconds}`
+            // OK: 絶対指定（曲頭からの秒）
+            Tone.Transport.scheduleOnce(() => {
+                log('デバッグ情報: 再生終了イベントが実行されました。');
+                resetPlayerState();
+                log('再生が終了しました。');
+            }, endSeconds);
+
+
+            Tone.Transport.start(undefined, startSeconds);
+            playButton.disabled = true;
+            stopButton.disabled = false;
+            log('再生を開始しました。');
+        });
+
+        stopButton.addEventListener('click', () => {
+            resetPlayerState(); // 停止ボタン押下時に状態をリセット
+            log('再生を停止しました。');
+        });
+    </script>
+</body>
+
+</html>

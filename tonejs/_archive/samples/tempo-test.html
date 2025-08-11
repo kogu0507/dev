@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+    <title>Tempo Test</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+        }
+
+        input[type="number"] {
+            width: 4em;
+        }
+
+        button {
+            margin: 0 0.5em;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>Tempo Test</h1>
+
+    <section>
+        <label for="bpmInput">BPM:</label>
+        <input type="number" id="bpmInput" value="120" min="20" max="300" />
+        <button id="applyTempo">適用</button>
+    </section>
+
+    <section style="margin-top: 1em;">
+        <button id="start">再生開始</button>
+        <button id="stop">停止</button>
+        <button id="testSound">サウンドテスト</button>
+    </section>
+
+    <p style="margin-top: 1em;">
+        現在のBPM: <strong id="currentBpm">--</strong>
+    </p>
+
+    <script type="module">
+        import { loadToneJs } from '../core/loader.js';
+        import { initToneAudio } from '../core/setup.js';
+        import { initTempo, startTempo, stopTempo, getBpm } from '../core/tempo.js';
+        import { createDefaultSynth, playSynthTestSound } from '../core/synth.js';
+
+        // Tone.js をグローバルから利用
+        await loadToneJs();
+
+        // シンセ作成
+        const testSynth = createDefaultSynth();
+        const loopSynth = createDefaultSynth();
+
+        // ループを一度だけ生成
+        const beatLoop = new Tone.Loop((time) => {
+            loopSynth.triggerAttackRelease('C4', '8n', time);
+        }, '4n');
+
+        // BPM 適用ボタン
+        document.getElementById('applyTempo').addEventListener('click', () => {
+            const bpm = Number(document.getElementById('bpmInput').value);
+            initTempo(bpm);
+            document.getElementById('currentBpm').textContent = getBpm();
+        });
+
+        document.getElementById('start').addEventListener('click', async () => {
+            await initToneAudio();
+            // Transport にループを登録し、0 秒から開始
+            beatLoop.start(0);
+            startTempo();
+        });
+
+        document.getElementById('stop').addEventListener('click', () => {
+            stopTempo();
+            // 同じインスタンスを停止
+            beatLoop.stop();
+        });
+
+
+        /**
+         * テストサウンド: ユーザー操作後に AudioContext を再開して C4 を鳴らします。
+         */
+        document.getElementById('testSound').addEventListener('click', async () => {
+            // AudioContext を確実に再開
+            await initToneAudio();
+
+            // シンセが未作成ならここで生成
+            if (!testSynth) {
+                testSynth = createDefaultSynth();
+            }
+
+            // テスト音を鳴らす
+            playSynthTestSound(testSynth);
+        });
+
+    </script>
+
+</body>
+
+</html>

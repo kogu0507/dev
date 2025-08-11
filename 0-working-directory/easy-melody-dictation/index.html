@@ -185,7 +185,8 @@
                         </div>
                     </section>
                     <script type="module" defer>
-                        import { SimpleSynthMini } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@v2.8.0/components/simple-synth-mini/script.min.js';
+                        // TOOD: 開発中はmodule@mainでよいか
+                        import { SimpleSynthMini } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@main/components/simple-synth-mini/script.min.js';
 
                         // querySelectorAll を使用して、すべてのキーボード要素を取得
                         const synthElements = document.querySelectorAll('.ssm-simple-synth-mini');
@@ -198,6 +199,8 @@
                                 new SimpleSynthMini(synthElement);
                             }
                         });
+
+
                     </script>
                 </template>
 
@@ -206,17 +209,81 @@
         </section>
     </main>
 
-    <script defer>
+    <script type="module" defer>
+        import { VerovioManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@main/verovio/verovio-manager.min.js';
+        import { TonejsManager } from 'https://cdn.jsdelivr.net/gh/kogu0507/module@main/tonejs/manager/tonejs-manager.js';
 
+        const verovioManager = new VerovioManager();
+        const tonejsManager = new TonejsManager();
 
+        function loadTemplate() {
+            // data-template-id 属性を持つすべての要素を取得
+            const sectionsToPopulate = document.querySelectorAll('[data-template-id]');
+
+            sectionsToPopulate.forEach(section => {
+                const templateId = section.dataset.templateId; // data-template-idの値を取得
+
+                // テンプレート要素を取得
+                const template = document.getElementById(templateId);
+
+                if (template) {
+                    // テンプレートの内容をクローン
+                    const clonedContent = template.content.cloneNode(true);
+
+                    // 既存のコンテンツをクリアして、クローンした内容を挿入
+                    section.innerHTML = '';
+                    section.appendChild(clonedContent);
+                } else {
+                    console.warn(`テンプレートID "${templateId}" が見つかりません。`);
+                }
+            });
+
+            // 表示／非表示のタイミングを知らせる
+            document.dispatchEvent(new CustomEvent('templatesLoaded'));
+        }
+
+        function initializeEventListeners(){
+            /* 
+            課題 ボタンが押された
+            */
+        }
+
+        async function displayAnswerScore(meiUrl, targetElementId) {
+            console.log('楽譜の表示を開始します...');
+            await verovioManager.displaySvgFromUrl(meiUrl, targetElementId);
+            console.log('楽譜の表示が完了しました。');
+        }
+
+        async function initialize() {
+            // TODO: promise.allとか？
+            try {
+                loadTemplate();
+                initializeEventListeners(elements);
+
+                console.log('VerovioManager の初期化を開始します...');
+                await verovioManager.initialize();
+                console.log('初期化が完了しました。');
+                /*
+                promis.allで
+                Verovioロード
+                Tonejsをロード
+                */
+            } catch (error) {
+                console.error('エラーが発生しました:', error);
+                // エラーハンドリングは VerovioManager 内部でUI表示されていますが、
+                // ここでも必要に応じて追加の処理ができます。
+            }
+        }
+        document.addEventListener('DOMContentLoaded', initialize);
     </script>
     <!--
     template-loader.js: 
         HTMLファイル内の template タグで定義された内容を、指定された場所に自動的に読み込んで表示する 
     toggle-visibility.js
         特定のボタンがクリックされたときに、別の要素の表示/非表示を切り替える
+        
     -->
-    <script defer src="./template-loader.js"></script>
+    <!-- <script defer src="./template-loader.js"></script> -->
     <script defer src="./toggle-visibility.js"></script>
     <script defer type="module" src="./app.js"></script>
 
